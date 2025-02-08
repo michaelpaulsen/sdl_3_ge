@@ -17,7 +17,20 @@ namespace SKC::lua{
 		~Lua() {
 			lua_close(m_lua_state);
 		}
-		void register_function(std::string name, lua_CFunction func ) {
+		
+		//NOTE(skc): DO NOT COPY THE LUA ENVORMENT YOU ARE ASKING FOR A DOUBLE 
+		// FREE IF YOU DO  
+		Lua(Lua&) = delete; 
+		Lua(Lua&&) = delete ;
+		
+		Lua& operator=(Lua&) = delete;
+		Lua& operator=(Lua&&) = delete;
+		bool execute_command() {
+			const char* str = "print(\"[LUA]hello_world\")";
+			luaL_dostring(m_lua_state, str);
+			return true;
+		}
+		void register_function(std::string name, lua_CFunction func) {
 			lua_register(m_lua_state, name.c_str(), func);
 
 		}

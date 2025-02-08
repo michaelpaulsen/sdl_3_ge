@@ -21,7 +21,9 @@ using Lstate_t = SKC::lua::Lua;
 struct main_info_t {
     std::string fname; 
     arg_list_t args; 
-    Lstate_t lua_state; 
+    Lstate_t& lua_state; 
+    //NOTE(skc): This has to be a reference to preven use after free... 
+    //(possible bug in lua_close [not checking for the value being null]) 
 };
 constexpr Uint64 TARGET_RENDER_TIME = ((1. / 60.) * 1000); 
 enum SKC_E {
