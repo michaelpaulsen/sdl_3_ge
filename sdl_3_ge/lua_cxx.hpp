@@ -6,13 +6,11 @@
 namespace SKC::lua{
 	class Lua {
 	using Lstate_t = lua_State*;
-	
 	Lstate_t m_lua_state; 
-	
 	public:
-		using lua_funct_t = std::function<int(Lstate_t)>;
 		Lua() {
 			m_lua_state = luaL_newstate(); 
+			luaL_openlibs(m_lua_state);
 		}
 		~Lua() {
 			lua_close(m_lua_state);
@@ -26,13 +24,16 @@ namespace SKC::lua{
 		Lua& operator=(Lua&) = delete;
 		Lua& operator=(Lua&&) = delete;
 		bool execute_command() {
-			const char* str = "print(\"[LUA]hello_world\")";
-			luaL_dostring(m_lua_state, str);
-			return true;
+			const char* s = "print(\"[Lua] Hello from this string\")";
+			auto rr = luaL_dostring(m_lua_state, s);
+			if (rr != LUA_OK) {
+				luaL_error(m_lua_state, "Error: %s\n", lua_tostring(m_lua_state, -1));
+
+			}
+			return rr == LUA_OK;
 		}
 		void register_function(std::string name, lua_CFunction func) {
 			lua_register(m_lua_state, name.c_str(), func);
-
 		}
 
 	public:
