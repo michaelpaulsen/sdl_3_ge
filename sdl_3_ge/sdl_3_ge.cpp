@@ -53,17 +53,21 @@ int main(SKC::Console& console, main_info_t info) {
 
             }
             if (quit) break;
-
-            //TODO (skc): make function to calc sleep time 
-            //based off a max framerate... 
-           
         }
-        
+       //FRAME RATE LIMIT CODE!  
+       //(^ is here for searchablility DO NOT REMOVE) 
         draw_end_ticks = SDL_GetTicks(); 
-        console.Inform( "took ", draw_end_ticks - draw_start_tick, "ms (of ", TARGET_RENDER_TIME, ") to draw frame").ClearLine(0).Print('\r');
-        
-        SDL_Delay(1000);
-
+        //this is the current tick since the SDL_Timer modual was started
+        auto rt = draw_end_ticks - draw_start_tick; 
+        //this is the number of ticks that has passed since the start of the draw code
+        if (rt > TARGET_RENDER_TIME) rt = 0; 
+        //rt is unsigned so we need to check if it is greater than the time we want to spend 
+        //rendering if so we set it to 0 
+        rt = TARGET_RENDER_TIME - rt;
+        //we do not need rt after this point so we can just write to it .. 
+        // (saves memory or something?) 
+        SDL_Delay(rt);
+        //delay the main thread for rt (which now has the wait time )ms 
 
     }
     SDL_DestroyRenderer(renderer); 
