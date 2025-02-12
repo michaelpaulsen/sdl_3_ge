@@ -55,6 +55,7 @@ int main(SKC::Console& console, main_info_t info) {
             if (quit) break;
         }
        //FRAME RATE LIMIT CODE!  
+       //FRAME RATE LIMIT CODE! DO ALL DRAWING BEFORE THIS LINE   
        //(^ is here for searchablility DO NOT REMOVE) 
         draw_end_ticks = SDL_GetTicks(); 
         //this is the current tick since the SDL_Timer modual was started
