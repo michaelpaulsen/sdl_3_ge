@@ -135,7 +135,9 @@
     <ClInclude Include="concepts.hpp" />
     <ClInclude Include="Console.hpp" />
     <ClInclude Include="DBG_functions.h" />
+    <ClInclude Include="key_util.hpp" />
     <ClInclude Include="lua_cxx.hpp" />
+    <ClInclude Include="main.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

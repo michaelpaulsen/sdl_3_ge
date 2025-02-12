@@ -3,19 +3,21 @@
 #include "main.hpp"
 #include "key_util.hpp"
 constexpr Uint64 TARGET_RENDER_TIME = ((1. / 60.) * 1000);
-
+#define assert(cnd) if(!cnd) _CrtDbgBreak() 
 
 int main(SKC::Console& console, main_info_t info) {
     console.Informln("entered main function");
     SDL_Window* window;
     SDL_Renderer* renderer;
     int window_w = 320, window_h = 240; 
+    bool draw = true ;
     if (!SDL_CreateWindowAndRenderer("lib skc test reference window\ntest", window_w, window_h, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
         console.Println("SDL error", SDL_GetError());
         return -1;
     }
     SDL_Event evnt{};
     bool quit = false; 
+    int spacing = 100; 
     while (!quit) {
         Uint64 draw_start_tick = SDL_GetTicks(), draw_end_ticks=0; 
         
@@ -33,16 +35,34 @@ int main(SKC::Console& console, main_info_t info) {
                 }
                 case SDL_EVENT_WINDOW_RESIZED: {
                     auto wind = evnt.window;
-                    console.Inform("window resized to ", wind.data1, "x", wind.data2, '\r');
+                    
+                    //TODO(skc): make window class 
+                    window_w = wind.data1;
+                    window_h = wind.data2;
                     break; 
                 }
-                case SDL_EVENT_WINDOW_FOCUS_LOST :
+                case SDL_EVENT_WINDOW_FOCUS_LOST: {
+                    draw = false; 
+                    break; 
+                }
                 case SDL_EVENT_WINDOW_FOCUS_GAINED: {
+                    draw = true; 
                     break; 
                 }
                 case SDL_EVENT_KEY_DOWN:
                 case SDL_EVENT_KEY_UP : {
-                    debug_key_events(console, evnt); 
+                    auto keye = evnt.key;
+                    auto key = keye.key;
+                    auto mod = keye.mod;
+                    if (key == SDLK_UP) {
+                        if(spacing > 1) --spacing;
+                    }
+                    
+                    if (key == SDLK_DOWN) {
+                         ++spacing;
+
+                    }
+                    if (key == SDLK_ESCAPE) quit = true;
                     break;
                   
                 }
@@ -54,7 +74,25 @@ int main(SKC::Console& console, main_info_t info) {
             }
             if (quit) break;
         }
-       //FRAME RATE LIMIT CODE!  
+        if (draw) {
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+            //SDL_RenderClear(renderer);
+            int x = 0; 
+            int y = window_h / 2;
+            for (int xx = 0; xx < spacing; ++xx) {
+                if (x > window_w) { 
+                    y+=5;
+                    x -= window_w;
+                }
+                SDL_SetRenderDrawColor(renderer, x, y-20, 0, 255);
+                SDL_RenderPoint(renderer, x, y);
+                ++x;
+            }
+            SDL_RenderPresent(renderer);
+        }
+
+
        //FRAME RATE LIMIT CODE! DO ALL DRAWING BEFORE THIS LINE   
        //(^ is here for searchablility DO NOT REMOVE) 
         draw_end_ticks = SDL_GetTicks(); 
@@ -69,7 +107,7 @@ int main(SKC::Console& console, main_info_t info) {
         // (saves memory or something?) 
         SDL_Delay(rt);
         //delay the main thread for rt (which now has the wait time )ms 
-
+        if(draw)console.Print("end of frame\r");
     }
     SDL_DestroyRenderer(renderer); 
     SDL_DestroyWindow(window); 
