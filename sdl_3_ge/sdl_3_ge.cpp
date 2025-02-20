@@ -2,8 +2,6 @@
 //
 #include "main.hpp"
 #include "key_util.hpp"
-constexpr Uint64 TARGET_RENDER_TIME = ((1. / 60.) * 1000);
-#define assert(cnd) if(!cnd) _CrtDbgBreak() 
 
 int main(SKC::Console& console, main_info_t info) {
     console.Informln("entered main function");

@@ -11,6 +11,17 @@
 #include "./lua_cxx.hpp" //name WIP 
 #include "./Console.hpp"
 
+//TODO(skc): shouldn't be const? 
+constexpr Uint64 TARGET_RENDER_TIME = ((1. / 60.) * 1000);
+
+//TODO(skc): move to own file 
+#ifdef _DEBUG
+#define assert(cnd) if(!cnd) _CrtDbgBreak() 
+#else
+#define assert(cnd)
+#endif
+
+
 //#define NOSDL
 //the type of the CLI arguments as passed to the end user 
 using arg_list_t = std::vector<std::string>;
