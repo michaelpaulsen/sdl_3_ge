@@ -47,6 +47,10 @@ namespace SKC::GE {
 		}
 		
 	};
+	auto default_event_func = [](SDL_Event e) {
+		return event_t::NO_FUNCT;
+		};
+
 	class event_handler {
 		
 		using event_list_t = std::vector<event_discriptor>;
@@ -61,6 +65,8 @@ namespace SKC::GE {
 		bool is_member_function(et id) {
 			bool a = (id == SDL_EVENT_GAMEPAD_ADDED);
 			a |= (id == SDL_EVENT_GAMEPAD_REMOVED);
+			a |= (id == SDL_EVENT_GAMEPAD_BUTTON_DOWN);
+			a |= (id == SDL_EVENT_GAMEPAD_BUTTON_UP);
 			return a;
 		}
 		
@@ -69,8 +75,7 @@ namespace SKC::GE {
 		
 			return a;
 		}
-
-
+		event_funct_t on_game_pad_button = default_event_func;
 		event_funct_t on_game_pad_added = event_funct_t([this](SDL_Event e)mutable {
 			m_game_pads[e.gdevice.which] = SDL_OpenGamepad(e.gdevice.which); 
 			return event_t::CONTINUE; 
@@ -80,6 +85,7 @@ namespace SKC::GE {
 			SDL_CloseGamepad(m_game_pads[e.gdevice.which]);
 			m_game_pads.erase(e.gdevice.which);
 			return event_t::CONTINUE;
+		});
 
 			});
 	public: 
