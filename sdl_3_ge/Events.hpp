@@ -29,35 +29,34 @@ namespace SKC::GE {
 	using event_funct_t = std::function < event_t(SDL_Event)>;
 
 	struct event_discriptor {
-		SDL_EventType id; 
-		event_funct_t funct; 
+		SDL_EventType id;
+		event_funct_t funct;
 		bool operator==(SDL_EventType oid) const {
-			return id == oid; 
+			return id == oid;
 		}
 		bool operator==(int oid) const {
 			return id == oid;
 		}
-		
-		
+
+
 		//if you're calling the below then you're 
 		//doing something funky but still feel like 
 		//this should be here. 
 		bool operator==(event_discriptor other) const {
 			return other.id == id;
 		}
-		
+
 	};
 	auto default_event_func = [](SDL_Event e) {
 		return event_t::NO_FUNCT;
-		};
-
+	};
+	
 	class event_handler {
 		
 		using event_list_t = std::vector<event_discriptor>;
 		using setter_t = std::expected<std::string, std::string>; 
 		using et = SDL_EventType; 
-		
-		event_list_t m_events = {};
+			event_list_t m_events = {};
 		std::unordered_map<Uint32, SDL_Gamepad*> m_game_pads = {};
 		bool is_joy_event(et id) {
 			return (id > SDL_EVENT_JOYSTICK_AXIS_MOTION && id < SDL_EVENT_JOYSTICK_UPDATE_COMPLETE); 
@@ -67,29 +66,31 @@ namespace SKC::GE {
 			a |= (id == SDL_EVENT_GAMEPAD_REMOVED);
 			a |= (id == SDL_EVENT_GAMEPAD_BUTTON_DOWN);
 			a |= (id == SDL_EVENT_GAMEPAD_BUTTON_UP);
-			return a;
+			return a; 
 		}
-		
 		bool is_not_spectial_event_type(et id) {
 			bool a = (id == SDL_EVENT_QUIT) || is_joy_event(id) || is_member_function(id) ;
-		
+			
 			return a;
 		}
 		event_funct_t on_game_pad_button = default_event_func;
 		event_funct_t on_game_pad_added = event_funct_t([this](SDL_Event e)mutable {
 			m_game_pads[e.gdevice.which] = SDL_OpenGamepad(e.gdevice.which); 
 			return event_t::CONTINUE; 
-
 		}); 
 		event_funct_t on_game_pad_removed = event_funct_t([this](SDL_Event e)mutable {
 			SDL_CloseGamepad(m_game_pads[e.gdevice.which]);
 			m_game_pads.erase(e.gdevice.which);
 			return event_t::CONTINUE;
 		});
-
-			});
+		event_t handle_memeber_event(SDL_Event e) {
+			if (e.type == SDL_EVENT_GAMEPAD_ADDED) return on_game_pad_added(e);
+			if (e.type == SDL_EVENT_GAMEPAD_REMOVED) return on_game_pad_removed(e);
+			if (e.type == SDL_EVENT_GAMEPAD_BUTTON_UP || e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) return on_game_pad_button(e); 
+			return event_t::NO_FUNCT; 
+		}
+	
 	public: 
-		//TODO(skc): make setters for the gamepad init functions... 
 		event_handler() = default; 
 		~event_handler() = default; 
 
@@ -128,39 +129,26 @@ namespace SKC::GE {
 			m_events[index].funct = funct; 
 			return std::string("set");	
 		}
-		event_t dispactch_sdl_event(SDL_Event e) {
-			bool event_handled = false; 
-			//NOTE(skc): the user shouldn't have to manually register the gamepad added and removed callbacks 
-			//so I default init them in their own members 
-			//there may be other functions of this sort later too... 
-			//in fact the more I think about it the more I want to make all of the most common 
-			//events like this
+		
+		void set_game_pad_button_callback(event_funct_t funct) {
+			on_game_pad_button = funct; 
+		}
+		
+		event_t do_event(SDL_Event e) {
 			
-			if (e.type == SDL_EVENT_GAMEPAD_ADDED) return on_game_pad_added(e);
-			if (e.type == SDL_EVENT_GAMEPAD_REMOVED)return on_game_pad_removed(e);
-
-
+			if (is_member_function((et)e.type)) {
+				return handle_memeber_event(e); 
+			}
 
 			if (is_joy_event((et)e.type)) return event_t::JOY_SITCK_EVENT;
 			if (e.type == SDL_EVENT_QUIT) return event_t::QUIT; 
 			
 			for (const auto& evnt : m_events) {
 				if (evnt == e.type) {
-					auto ev = evnt.funct(e);
-					event_handled = true;
-					if (ev == event_t::BREAK || ev == event_t::QUIT) {
-						return ev;
-					}
-					break; 
+					return evnt.funct(e);
 				}
 			}
-			
-			//if the event was handled then flag the caller to continue pumping the event que
-			//if it is not though we want to signal to the callee that it is not... 
-			//this allows the user to print out error messages. 
-			
-			return event_handled? event_t::CONTINUE : event_t::NO_FUNCT;
-
+			return event_t::NO_FUNCT;
 		}
 		//I don't know when this would be used but good to have 
 		bool event_is_regisitered(et id) const {
