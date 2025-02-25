@@ -26,6 +26,17 @@ int main(SKC::Console& console, main_info_t info) {
         console.Inform("mouse ", motion.which, " moved to -> ", motion.x, " ", motion.y, '\r');
         return SKC::GE::event_t::CONTINUE;
     };
+    
+    //TODO(skc): implement a function that does this automaticall
+    SDL_Surface *surface = SDL_LoadBMP("C:/Users/Skele/Desktop/projects/sdl_3_ge/sdl_3_ge/test_image.bmp");
+    if (!surface) {
+        console.Errorln("SDL_ERROR ", SDL_GetError());
+        exit(-1);
+    }
+    auto test_texture = window.create_texture_from_surface(surface); 
+    SDL_DestroySurface(surface); 
+    
+    
     event_handler.register_event(SDL_EVENT_KEY_UP, keyevent);
     event_handler.register_event(SDL_EVENT_KEY_DOWN, keyevent);
     event_handler.register_event(SDL_EVENT_MOUSE_MOTION, mouse_event);
@@ -97,17 +108,22 @@ int main(SKC::Console& console, main_info_t info) {
                     break;
                 }
                 }
+              
+            }
+
+        }
+
                 if (draw) {
                     window.clear();
                     window.set_draw_color(255, 0, 0);
+            window.draw_texture(test_texture);
                     window.fill_rectangle(0, 0, 20, 20);
                     window.set_draw_color(255, 255, 0);
                     window.draw_rectangle({ 1,1,20,50 }); 
+            window.draw_texture(test_texture, { 100,20,128,128 }); 
                     window.present();
                 }
                 if (quit) break;
-            }
-        }
         //FRAME RATE LIMIT CODE! DO ALL DRAWING BEFORE THIS LINE   
         //(^ is here for searchablility DO NOT REMOVE) 
         draw_end_ticks = SDL_GetTicks();

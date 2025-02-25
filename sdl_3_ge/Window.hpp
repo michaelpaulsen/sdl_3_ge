@@ -35,6 +35,10 @@ namespace SKC::GE {
 		* this is where the getters and setters are
 		* this is all code that isn't involved directly with the rendering
 		*/
+		auto create_texture_from_surface(SDL_Surface *surface) {
+			return SDL_CreateTextureFromSurface(m_renderer, surface);
+		}
+
 		void update_window_size() {
 			rect ret{};
 			SDL_GetRenderSafeArea(m_renderer, &ret);
@@ -126,5 +130,18 @@ namespace SKC::GE {
 		}
 		
 
+		/*
+		*texture API
+		* this is where all of the code that involves rendering textures goes 
+		*/
+		void draw_texture(SDL_Texture *txt) {
+			SDL_RenderTexture(m_renderer, txt, NULL, NULL);
+		}
+		void draw_texture(SDL_Texture *txt, Frect pos) {
+			SDL_RenderTexture(m_renderer, txt, NULL, &pos);
+		}
+		void draw_texture(SDL_Texture *txt, Frect pos, Frect atlas_pos) {
+			SDL_RenderTexture(m_renderer, txt, &atlas_pos , &pos );
+		}
 	};
 }
