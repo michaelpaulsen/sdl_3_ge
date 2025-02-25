@@ -7,19 +7,16 @@
 #include <SDL3/SDL.h>
 
 
+#include "./key_util.hpp"
+#include "./game_pad.hpp"
 
 #include "./lua_cxx.hpp" //name WIP 
 #include "./Console.hpp"
-
+#include "./Events.hpp"
+#include "./Window.hpp"
 //TODO(skc): shouldn't be const? 
 constexpr Uint64 TARGET_RENDER_TIME = ((1. / 60.) * 1000);
 
-//TODO(skc): move to own file 
-#ifdef _DEBUG
-#define assert(cnd) if(!cnd) _CrtDbgBreak() 
-#else
-#define assert(cnd)
-#endif
 
 
 //#define NOSDL
@@ -47,7 +44,7 @@ enum SKC_E {
 
 #define MAIN_NAME proc_main
 #ifndef SKC_SDL_INIT_FLAGS
-#define SKC_SDL_INIT_FLAGS SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD
+#define SKC_SDL_INIT_FLAGS SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK |SDL_INIT_HAPTIC 
 #endif // !SKC_SDL_INIT_FLAGS
 
 
@@ -55,7 +52,6 @@ enum SKC_E {
 int MAIN_NAME(SKC::Console&, main_info_t);
 
 int main(int argc, char** argv) {
-    //this is going to be moved into its own file... this should not be exposed to the end
     //user's grubby hands  
     //the goal of this is to abstract away the important (and dirty) stuff like dealing with the CLI
     //arguments
@@ -65,7 +61,6 @@ int main(int argc, char** argv) {
     console.Informln("starting LUA VM");
 
     //this is the lua state 
-    //TODO (skc) : wrap this in an object
     auto L = Lstate_t();
     if (!L.execute_command()) {
         console.Error("LUA TEST FAILD");
@@ -85,18 +80,13 @@ int main(int argc, char** argv) {
         console.Informln("calling user entry with ", args.size(), " arguments");
         //inform the dev on the paramiters... 
     }
-#ifndef NOSDL 
-    //we also want to init SDL on our side because there's no reason that you won't want a window 
     console.Informln("init SDL");
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
+    if (!SDL_Init(SKC_SDL_INIT_FLAGS)) {
         //SDL_Init may fail if it does then we exit...
         auto error = SDL_GetError();
         console.Errorln("UNABLE TO START SDL ERROR ", error);
         console.Errorln("EXITING WITH sENO_SDL");
     }
-#else 
-    console.Warnln("SDL PRE INIT DISABLED CALL SDL_Init BEFORE USING SDL");
-#endif
     //call the user's entry point and save the return value so that we can return it later 
 
     auto ret = MAIN_NAME(console, { argv[0], args, L });
