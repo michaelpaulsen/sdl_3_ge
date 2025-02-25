@@ -5,17 +5,12 @@
 
 int main(SKC::Console& console, main_info_t info) {
     console.Informln("entered main function");
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    int window_w = 320, window_h = 240; 
+    int window_w = 320, window_h = 240;
     bool draw = true;
-    if (!SDL_CreateWindowAndRenderer("lib skc test reference window\ntest", window_w, window_h, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
-        console.Println("SDL error", SDL_GetError());
-        return -1;
-    }
+    auto window = SKC::GE::window("test window", window_w, window_h, SDL_WINDOW_RESIZABLE); 
     SDL_Event evnt{};
-    bool quit = false; 
-    int spacing = 100; 
+    bool quit = false;
+    int spacing = 100;
     auto event_handler = SKC::GE::event_handler(); 
     
     //default key event
@@ -48,15 +43,15 @@ int main(SKC::Console& console, main_info_t info) {
     });
     while (!quit) {
         Uint64 draw_start_tick = SDL_GetTicks(), draw_end_ticks = 0;
-        
+
         while (SDL_PollEvent(&evnt)) {
-            console.ClearLine(); 
+            console.ClearLine();
             auto evnd = event_handler.do_event(evnt);
             if (evnd == SKC::GE::event_t::QUIT) {
 
-                    quit = true; 
-                    break; 
-                }
+                quit = true;
+                break;
+            }
             if (evnd == SKC::GE::event_t::NO_FUNCT) {
 
                 //TODO(skc):remove all of this code for the event API... 
@@ -74,12 +69,12 @@ int main(SKC::Console& console, main_info_t info) {
                         auto t = SKC::GE::controller::get_controller_face_button_name(contr.value(), gpevent.button);
                         if (gpevent.down && t.has_value()) {
                             console.ClearLine().Print("\rbtn \"", t.value(), "\" pressed");
-                }
+                        }
                     }
                     else {
                         console.Print(contr.error());
-                }
-                    break; 
+                    }
+                    break;
                 }
                 case SDL_EVENT_GAMEPAD_AXIS_MOTION: {
                     auto gp_axis_motion = evnt.gaxis;
@@ -87,7 +82,7 @@ int main(SKC::Console& console, main_info_t info) {
                     int value = gp_axis_motion.value;
                     double r = (double)value / (double)32767;
                     console.ClearLine().Print("\raxis ", gp_axis, " is value ", r);
-                    break; 
+                    break;
                 }
                 case SDL_EVENT_GAMEPAD_REMAPPED: {
                     break;
@@ -96,36 +91,30 @@ int main(SKC::Console& console, main_info_t info) {
                     auto type = evnt.type;
                     if (type <= SDL_EVENT_WINDOW_LAST && type >= SDL_EVENT_WINDOW_FIRST) {
                         console.ClearLine().Print("unhandled window event\r");
-                    break; 
-                }
+                        break;
+                    }
                     std::cout << "unhandled event of type 0x" << std::hex << evnt.type << std::dec << '\r';
                     break;
-            }
-        }
-        if (draw) {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
-            //SDL_RenderClear(renderer);
-            int x = 0; 
-            int y = window_h / 2;
-            for (int xx = 0; xx < spacing; ++xx) {
-                if (x > window_w) { 
-                    y+=5;
-                    x -= window_w;
+                }
+                }
+                if (draw) {
+                    window.clear();
+                    window.set_draw_color(255, 0, 0);
+                    window.fill_rectangle(0, 0, 20, 20);
+                    window.set_draw_color(255, 255, 0);
+                    window.draw_rectangle({ 1,1,20,50 }); 
+                    window.present();
                 }
                 if (quit) break;
             }
-            SDL_RenderPresent(renderer);
         }
-
-
-       //FRAME RATE LIMIT CODE! DO ALL DRAWING BEFORE THIS LINE   
-       //(^ is here for searchablility DO NOT REMOVE) 
-        draw_end_ticks = SDL_GetTicks(); 
+        //FRAME RATE LIMIT CODE! DO ALL DRAWING BEFORE THIS LINE   
+        //(^ is here for searchablility DO NOT REMOVE) 
+        draw_end_ticks = SDL_GetTicks();
         //this is the current tick since the SDL_Timer modual was started
-        auto rt = draw_end_ticks - draw_start_tick; 
+        auto rt = draw_end_ticks - draw_start_tick;
         //this is the number of ticks that has passed since the start of the draw code
-        if (rt > TARGET_RENDER_TIME) rt = 0; 
+        if (rt > TARGET_RENDER_TIME) rt = 0;
         //rt is unsigned so we need to check if it is greater than the time we want to spend 
         //rendering if so we set it to 0 
         rt = TARGET_RENDER_TIME - rt;
@@ -135,7 +124,5 @@ int main(SKC::Console& console, main_info_t info) {
         //delay the main thread for rt (which now has the wait time )ms 
         
     }
-    SDL_DestroyRenderer(renderer); 
-    SDL_DestroyWindow(window); 
-    return 0; 
+    return 0;
 }
