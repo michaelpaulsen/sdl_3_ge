@@ -1,14 +1,14 @@
 // sdl_3_ge.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 #include "main.hpp"
-#include "key_util.hpp"
+#define EVENT_LAMBDA  [&console](SDL_Event e) mutable -> SKC::GE::event_t
 
 int main(SKC::Console& console, main_info_t info) {
     console.Informln("entered main function");
     SDL_Window* window;
     SDL_Renderer* renderer;
     int window_w = 320, window_h = 240; 
-    bool draw = true ;
+    bool draw = true;
     if (!SDL_CreateWindowAndRenderer("lib skc test reference window\ntest", window_w, window_h, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
         console.Println("SDL error", SDL_GetError());
         return -1;
@@ -16,61 +16,91 @@ int main(SKC::Console& console, main_info_t info) {
     SDL_Event evnt{};
     bool quit = false; 
     int spacing = 100; 
+    auto event_handler = SKC::GE::event_handler(); 
+    
+    //default key event
+    auto keyevent = EVENT_LAMBDA {
+        auto key_event = e.key;
+        auto key = key_event.key;
+        console.Print("key", (int)key, " was ", key_event.down ? " pressed" : " released", '\r');
+        return SKC::GE::event_t::CONTINUE; 
+    
+    }; 
+    auto mouse_event = EVENT_LAMBDA{
+        auto motion = e.motion;
+        console.Inform("mouse ", motion.which, " moved to -> ", motion.x, " ", motion.y, '\r');
+        return SKC::GE::event_t::CONTINUE;
+    };
+    event_handler.register_event(SDL_EVENT_KEY_UP, keyevent);
+    event_handler.register_event(SDL_EVENT_KEY_DOWN, keyevent);
+    event_handler.register_event(SDL_EVENT_MOUSE_MOTION, mouse_event);
+    event_handler.register_event(SDL_EVENT_MOUSE_MOTION, EVENT_LAMBDA{
+        auto jbat = e.jbattery; 
+            return SKC::GE::event_t::CONTINUE; 
+        });
+    event_handler.register_event(SDL_EVENT_WINDOW_RESIZED, [&console, &window](SDL_Event e) {
+        return SKC::GE::event_t::CONTINUE;
+        });
+    event_handler.register_event(SDL_EVENT_MOUSE_WHEEL, EVENT_LAMBDA{
+        auto wheel = e.wheel; 
+    console.Print("\rmouse wheel event whith ", wheel.x, 'x', wheel.y, "and mouse pos of ", wheel.mouse_x, 'x', wheel.mouse_y,'\r');
+        return SKC::GE::event_t::CONTINUE; 
+    });
     while (!quit) {
-        Uint64 draw_start_tick = SDL_GetTicks(), draw_end_ticks=0; 
+        Uint64 draw_start_tick = SDL_GetTicks(), draw_end_ticks = 0;
         
         while (SDL_PollEvent(&evnt)) {
             console.ClearLine(); 
-            switch (evnt.type) {
-                case SDL_EVENT_QUIT: {
+            auto evnd = event_handler.do_event(evnt);
+            if (evnd == SKC::GE::event_t::QUIT) {
+
                     quit = true; 
                     break; 
                 }
-                case SDL_EVENT_MOUSE_MOTION: {
-                    auto motion = evnt.motion; 
-                    console.Inform("mouse ", motion.which, " moved to -> ", motion.x, " ", motion.y, '\r');
-                    break; 
-                }
-                case SDL_EVENT_WINDOW_RESIZED: {
-                    auto wind = evnt.window;
-                    
-                    //TODO(skc): make window class 
-                    window_w = wind.data1;
-                    window_h = wind.data2;
-                    break; 
-                }
-                case SDL_EVENT_WINDOW_FOCUS_LOST: {
-                    draw = false; 
-                    break; 
-                }
-                case SDL_EVENT_WINDOW_FOCUS_GAINED: {
-                    draw = true; 
-                    break; 
-                }
-                case SDL_EVENT_KEY_DOWN:
-                case SDL_EVENT_KEY_UP : {
-                    auto keye = evnt.key;
-                    auto key = keye.key;
-                    auto mod = keye.mod;
-                    if (key == SDLK_UP) {
-                        if(spacing > 1) --spacing;
-                    }
-                    
-                    if (key == SDLK_DOWN) {
-                         ++spacing;
+            if (evnd == SKC::GE::event_t::NO_FUNCT) {
 
+                //TODO(skc):remove all of this code for the event API... 
+                switch (evnt.type) {
+
+                    //TODO(skc): use event handler instead of this.
+                case SDL_EVENT_GAMEPAD_BUTTON_UP:
+                case SDL_EVENT_GAMEPAD_BUTTON_DOWN: {
+                    //the event
+                    auto gpevent = evnt.gbutton;
+                    //the controller that the event is based in ...
+                    auto a = gpevent.button;
+                    auto contr = event_handler.get_game_pad(gpevent.which);
+                    if (contr.has_value()) {
+                        auto t = SKC::GE::controller::get_controller_face_button_name(contr.value(), gpevent.button);
+                        if (gpevent.down && t.has_value()) {
+                            console.ClearLine().Print("\rbtn \"", t.value(), "\" pressed");
+                }
                     }
-                    if (key == SDLK_ESCAPE) quit = true;
+                    else {
+                        console.Print(contr.error());
+                }
+                    break; 
+                }
+                case SDL_EVENT_GAMEPAD_AXIS_MOTION: {
+                    auto gp_axis_motion = evnt.gaxis;
+                    int gp_axis = gp_axis_motion.axis;
+                    int value = gp_axis_motion.value;
+                    double r = (double)value / (double)32767;
+                    console.ClearLine().Print("\raxis ", gp_axis, " is value ", r);
+                    break; 
+                }
+                case SDL_EVENT_GAMEPAD_REMAPPED: {
                     break;
-                  
                 }
                 default: {
-                    console.Inform("unknown Event of type : ", evnt.type, '\r').Reset();
+                    auto type = evnt.type;
+                    if (type <= SDL_EVENT_WINDOW_LAST && type >= SDL_EVENT_WINDOW_FIRST) {
+                        console.ClearLine().Print("unhandled window event\r");
                     break; 
                 }
-
+                    std::cout << "unhandled event of type 0x" << std::hex << evnt.type << std::dec << '\r';
+                    break;
             }
-            if (quit) break;
         }
         if (draw) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -83,9 +113,7 @@ int main(SKC::Console& console, main_info_t info) {
                     y+=5;
                     x -= window_w;
                 }
-                SDL_SetRenderDrawColor(renderer, x, y-20, 0, 255);
-                SDL_RenderPoint(renderer, x, y);
-                ++x;
+                if (quit) break;
             }
             SDL_RenderPresent(renderer);
         }
@@ -105,7 +133,7 @@ int main(SKC::Console& console, main_info_t info) {
         // (saves memory or something?) 
         SDL_Delay(rt);
         //delay the main thread for rt (which now has the wait time )ms 
-        if(draw)console.Print("end of frame\r");
+        
     }
     SDL_DestroyRenderer(renderer); 
     SDL_DestroyWindow(window); 
