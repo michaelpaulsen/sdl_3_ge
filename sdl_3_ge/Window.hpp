@@ -7,10 +7,9 @@ namespace SKC::GE {
 		c_t r{}, g{}, b{}, a{ 255 };
 	};
 	//TODO(skc):move to own file. 
-	struct point {
-		float x, y; 
-	};
+	using  point = SDL_Point;
 	using rect = SDL_Rect; 
+	using Fpoint = SDL_FPoint; 
 	using Frect = SDL_FRect;
 	class window {
 		using c_t = Uint8;
@@ -142,6 +141,9 @@ namespace SKC::GE {
 		}
 		void draw_texture(SDL_Texture *txt, Frect pos, Frect atlas_pos) {
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos , &pos );
+		}
+		void draw_texture_with_afine_transform(SDL_Texture *txt, Fpoint tl, Fpoint tr, Fpoint bl ) {
+			SDL_RenderTextureAffine(m_renderer, txt, NULL, &tl, &tr, &bl);
 		}
 	};
 }

@@ -5,7 +5,8 @@
 
 int main(SKC::Console& console, main_info_t info) {
     console.Informln("entered main function");
-    int window_w = 320, window_h = 240;
+    Uint64 frame{};
+   int window_w = 1920, window_h = 1080;
     bool draw = true;
     auto window = SKC::GE::window("test window", window_w, window_h, SDL_WINDOW_RESIZABLE); 
     SDL_Event evnt{};
@@ -26,9 +27,8 @@ int main(SKC::Console& console, main_info_t info) {
         console.Inform("mouse ", motion.which, " moved to -> ", motion.x, " ", motion.y, '\r');
         return SKC::GE::event_t::CONTINUE;
     };
-    
     //TODO(skc): implement a function that does this automaticall
-    SDL_Surface *surface = SDL_LoadBMP("C:/Users/Skele/Desktop/projects/sdl_3_ge/sdl_3_ge/test_image.bmp");
+    SDL_Surface *surface = SDL_LoadBMP("./test_image.bmp");
     if (!surface) {
         console.Errorln("SDL_ERROR ", SDL_GetError());
         exit(-1);
@@ -113,7 +113,6 @@ int main(SKC::Console& console, main_info_t info) {
 
         }
 
-                if (draw) {
                     window.clear();
                     window.set_draw_color(255, 0, 0);
             window.draw_texture(test_texture);
@@ -121,8 +120,9 @@ int main(SKC::Console& console, main_info_t info) {
                     window.set_draw_color(255, 255, 0);
                     window.draw_rectangle({ 1,1,20,50 }); 
             window.draw_texture(test_texture, { 100,20,128,128 }); 
+            auto shearoff = 50 * sinf((double)frame / 10.);
+            window.draw_texture_with_afine_transform(test_texture, { 50,100 }, { 150,100 }, { 70 + shearoff,300});
                     window.present();
-                }
                 if (quit) break;
         //FRAME RATE LIMIT CODE! DO ALL DRAWING BEFORE THIS LINE   
         //(^ is here for searchablility DO NOT REMOVE) 
@@ -138,7 +138,7 @@ int main(SKC::Console& console, main_info_t info) {
         // (saves memory or something?) 
         SDL_Delay(rt);
         //delay the main thread for rt (which now has the wait time )ms 
-        
+        ++frame; 
     }
     return 0;
 }
