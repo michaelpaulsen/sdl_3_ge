@@ -68,25 +68,6 @@ int main(SKC::Console& console, main_info_t info) {
                 //TODO(skc):remove all of this code for the event API... 
                 switch (evnt.type) {
 
-                    //TODO(skc): use event handler instead of this.
-                case SDL_EVENT_GAMEPAD_BUTTON_UP:
-                case SDL_EVENT_GAMEPAD_BUTTON_DOWN: {
-                    //the event
-                    auto gpevent = evnt.gbutton;
-                    //the controller that the event is based in ...
-                    auto a = gpevent.button;
-                    auto contr = event_handler.get_game_pad(gpevent.which);
-                    if (contr.has_value()) {
-                        auto t = SKC::GE::controller::get_controller_face_button_name(contr.value(), gpevent.button);
-                        if (gpevent.down && t.has_value()) {
-                            console.ClearLine().Print("\rbtn \"", t.value(), "\" pressed");
-                        }
-                    }
-                    else {
-                        console.Print(contr.error());
-                    }
-                    break;
-                }
                 case SDL_EVENT_GAMEPAD_AXIS_MOTION: {
                     auto gp_axis_motion = evnt.gaxis;
                     int gp_axis = gp_axis_motion.axis;

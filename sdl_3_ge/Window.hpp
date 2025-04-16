@@ -34,6 +34,19 @@ namespace SKC::GE {
 		* this is where the getters and setters are
 		* this is all code that isn't involved directly with the rendering
 		*/
+		void enable_screen_saver() {
+			SDL_EnableScreenSaver();
+			m_is_screen_saver_enabled = true; 
+		}
+		void disable_screen_saver() {
+			SDL_DisableScreenSaver(); 
+			m_is_screen_saver_enabled = false;
+
+		}
+		bool is_screen_saver_enabled() const {
+			return m_is_screen_saver_enabled;
+		}
+
 		auto create_texture_from_surface(SDL_Surface *surface) {
 			return SDL_CreateTextureFromSurface(m_renderer, surface);
 		}
