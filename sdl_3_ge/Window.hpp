@@ -153,20 +153,20 @@ namespace SKC::GE {
 		void draw_line(Frect rect) {
 			SDL_RenderLine(m_renderer, rect.x, rect.y, rect.w, rect.h); 
 		}
-		void draw_line(point p1, point p2) {
+		void draw_line(Fpoint p1, Fpoint p2) {
 			SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y);
 		}
-		void draw_line(point p1, float x2, float y2) {
+		void draw_line(Fpoint p1, float x2, float y2) {
 			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
 		}
 		void draw_line(float x1, float y1 , float x2, float y2) {
 			SDL_RenderLine(m_renderer, x1, y1, x2, y2);
 		}
-		void draw_line( float x2, float y2, point p1) {
+		void draw_line( float x2, float y2, Fpoint p1) {
 			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
 		}
 
-		void draw_pixel(point p) {
+		void draw_pixel(Fpoint p) {
 			SDL_RenderPoint(m_renderer, p.x, p.y);
 		}
 		void draw_pixel(float x, float y) {
@@ -231,7 +231,7 @@ namespace SKC::GE {
 			//no matter what
 			SDL_DestroySurface(text_surface);
 			if (!text_texture) return false;
-			draw_texture(text_texture, Frect(x, y, texture_w, texture_h));
+			draw_texture(text_texture, Frect(x, y, (float)texture_w, (float)texture_h));
 			SDL_DestroyTexture(text_texture);
 			return true;
 		}
