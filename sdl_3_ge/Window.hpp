@@ -1,39 +1,54 @@
 #pragma once
 #include <string>
+#include <filesystem>
 #include <SDL3/SDL.h>
 namespace SKC::GE {
+	//TODO(skc):move to own file. 
 	struct color{
 		using c_t = Uint8;
 		c_t r{}, g{}, b{}, a{ 255 };
 	};
-	//TODO(skc):move to own file. 
+	
 	using  point = SDL_Point;
 	using rect = SDL_Rect; 
 	using Fpoint = SDL_FPoint; 
 	using Frect = SDL_FRect;
+	
+	//TODO (skc) : move all of this filesystem 
+	//stuff to own file. 
+	namespace fs = std::filesystem; 
+	using path_t = fs::path; 
+	
 	class window {
 		using c_t = Uint8;
 
 		 
 		int m_x{}, m_y{}, m_width, m_height;
 		std::string title; 
+		
 		SDL_Window* m_window;
 		SDL_Renderer* m_renderer; 
 		
 		color m_background_color{}; 
 		bool m_is_screen_saver_enabled = true; 
+		
+		//font stuff. 
+		path_t m_font_dir; 
+		TTF_TextEngine* m_text_engine; 
 	public: 
 		window(std::string title, int  width, int height, SDL_WindowFlags flags) : m_width { width }, m_height{ height } {
-			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer); 
+			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer);
+			m_font_dir = path_t("./fonts"); 
+			m_text_engine = TTF_CreateRendererTextEngine(m_renderer); 
 		}
 		~window() {
 			SDL_DestroyRenderer(m_renderer);
 			SDL_DestroyWindow(m_window);
 		}
-	
+		
 		
 		/*
-		* The meta functions
+		* --The Non-rendering API--
 		* this is where the getters and setters are
 		* this is all code that isn't involved directly with the rendering
 		*/
@@ -43,7 +58,7 @@ namespace SKC::GE {
 		auto get_renderer() {
 			return m_renderer; 
 		}
-		
+
 		
 		void enable_screen_saver() {
 			SDL_EnableScreenSaver();
@@ -94,7 +109,7 @@ namespace SKC::GE {
 		void set_draw_color(c_t r, c_t g, c_t b, c_t a = 255) {
 			SDL_SetRenderDrawColor(m_renderer, r, g, b, a); 
 		}
-
+		
 		double from_normilzed_width(double U) const {
 			return U * (double)m_width; 
 		}
@@ -117,7 +132,6 @@ namespace SKC::GE {
 		/*
 		* --Intrinsics API-- 
 		* These are the functions that change the contents of the screen. 
-		* 
 		*/
 		
 		void draw_rectangle(Frect rect) {
@@ -165,8 +179,8 @@ namespace SKC::GE {
 		void present() {
 			SDL_RenderPresent(m_renderer);
 		}
-		
 
+		
 		/*
 		*--texture API-- 
 		*this is where all of the code 
@@ -195,7 +209,31 @@ namespace SKC::GE {
 		void draw_texture_rotated(SDL_Texture* txt, const Frect atlas_pos, const Frect pos, const Fpoint center, const double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
 
+		}
 
+		/*
+		*--TEXT API--
+		* this is where all of the code for Text rendering goes
+		*/
+		bool render_text_simple(std::string text,
+			TTF_Font* font,
+			float x, float y,
+			c_t r = 255, c_t g = 255, c_t b = 255) {
+			auto text_surface = TTF_RenderText_Blended(font,
+				text.c_str(), text.size(),
+				{ r,g,b });
+			if (!text_surface) return false;
+			auto texture_w = text_surface->w;
+			auto texture_h = text_surface->h;
+			auto text_texture = SDL_CreateTextureFromSurface(
+				m_renderer, text_surface);
+			//doing this here so that the surface gets freed 
+			//no matter what
+			SDL_DestroySurface(text_surface);
+			if (!text_texture) return false;
+			draw_texture(text_texture, Frect(x, y, texture_w, texture_h));
+			SDL_DestroyTexture(text_texture);
+			return true;
 		}
 	};
 }

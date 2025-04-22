@@ -3,9 +3,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <filesystem>
 
 #include <SDL3/SDL.h>
-
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include "./key_util.hpp"
 #include "./game_pad.hpp"
@@ -88,7 +89,7 @@ int main(int argc, char** argv) {
         console.Errorln("EXITING WITH sENO_SDL");
     }
     //call the user's entry point and save the return value so that we can return it later 
-
+    TTF_Init(); 
     auto ret = MAIN_NAME(console, { argv[0], args, L });
 
     console.Reset();
