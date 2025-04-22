@@ -14,11 +14,14 @@ namespace SKC::GE {
 	class window {
 		using c_t = Uint8;
 
+		 
+		int m_x{}, m_y{}, m_width, m_height;
 		std::string title; 
 		SDL_Window* m_window;
 		SDL_Renderer* m_renderer; 
-		int m_x{}, m_y{}, m_width, m_height;
+		
 		color m_background_color{}; 
+		bool m_is_screen_saver_enabled = true; 
 	public: 
 		window(std::string title, int  width, int height, SDL_WindowFlags flags) : m_width { width }, m_height{ height } {
 			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer); 
@@ -34,6 +37,14 @@ namespace SKC::GE {
 		* this is where the getters and setters are
 		* this is all code that isn't involved directly with the rendering
 		*/
+		auto get_window_surface() {
+			return SDL_GetWindowSurface(m_window); 
+		}
+		auto get_renderer() {
+			return m_renderer; 
+		}
+		
+		
 		void enable_screen_saver() {
 			SDL_EnableScreenSaver();
 			m_is_screen_saver_enabled = true; 
@@ -89,8 +100,9 @@ namespace SKC::GE {
 			SDL_GetRenderDrawColor(m_renderer, &color.r, &color.g, &color.b, &color.a); 
 			return color;  
 		}
+		
 		/*
-		* The draw reated functions
+		* --Intrinsics API-- 
 		* These are the functions that change the contents of the screen. 
 		* 
 		*/
@@ -143,8 +155,9 @@ namespace SKC::GE {
 		
 
 		/*
-		*texture API
-		* this is where all of the code that involves rendering textures goes 
+		*--texture API-- 
+		*this is where all of the code 
+		*that involves rendering textures goes 
 		*/
 		void draw_texture(SDL_Texture *txt) {
 			SDL_RenderTexture(m_renderer, txt, NULL, NULL);
@@ -155,8 +168,21 @@ namespace SKC::GE {
 		void draw_texture(SDL_Texture *txt, Frect pos, Frect atlas_pos) {
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos , &pos );
 		}
+
 		void draw_texture_with_afine_transform(SDL_Texture *txt, Fpoint tl, Fpoint tr, Fpoint bl ) {
 			SDL_RenderTextureAffine(m_renderer, txt, NULL, &tl, &tr, &bl);
+		}
+
+		void draw_texture_rotated(SDL_Texture* txt, Frect atlas_pos, Frect pos, double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
+			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, NULL, flip);
+		}
+		void draw_texture_rotated(SDL_Texture* txt, const Frect pos, const double angle, const SDL_FlipMode flip = SDL_FLIP_NONE) {
+			SDL_RenderTextureRotated(m_renderer, txt, NULL, &pos, angle, NULL, flip); 
+		}
+		void draw_texture_rotated(SDL_Texture* txt, const Frect atlas_pos, const Frect pos, const Fpoint center, const double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
+			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
+
+
 		}
 	};
 }
