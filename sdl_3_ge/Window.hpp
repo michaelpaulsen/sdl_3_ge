@@ -95,6 +95,19 @@ namespace SKC::GE {
 			SDL_SetRenderDrawColor(m_renderer, r, g, b, a); 
 		}
 
+		double from_normilzed_width(double U) const {
+			return U * (double)m_width; 
+		}
+		double to_normilzed_width(int px) const {
+			return (double)px / (double)m_width;
+		}
+		double from_normilzed_height(double V) const {
+			return V * (double)m_height;
+		}
+		double to_normilzed_height(int py) const{
+			return (double)py / (double)m_height;
+		}
+		
 		color get_draw_color() {
 			color color = {}; 
 			SDL_GetRenderDrawColor(m_renderer, &color.r, &color.g, &color.b, &color.a); 
