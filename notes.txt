@@ -1,0 +1,41 @@
+ImGui::SeparatorText("Dice stuff");
+            if (ImGui::Button("prev dice")) { if ((--f) < 0) f = (dice.size()-1); }
+            ImGui::SameLine(); 
+            if (ImGui::Button("next dice"))   f = (++f) % dice.size();
+            ImGui::Text("current dice : %d ", dice[f]);
+            if (ImGui::Button("roll")) {
+                die_roll1 = (rand() % dice[f]) + 1;
+                die_roll2 = (rand() % dice[f]) + 1;
+                die_roll = die_roll1; 
+            }
+            if (dice[f] > 2) {
+                std::vector<const char* >items = {
+                   "normal",
+                   "advatage",
+                   "disadvantage",
+                   "sum"
+                };
+                ImGui::Text("Roll Mode");
+                ImGui::Combo(" ", &advatage, items.data(), items.size());
+                if (advatage == 1) {
+                    die_roll = die_roll1 > die_roll2 ? die_roll1 : die_roll2;
+                }else if (advatage == 2) {
+                    die_roll = die_roll1 < die_roll2 ? die_roll1 : die_roll2;
+                }
+                else if (advatage == 3) {
+                    die_roll = die_roll1 + die_roll2; 
+                }
+                
+                if (advatage != 0) {
+                    ImGui::Text("1st, 2nd, result");
+                    ImGui::Text("%d, %d, %d", die_roll1, die_roll2, die_roll);
+
+                }
+                else {
+                    ImGui::Text("result : %d", die_roll);
+
+                }
+            }
+            else {
+                advatage = 0;
+            }

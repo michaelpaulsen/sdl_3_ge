@@ -117,6 +117,14 @@ namespace SKC::GE {
 		void set_window_render_scale(float new_x_scale, float new_y_scale) {
 			SDL_SetRenderScale(m_renderer, new_x_scale, new_y_scale);
 		}
+		
+		const std::string get_window_title() const {
+			return SDL_GetWindowTitle(m_window);
+		}
+		void set_window_title(std::string title) {
+			SDL_SetWindowTitle(m_window, title.c_str());
+		}
+
 		double from_normilzed_width(double U) const {
 			return U * (double)m_width; 
 		}

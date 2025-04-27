@@ -69,6 +69,7 @@ int main(SKC::Console& console, main_info_t info) {
      }
     
     auto window = SKC::GE::imgui_window("test window", window_w, window_h, SDL_WINDOW_RESIZABLE);
+    auto window_name = window.get_window_title(); 
     SDL_Event evnt{};
     bool quit = false;
     auto event_handler = SKC::GE::event_handler();
@@ -248,6 +249,14 @@ int main(SKC::Console& console, main_info_t info) {
             text_color.x * 255, text_color.y * 255, text_color.z * 255);
         
 #pragma warning(pop)
+        if (frame >= 60) {
+            if ((frame % 60) < 30) {
+                window.set_window_title(std::format("{} ({} frame : {})", window_name, info.args.get_as<std::string>("exe_path").value(),frame%60));
+            }
+            else {
+                window.set_window_title(std::format("{} (frame:{})", window_name, frame%60));
+            }
+        }
         window.set_window_render_scale(1);
         auto str = std::format("{:0>2}:{:0>2}:{:0>2}", time_stamp.tm_hour, time_stamp.tm_min, time_stamp.tm_sec); 
         auto tmp_y = (float)window.from_normilzed_height(.90); 
