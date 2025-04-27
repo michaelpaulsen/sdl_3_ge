@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     //the goal of this is to abstract away the important (and dirty) stuff like dealing with the CLI
     //arguments
     auto console = SKC::Console();
-    console.Informln("init skc console");
+    console.Clear().Informln("init skc console");
     //the above is passed on to the user via thier own main function 
     console.Informln("starting LUA VM");
 
@@ -87,6 +87,7 @@ int main(int argc, char** argv) {
         auto error = SDL_GetError();
         console.Errorln("UNABLE TO START SDL ERROR ", error);
         console.Errorln("EXITING WITH sENO_SDL");
+        exit(sENO_SDL); 
     }
     //call the user's entry point and save the return value so that we can return it later 
     TTF_Init(); 

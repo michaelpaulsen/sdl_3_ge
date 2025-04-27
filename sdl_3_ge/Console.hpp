@@ -148,7 +148,7 @@ namespace SKC{
 	}
 	SKC_consoleVA auto& Console::Inform(printType msg1, printTypes... msg2) {
 		SetBGColor(64, 128, 128);
-		SetFGColor(128, 256, 256);
+		SetFGColor(128, 255, 255);
 		Print(msg1, msg2...);
 		return *this;
 
@@ -205,7 +205,7 @@ namespace SKC{
 	auto& Console::ProgressBar(double min, double max, double val, int width) {
 		double range = max - min;
 		double v = val - min;
-		int hashes = round((v / range) * width);
+		int hashes = (int)round((v / range) * width);
 		Print('[', val, '/', max, "][");
 		for (int x = 1; x < width; ++x) {
 			if (x < hashes) {
