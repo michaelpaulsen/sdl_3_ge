@@ -15,6 +15,8 @@
 #include "./Console.hpp"
 #include "./Events.hpp"
 #include "./Window.hpp"
+#include "./Imgui_window.hpp"
+
 //TODO(skc): shouldn't be const? 
 constexpr Uint64 TARGET_RENDER_TIME = ((1. / 60.) * 1000);
 
