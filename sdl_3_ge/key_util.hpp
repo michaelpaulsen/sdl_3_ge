@@ -2,9 +2,9 @@
 #include <string>
 #include "Console.hpp"
 #include <SDL3/SDL.h>
-std::string white_space_to_display(const char t) {
+std::string white_space_to_display(const char key) {
 
-    switch (t) {
+    switch (key) {
     case 0x00: return "<NUL>";
     case 0x01: return "<SOH>";
     case 0x02: return "<STX>";
@@ -39,7 +39,7 @@ std::string white_space_to_display(const char t) {
     case 0x1f: return "<US>";
     case 0x20: return "<SPACE>";
     case 0x7f: return "<DEL>";
-    default: return std::string(1, t);
+    default: return std::string(1, key);
     }
 }
 
@@ -69,6 +69,7 @@ void debug_key_events(SKC::Console& console, SDL_Event evnt) {
     auto keye = evnt.key;
     auto key = keye.key;
     auto mod = keye.mod;
+    console.ClearLine();
     debug_mod_keys(console, mod);
     debug_key_codes(console, key, mod & SDL_KMOD_CAPS);
 }

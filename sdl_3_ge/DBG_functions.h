@@ -1,6 +1,6 @@
 #pragma once
 #ifdef _DEBUG
-#define assert(cnd) if(!cnd) _CrtDbgBreak() 
+#define DBG_ASSERT(cnd) if(!cnd) _CrtDbgBreak() 
 #else
 #define assert(cnd)
 #endif
