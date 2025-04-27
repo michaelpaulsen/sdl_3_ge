@@ -4,13 +4,15 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <ranges>
 
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
+
 #include "./key_util.hpp"
 #include "./game_pad.hpp"
-
+#include "./CVar.hpp"
 #include "./lua_cxx.hpp" //name WIP 
 #include "./Console.hpp"
 #include "./Events.hpp"
@@ -18,18 +20,15 @@
 #include "./Imgui_window.hpp"
 
 //TODO(skc): shouldn't be const? 
-constexpr Uint64 TARGET_RENDER_TIME = ((1. / 60.) * 1000);
+constexpr Uint64 TARGET_RENDER_TIME = static_cast<Uint64>((1. / 30.) * 1000);
 
 
 
-//#define NOSDL
-//the type of the CLI arguments as passed to the end user 
-using arg_list_t = std::vector<std::string>;
-
+using arg_list_t = SKC::GE::C_var_list;
 using Lstate_t = SKC::lua::Lua;
 
 struct main_info_t {
-    std::string fname;
+    //std::string fname;
     arg_list_t args;
     Lstate_t& lua_state;
     //NOTE(skc): This has to be a reference to preven use after free... 
@@ -55,7 +54,6 @@ enum SKC_E {
 int MAIN_NAME(SKC::Console&, main_info_t);
 
 int main(int argc, char** argv) {
-    //user's grubby hands  
     //the goal of this is to abstract away the important (and dirty) stuff like dealing with the CLI
     //arguments
     auto console = SKC::Console();
@@ -69,16 +67,44 @@ int main(int argc, char** argv) {
         console.Error("LUA TEST FAILD");
     }
     arg_list_t args = {};
-    //instead of having a char** this is a std::vector<std::strings> that way the memory deals with its self at the end
+    //instead of having a char** this is a list of the C_vars  that way the memory deals with its self at the end
     // of exicution this also gives us access to things like args.size() and the such. 
-    //argv always at least stores the path to the exe so we only want to enter this loop if the number of paramiters is
-    //strictly greater than 1 not greater than or equal 
+    console.Informln("adding ", argv[0], " to args as \"exe_path\"");
+    args.emplace_back("exe_path", std::string(argv[0])); 
     if (argc > 1) {
+        namespace rng = std::ranges; 
         for (int x = 1; x < argc; ++x) {
-            console.Informln("adding ", argv[x], " to args");
-            args.emplace_back(argv[x]);
-            //add the current paramiter to the stack 
-            //should test if this emplace_back is actually good 
+            std::string arg = argv[x]; 
+            if (!arg.contains('=')) {
+                
+                console.Inform("adding ", arg, " to Cvars as <EMPTY>");
+                args.emplace_back(arg);
+                continue; 
+            }
+            auto arg_rng = rng::split_view(arg, '=');
+            bool is_name{ true }; 
+            std::string name;
+            std::string value;
+            for (const auto& ev : arg_rng) {
+                std::string_view data{ ev }; 
+                if (is_name) {
+                    name = data; 
+                    is_name = false; 
+                    continue; 
+                }
+                value += data; 
+
+            }
+            if (!name.empty()) {
+                if (value.empty()) {
+                    console.Informln ("adding ", name, " to Cvars as <EMPTY>");
+                    args.emplace_back(name); 
+                    continue;
+                }
+                console.Informln("adding ", name, " to Cvars as ", value);
+                args.emplace_back(name, value);
+
+            }
         }
         console.Informln("calling user entry with ", args.size(), " arguments");
         //inform the dev on the paramiters... 
@@ -92,9 +118,10 @@ int main(int argc, char** argv) {
         exit(sENO_SDL); 
     }
     //call the user's entry point and save the return value so that we can return it later 
+    
     TTF_Init(); 
-    auto ret = MAIN_NAME(console, { argv[0], args, L });
-
+    auto ret = MAIN_NAME(console, {args, L});
+   
     console.Reset();
     SDL_Quit(); //by the time that we get here we are done so we tell sdl to quit. 
 
