@@ -20,6 +20,7 @@ namespace SKC::GE {
 	using path_t = fs::path; 
 	
 	class window {
+	protected: 
 		using c_t = Uint8;
 
 		 
@@ -110,6 +111,12 @@ namespace SKC::GE {
 			SDL_SetRenderDrawColor(m_renderer, r, g, b, a); 
 		}
 		
+		void set_window_render_scale(float new_scale) {
+			SDL_SetRenderScale(m_renderer, new_scale, new_scale); 
+		}
+		void set_window_render_scale(float new_x_scale, float new_y_scale) {
+			SDL_SetRenderScale(m_renderer, new_x_scale, new_y_scale);
+		}
 		double from_normilzed_width(double U) const {
 			return U * (double)m_width; 
 		}
@@ -218,10 +225,10 @@ namespace SKC::GE {
 		bool render_text_simple(std::string text,
 			TTF_Font* font,
 			float x, float y,
-			c_t r = 255, c_t g = 255, c_t b = 255) {
+			c_t r = 255, c_t g = 255, c_t b = 255, c_t a = 255) {
 			auto text_surface = TTF_RenderText_Blended(font,
 				text.c_str(), text.size(),
-				{ r,g,b });
+				{ r,g,b,a });
 			if (!text_surface) return false;
 			auto texture_w = text_surface->w;
 			auto texture_h = text_surface->h;
