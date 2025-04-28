@@ -54,7 +54,7 @@ namespace SKC::GE {
 					return{};
 				}
 				
-			}
+		}
 	};
 	class C_var_list {
 		std::vector<C_var> m_c_vars; 
@@ -71,6 +71,15 @@ namespace SKC::GE {
 				if (cv.name() == name) return cv.as<T>(); 
 			}
 			return {}; 
+		}
+		template <typename T> T get_as(std::string name, T df) {
+			for (const auto& cv : m_c_vars) {
+				if (cv.name() == name) {
+					if(cv.as<T>().has_value()) return cv.as<T>().value();
+					return df; 
+				}
+			}
+			return df;
 		}
 		void emplace_back(std::string name) {
 			m_c_vars.emplace_back(name);

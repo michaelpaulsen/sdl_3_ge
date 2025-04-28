@@ -230,6 +230,7 @@ namespace SKC::GE {
 		*--TEXT API--
 		* this is where all of the code for Text rendering goes
 		*/
+
 		bool render_text_simple(std::string text,
 			TTF_Font* font,
 			float x, float y,
