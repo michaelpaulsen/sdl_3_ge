@@ -73,38 +73,55 @@ int main(int argc, char** argv) {
     args.emplace_back("exe_path", std::string(argv[0])); 
     if (argc > 1) {
         namespace rng = std::ranges; 
+        std::string name{}, value{};
+        bool first = true; 
         for (int x = 1; x < argc; ++x) {
             std::string arg = argv[x]; 
-            if (!arg.contains('=')) {
-                
-                console.Inform("adding ", arg, " to Cvars as <EMPTY>");
-                args.emplace_back(arg);
+             
+                    
+            if ((arg.length() > 2 && (arg[0] == '-' && arg[1] == '-'))) {
+                if (!name.empty()) {
+                    if (!value.empty()) {
+                        console.Informln("adding ", name, " to cvars as ", value);
+                        args.emplace_back(name, value);
+                    }
+                    else {
+                        console.Informln("adding ", name, " to cvars as <EMPTY>");
+                        args.emplace_back(name);
+                    }
+                }
+
+                name = arg.erase(0, 2);
+                value = {};
                 continue; 
             }
-            auto arg_rng = rng::split_view(arg, '=');
-            bool is_name{ true }; 
-            std::string name;
-            std::string value;
-            for (const auto& ev : arg_rng) {
-                std::string_view data{ ev }; 
-                if (is_name) {
-                    name = data; 
-                    is_name = false; 
-                    continue; 
+            else if (arg[0] == '\\') {
+                if (!name.empty()) {
+                    if (!value.empty()) {
+                        console.Informln("adding ", name, " to cvars as ", value);
+                        args.emplace_back(name, value);
+                    }
+                    else {
+                        console.Informln("adding ", name, " to cvars as <EMPTY>");
+                        args.emplace_back(name);
+                    }
                 }
-                value += data; 
+                console.Warnln(arg[0]); 
+                name = arg.erase(0, 1);
+                value = {};
 
             }
-            if (!name.empty()) {
-                if (value.empty()) {
-                    console.Informln ("adding ", name, " to Cvars as <EMPTY>");
-                    args.emplace_back(name); 
-                    continue;
-                }
-                console.Informln("adding ", name, " to Cvars as ", value);
-                args.emplace_back(name, value);
-
+            else {
+                value += std::format("{} ", arg); 
             }
+        }
+        if (!value.empty()) {
+            console.Informln("adding ", name, " to cvars as ", value);
+            args.emplace_back(name, value);
+        }
+        else {
+            console.Informln("adding ", name, " to cvars as <EMPTY>");
+            args.emplace_back(name);
         }
         console.Informln("calling user entry with ", args.size(), " arguments");
         //inform the dev on the paramiters... 
