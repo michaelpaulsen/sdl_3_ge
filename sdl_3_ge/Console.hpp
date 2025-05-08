@@ -155,7 +155,7 @@ namespace SKC{
 	}
 	SKC_consoleVA auto& Console::Warn(printType msg1, printTypes... msg2) {
 		SetBGColor(128, 128, 64);
-		SetFGColor(256, 256, 128);
+		SetFGColor(255, 255, 128);
 		Print(msg1, msg2...);
 		return *this;
 
