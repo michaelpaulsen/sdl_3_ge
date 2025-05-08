@@ -18,7 +18,7 @@
 #include "./Events.hpp"
 #include "./Window.hpp"
 #include "./Imgui_window.hpp"
-
+#include "./Math.hpp"
 //TODO(skc): shouldn't be const? 
 constexpr Uint64 TARGET_RENDER_TIME = static_cast<Uint64>((1. / 30.) * 1000);
 
