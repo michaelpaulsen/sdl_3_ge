@@ -2,6 +2,7 @@
 #include <string>
 #include <filesystem>
 #include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 namespace SKC::GE {
 	//TODO(skc):move to own file. 
 	struct color{
@@ -76,6 +77,15 @@ namespace SKC::GE {
 
 		auto create_texture_from_surface(SDL_Surface *surface) {
 			return SDL_CreateTextureFromSurface(m_renderer, surface);
+		}
+		//TODO (skc) : create a resource class. 
+		SDL_Texture* create_texture_from_path(std::filesystem::path pth) {
+			SDL_Surface* surface = IMG_Load(pth.generic_string().c_str());
+			if (!surface) return NULL; 
+			auto tex = create_texture_from_surface(surface);
+			SDL_DestroySurface(surface);
+			return tex; 
+
 		}
 
 		void update_window_size() {
