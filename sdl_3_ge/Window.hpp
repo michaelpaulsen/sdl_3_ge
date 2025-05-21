@@ -3,18 +3,16 @@
 #include <filesystem>
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
+
+//this is where the color stuff is stored. 
+#include "Color.hpp"
 namespace SKC::GE {
-	//TODO(skc):move to own file. 
-	struct color{
-		using c_t = Uint8;
-		c_t r{}, g{}, b{}, a{ 255 };
-	};
 	
-	using  point = SDL_Point;
-	using rect = SDL_Rect; 
+	
+	using point  = SDL_Point;
+	using rect   = SDL_Rect; 
 	using Fpoint = SDL_FPoint; 
-	using Frect = SDL_FRect;
-	
+	using Frect  = SDL_FRect;
 	//TODO (skc) : move all of this filesystem 
 	//stuff to own file. 
 	namespace fs = std::filesystem; 
