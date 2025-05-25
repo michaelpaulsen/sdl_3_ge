@@ -16,6 +16,9 @@
 #ifndef U32
 #define U32 static_cast<uint32_t>
 #endif // !U32
+#ifndef UZ
+#define UZ static_cast<size_t>
+#endif // !U32
 
 namespace SKC::GE {
 	//TODO(skc) : this file is kinda getting long.
@@ -137,18 +140,29 @@ namespace SKC::GE {
 			TEXT_DATA
 
 		};
-	private :
+	enum struct arrow_direction_t : unsigned char {
+		LEFT,
+		UP,
+		RIGHT,
+		DOWN,
+		MAX
+	};
+	class event_handler {
+	private:
 		struct keyevent_state_t {
 			bool down;              
 			bool repeat;
 		};
 		template<typename state_t> 
 		using state_array_t = std::array<state_t, 256>;
+		template<size_t size>
+		using key_state_array_t = std::array<keyevent_state_t, size>;
+
 		bool m_window_resized{ false }; 
 		bool m_quit{ false }; 
 		bool m_system_theme_changed{ false }; 
 		bool m_window_is_minimized{ false }; 
-		
+
 		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA};
 
 		key_mod m_keymod_state{}; 
@@ -160,13 +174,13 @@ namespace SKC::GE {
 		//the way that this is updated makes it theroetically possible to miss imputs when the same input is 
 		//inputed more than once a frame but even at 30 fps that is nearly imposible
 		//+ I think that every GE in existance has a simular system... 
-		bool m_up, m_down, m_left, m_right;
 		SKC::Math::Vect2d m_mouse_position{ 0,0 };
 		SKC::Math::Vect2d m_cursor_position{ 0,0 };
 		SKC::Math::Vect2d m_last_joy_relitive_pos{ 0,0 };
 		
 		state_array_t<keyevent_state_t> m_key_states{};
 		state_array_t<bool> m_mouse_button_states{};
+		key_state_array_t<UZ(arrow_direction_t::MAX)> m_arrow_state{};
 		//const uint32_t LARROW = ;
 	public : 
 		
@@ -194,11 +208,6 @@ namespace SKC::GE {
 		bool has_dropped_data() const { 
 			return m_dropped_data_type != drop_event_data_type_t::NO_DROPPED_DATA; 
 		}
-
-		auto    up() const { return m_up; }
-		auto  down() const { return m_down; }
-		auto  left() const { return m_left; }
-		auto right() const { return m_left; }
 		//NOTE(skc) : this is not const because it is kinda important to not ignore the user when they
 		// drop something into the aplication so the flag is only cleared when the consumer calls this function.	
 		//NOTE(skc) :IF YOU'RE TRYING TO ACCEPT DATA FROM "DROP" EVENTS CALL THIS EVERY FRAME DO NOT
@@ -209,6 +218,10 @@ namespace SKC::GE {
 			return ret ; 
 		}
 		 
+		auto get_arrow_key_state(arrow_direction_t arrow) const {
+			if (arrow == arrow_direction_t::MAX) return keyevent_state_t{ false,false };
+			return m_arrow_state.at(UZ(arrow));
+		}
 		auto& get_key_mods() const noexcept { return m_keymod_state; }
 
 		auto entered_full_screen() const { return m_fullscreen_status;  }
@@ -297,47 +310,56 @@ namespace SKC::GE {
 				case SDL_EVENT_KEY_UP : {
 					auto keyevnt = evnt.key; 
 					auto key = keyevnt.key;
-					//
+					auto down = keyevnt.down;
+					auto repeat = keyevnt.repeat;
 					m_keymod_state = key_mod(keyevnt.mod);
 					if (key < 256) {
-						m_key_states.at(key) = { keyevnt.down,keyevnt.repeat };
+						m_key_states.at(key) = { down,repeat };
 						break; 
 					}
-					switch (key) {
-						case SDLK_LEFT: {
+
+					//NOTE(skc) : I set the m_arrow_state even if arrow_keys_alias_WASD is true because 
+					//the consumer may still have contextual reasons to treat the arrow keys differently 
+					//while still wanting them to alias their respective keys. 
+					if (key == SDLK_LEFT) {
 							if (arrow_keys_alias_WASD) m_key_states.at(U32('a')) = { keyevnt.down,keyevnt.repeat }; 
+						m_arrow_state.at(UZ(arrow_direction_t::LEFT)) = { down, repeat };
 							break; 
 						}
-						case SDLK_RIGHT: {
-							if (arrow_keys_alias_WASD) m_key_states.at(U32('d')) = { keyevnt.down,keyevnt.repeat };
-
+					if (key == SDLK_RIGHT) {
+						if (arrow_keys_alias_WASD) m_key_states.at(U32('d')) = { down,repeat };
+						m_arrow_state.at(UZ(arrow_direction_t::RIGHT)) = { down, repeat };
 							break;
 						}
-						case SDLK_UP: {
-							if (arrow_keys_alias_WASD) m_key_states.at(U32('w')) = { keyevnt.down,keyevnt.repeat };
-
+					if (key == SDLK_UP) {
+						if (arrow_keys_alias_WASD) m_key_states.at(U32('w')) = { down,repeat };
+						m_arrow_state.at(UZ(arrow_direction_t::UP)) = { down, repeat };
 							break;
 						}
-						case SDLK_DOWN: {
-							if (arrow_keys_alias_WASD) m_key_states.at(U32('s')) = { keyevnt.down,keyevnt.repeat };
+					if (key == SDLK_DOWN) {
+						if (arrow_keys_alias_WASD) m_key_states.at(U32('s')) = { down,repeat };
+						m_arrow_state.at(UZ(arrow_direction_t::DOWN)) = { down, repeat };
 							break;
 						}
-						default: {
-							if (key >= SDLK_KP_1 && key <= SDLK_KP_0) {
-								key -= (SDLK_KP_1);
-								key += '1'; 
-								if (key == SDLK_KP_0) key = '0';
 								
-								m_key_states.at(key) = { keyevnt.down,keyevnt.repeat };
+					//NOTE(skc) : for some reason the char codes for the KP are 
+					//1234567890 not the ASCII layout of 0123456789 ... 
+					//this takes the key code and sets the respective bit
+
+					//TODO(skc) : distinguish between the KP and main layout numbers. 
+					if (key == SDLK_KP_0) {
+						m_key_states.at(U32('0')) = { down,repeat };
+						break;
+					}
+					if (key >= SDLK_KP_1 && key < SDLK_KP_0) {
+						key = '1' + ( key - SDLK_KP_1);
+						m_key_states.at(key) = { down,repeat };
 								break; 
 							}
 							std::print("UNKNOWN EXSTENDED KEY CODE 0x{:>0x}\r", key);
 							break;
 
 						}
-					}
-					break; 
-				}
 				case SDL_EVENT_TEXT_EDITING:
 				case SDL_EVENT_TEXT_INPUT:               /**< Keyboard text input */
 				case SDL_EVENT_KEYMAP_CHANGED: {
