@@ -202,12 +202,10 @@ namespace SKC::GE {
 
 		//== The Getters for the State. 
 		//maybe shouldn't be const... (so that I can reset the flag when called)
-		bool theme_changed() const { return m_system_theme_changed;}
-		bool is_minimized() const { return m_window_is_minimized;}
-		bool quit() const { return m_quit;  }
-		bool has_dropped_data() const { 
-			return m_dropped_data_type != drop_event_data_type_t::NO_DROPPED_DATA; 
-		}
+		bool theme_changed() const noexcept { return m_system_theme_changed; }
+		bool is_minimized() const noexcept { return m_window_is_minimized; }
+		bool quit() const noexcept { return m_quit; }
+		bool has_dropped_data() const noexcept { return m_dropped_data_type != drop_event_data_type_t::NO_DROPPED_DATA; }
 		//NOTE(skc) : this is not const because it is kinda important to not ignore the user when they
 		// drop something into the aplication so the flag is only cleared when the consumer calls this function.	
 		//NOTE(skc) :IF YOU'RE TRYING TO ACCEPT DATA FROM "DROP" EVENTS CALL THIS EVERY FRAME DO NOT
@@ -223,12 +221,13 @@ namespace SKC::GE {
 			return m_arrow_state.at(UZ(arrow));
 		}
 		auto& get_key_mods() const noexcept { return m_keymod_state; }
+		auto entered_full_screen() const noexcept { return m_fullscreen_status; }
+		auto last_joy_pos_r() const noexcept { return m_last_joy_relitive_pos; }
+		auto mouse_position() const noexcept { return m_mouse_position; }
+		auto cursor_position() const noexcept { return m_cursor_position; }
 
-		auto entered_full_screen() const { return m_fullscreen_status;  }
-		auto last_joy_pos_r() const { return m_last_joy_relitive_pos; }
-		auto mouse_position() const { return m_mouse_position; }
-		auto cursor_position() const { return m_cursor_position; }
-		auto get_key_state(unsigned char key) {
+	
+		auto get_key_state(unsigned char key) noexcept {
 			try {
 				return m_key_states.at(static_cast<size_t>(key));
 			}
@@ -242,7 +241,7 @@ namespace SKC::GE {
 			}
 		}
 
-		void pollevents() {
+		void pollevents() noexcept {
 			m_window_resized = false;
 			m_system_theme_changed = false;
 			m_fullscreen_status = full_screen_state_change_t::NO_CHANGE;
