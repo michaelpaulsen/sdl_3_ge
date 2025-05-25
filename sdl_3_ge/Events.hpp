@@ -162,6 +162,7 @@ namespace SKC::GE {
 		bool m_quit{ false }; 
 		bool m_system_theme_changed{ false }; 
 		bool m_window_is_minimized{ false }; 
+		bool m_has_key_event{ false }; 
 
 		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA};
 
@@ -206,6 +207,8 @@ namespace SKC::GE {
 		bool is_minimized() const noexcept { return m_window_is_minimized; }
 		bool quit() const noexcept { return m_quit; }
 		bool has_dropped_data() const noexcept { return m_dropped_data_type != drop_event_data_type_t::NO_DROPPED_DATA; }
+		bool has_key_event() const noexcept { return m_has_key_event; }
+		bool window_resized() const noexcept { return m_window_resized; }
 		//NOTE(skc) : this is not const because it is kinda important to not ignore the user when they
 		// drop something into the aplication so the flag is only cleared when the consumer calls this function.	
 		//NOTE(skc) :IF YOU'RE TRYING TO ACCEPT DATA FROM "DROP" EVENTS CALL THIS EVERY FRAME DO NOT
@@ -238,10 +241,13 @@ namespace SKC::GE {
 				
 				//this should crash because it should be litterally mathmatically imposible to reach this... 
 				assert(false);
+				return keyevent_state_t{ false, false };
 			}
 		}
 
 		void pollevents() noexcept {
+
+			m_has_key_event = false; 
 			m_window_resized = false;
 			m_system_theme_changed = false;
 			m_fullscreen_status = full_screen_state_change_t::NO_CHANGE;
@@ -307,6 +313,7 @@ namespace SKC::GE {
 //===EYBOARD EVENTS===//
 				case SDL_EVENT_KEY_DOWN:
 				case SDL_EVENT_KEY_UP : {
+					m_has_key_event = true; 
 					auto keyevnt = evnt.key; 
 					auto key = keyevnt.key;
 					auto down = keyevnt.down;
@@ -365,8 +372,10 @@ namespace SKC::GE {
 					std::print("KB event not handled {:#>04x}\r", type);
 					break;
 				}
-				default: 
+				default: {
 					std::print(" unhandled event type {:#>04x}\r", type);
+					break;
+				}
 				}
 			}
 		}
