@@ -9,7 +9,7 @@ template <typename T> concept numeber = std::is_integral_v<T> || std::is_floatin
 		T x{}, y{};
 		
 		Vect2(T _x, T _y) : x(_x), y(_y) {}; 
-		T len() {
+		double len() {
 			return std::sqrt((x * x) + (y * y)); 
 		}
 		T len2() {
