@@ -25,7 +25,7 @@ namespace SKC::GE {
 		 
 		int m_x{}, m_y{}, m_width, m_height;
 		std::string title; 
-		
+		float m_scale_x{ 1 }, m_scale_y{ 1 };
 		SDL_Window* m_window;
 		SDL_Renderer* m_renderer; 
 		
@@ -92,12 +92,14 @@ namespace SKC::GE {
 			return SDL_CreateTextureFromSurface(m_renderer, surface);
 		}
 		//TODO (skc) : create a resource class. 
-		SDL_Texture* create_texture_from_path(std::filesystem::path pth) {
+		auto create_texture_from_path(std::filesystem::path pth) {
 			SDL_Surface* surface = IMG_Load(pth.generic_string().c_str());
-			if (!surface) return NULL; 
+			if (!surface) return 0ull;
 			auto tex = create_texture_from_surface(surface);
 			SDL_DestroySurface(surface);
-			return tex; 
+			m_image_textures.emplace_back(tex, pth);
+			return m_image_textures.back().tid; 
+				//return tex; 
 
 		}
 
@@ -134,10 +136,17 @@ namespace SKC::GE {
 			SDL_SetRenderDrawColor(m_renderer, r, g, b, a); 
 		}
 		
-		void set_window_render_scale(float new_scale) {
+		void set_render_scale(float new_scale) {
+			//if the user is not actually changing the scale there's no work to be done.
+			if (new_scale == m_scale_x && new_scale == m_scale_y) return;
+			
+			m_scale_x = new_scale;
+			m_scale_y = new_scale;
 			SDL_SetRenderScale(m_renderer, new_scale, new_scale); 
 		}
-		void set_window_render_scale(float new_x_scale, float new_y_scale) {
+		void set_render_scale(float new_x_scale, float new_y_scale) {
+			m_scale_x = new_x_scale;
+			m_scale_y = new_y_scale;
 			SDL_SetRenderScale(m_renderer, new_x_scale, new_y_scale);
 		}
 		
