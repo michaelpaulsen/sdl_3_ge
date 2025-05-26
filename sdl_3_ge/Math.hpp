@@ -2,6 +2,8 @@
 #include <numbers>
 #include "./perlin.hpp"
 namespace SKC::Math {
+	static constexpr inline double DEG_TO_RAD = (std::numbers::pi / 180.);
+	static constexpr inline double RAD_TO_DEG = (180./ std::numbers::pi);
 	double map(double t, double min, double max, double to_min, double to_max) {
 		return (t - min) / (max - min) * (to_max - to_min) + to_min;
 	}
