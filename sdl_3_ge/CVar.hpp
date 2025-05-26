@@ -15,15 +15,14 @@ namespace SKC::GE {
 		public: 
 			C_var(std::string name, cvar_value_t value) noexcept : m_is_set(true), m_name(name), m_value(value) {};
 			C_var(std::string name) : m_name(name) {}; 
-			auto name() const{
+			auto name() const noexcept {
 				return m_name; 
 			}
-			void set_value(cvar_value_t val) {
+			void set_value(cvar_value_t val) noexcept {
 				m_is_set = true; 
 				m_value = val;
 			}
-			
-//I don't think I am going to like this syntax but 
+//NOTE(skc) : I don't think I am going to like this syntax but 
 //I don't know a better way of doing this. 
 //as<T>() just seems gross...  would much prefer as(T)..  
 //the reason that I am making it so it returns an empty optional instead of 
