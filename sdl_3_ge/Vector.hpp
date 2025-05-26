@@ -29,3 +29,6 @@ template <typename T> concept numeber = std::is_integral_v<T> || std::is_floatin
 		}
 	};
 }
+using skc_Vect2d = SKC::Math::Vect2<double>;
+using skc_Vect2f = SKC::Math::Vect2<float>;
+using skc_Vect2i = SKC::Math::Vect2<int>;
