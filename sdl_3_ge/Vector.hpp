@@ -18,6 +18,14 @@ template <typename T> concept numeber = std::is_integral_v<T> || std::is_floatin
 		T dot(Vect2<T> other) {
 			return (x * other.x) + (y * other.y); 
 		}
+		void operator+=(T other) {
+			x += other;
+			y += other;
+		}
+		void operator+=(Vect2<T> other) {
+			x += other.x; 
+			y += other.y; 
+		}
 		Vect2<T> operator + (Vect2<T> other) {
 			return { x + other.x, y + other.y };
 		}
