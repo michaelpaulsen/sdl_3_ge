@@ -43,10 +43,8 @@ namespace SKC::GE {
 					return std::strtod(m_value.c_str(), nullptr);
 				}
 				else static_if (std::is_same_v<T,bool>){
-					if (m_value == "true") return { true };
-					if (m_value == "false") return { false };
-					return {};
-					//return m_value; 
+					if (m_value == "false" || m_value == "0" || m_value.empty()) return { false }; else
+					return { true };
 				}else static_if(std::is_same_v<T, std::string>) {
 					return m_value; 
 				} else {
