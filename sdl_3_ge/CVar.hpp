@@ -79,10 +79,21 @@ namespace SKC::GE {
 			return df;
 		}
 		void emplace_back(std::string name) {
+			for (auto& c : m_c_vars) {
+				if (c.name() == name) {
+					return; 
+				}
+			}
 			m_c_vars.emplace_back(name);
 
 		}
 		void emplace_back(std::string name, cvar_value_t value) {
+			for (auto& c : m_c_vars) {
+				if (c.name() == name) {
+					c.set_value(value); 
+					return;
+				}
+			}
 			m_c_vars.emplace_back(name, value); 
 		}
 		auto size() {
