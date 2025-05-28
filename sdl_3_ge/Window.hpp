@@ -125,8 +125,8 @@ namespace SKC::GE {
 		void set_background_color(color other) {
 			m_background_color = other;
 		}
-		void set_background_color(c_t r, c_t g, c_t b) {
-			m_background_color = { r,g,b,255 }; 
+		void set_background_color(c_t r, c_t g, c_t b, c_t a = 255) {
+			m_background_color = { r,g,b,a }; 
 		}
 
 		void set_draw_color(color color) {
