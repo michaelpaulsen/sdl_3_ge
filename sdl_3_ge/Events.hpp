@@ -78,7 +78,7 @@ namespace SKC::GE {
 			other = key_mod(0);
 		}
 	
-		void operator=(const key_mod& other) {
+		void operator=(const key_mod& other) noexcept {
 			lshift = other.lshift;
 			rshift = other.rshift;
 			rctrl = other.rctrl;
@@ -108,17 +108,17 @@ namespace SKC::GE {
 
 		~key_mod() = default;
 
-		bool shift() const {
+		bool shift() const noexcept {
 			return rshift || lshift;
 		}
-		bool alt() const {
+		bool alt() const noexcept {
 			return ralt || lalt;
 		}
-		bool gui() const {
+		bool gui() const noexcept {
 			return rgui || lgui;
 
 		}
-		bool ctrl() const {
+		bool ctrl() const noexcept {
 			return rctrl || lctrl;
 
 		}
@@ -181,6 +181,7 @@ namespace SKC::GE {
 		
 		state_array_t<keyevent_state_t> m_key_states{};
 		state_array_t<bool> m_mouse_button_states{};
+
 		key_state_array_t<UZ(arrow_direction_t::MAX)> m_arrow_state{};
 		//const uint32_t LARROW = ;
 	public : 
@@ -230,7 +231,7 @@ namespace SKC::GE {
 		auto cursor_position() const noexcept { return m_cursor_position; }
 
 	
-		auto get_key_state(unsigned char key) noexcept {
+		auto get_key_state(unsigned char key) const noexcept  {
 			try {
 				return m_key_states.at(static_cast<size_t>(key));
 			}
