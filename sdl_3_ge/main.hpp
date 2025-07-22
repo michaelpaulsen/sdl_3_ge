@@ -65,12 +65,8 @@ int main(int argc, char** argv) {
 
     //this is the lua state
     auto L = Lstate_t();
-    if (!L.execute_command()) {
-        console.Error("LUA TEST FAILD");
-    }
     arg_list_t args = {};
-    //instead of having a char** this is a list of the C_vars  that way the memory deals with its self at the end
-    // of exicution this also gives us access to things like args.size() and the such.
+   
     console.Informln("adding ", argv[0], " to args as \"exe_path\"");
     args.emplace_back("exe_path", std::string(argv[0]));
    //TODO(skc): This still needs work! 
@@ -86,6 +82,12 @@ int main(int argc, char** argv) {
                 if (!name.empty()) {
                     if (!value.empty()) {
                         console.Informln("adding ", name, " to cvars as ", value);
+                        auto last_non_space = value.find_last_not_of(' '); 
+                        auto erase_len = value.length() - last_non_space; 
+                        
+                        if (erase_len) {
+                            value = value.erase(last_non_space, erase_len);
+                        }
                         args.emplace_back(name, value);
                     }
                     else {
