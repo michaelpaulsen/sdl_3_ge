@@ -13,9 +13,14 @@
 
 //3rd party deps
 #include <SDL3/SDL.h>
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 
 //first party deps
 #include "./Vector.hpp"
+
+//TODO(skc) : move to own file?
 #ifndef U32
 #define U32 static_cast<uint32_t>
 #endif // !U32
@@ -150,6 +155,9 @@ namespace SKC::GE {
 		DOWN,
 		MAX
 	};
+	
+	
+	template<bool _use_IMGUI = false>
 	class event_handler {
 	private:
 		struct keyevent_state_t {
@@ -186,7 +194,7 @@ namespace SKC::GE {
 		state_array_t<bool> m_mouse_button_states{};
 
 		key_state_array_t<UZ(arrow_direction_t::MAX)> m_arrow_state{};
-		//const uint32_t LARROW = ;
+		
 	public : 
 		
 		
@@ -201,7 +209,6 @@ namespace SKC::GE {
 		event_handler operator=(event_handler&&) = delete;
 
 		//instead of making getter and setter for this I am just goint to make it public
-		
 		bool arrow_keys_alias_WASD = false;
 		//bool m_up, m_down, m_left, m_right;
 
@@ -236,7 +243,7 @@ namespace SKC::GE {
 	
 		auto get_key_state(unsigned char key) const noexcept  {
 			try {
-				return m_key_states.at(static_cast<size_t>(key));
+				return m_key_states.at(UZ(key));
 			}
 			catch (...) {
 				//TODO(skc) : make a macro outa this... 
@@ -257,6 +264,9 @@ namespace SKC::GE {
 			m_fullscreen_status = full_screen_state_change_t::NO_CHANGE;
 			SDL_Event evnt{}; 
 			while (SDL_PollEvent(&evnt)) {
+				if constexpr (_use_IMGUI) {
+					ImGui_ImplSDL3_ProcessEvent(&evnt);
+				}
 				auto type = evnt.type; 
 				switch (evnt.type) {
 				case SDL_EVENT_QUIT: 
@@ -404,20 +414,23 @@ struct std::formatter<SKC::GE::key_mod> {
 	constexpr auto parse(std::format_parse_context& ctx) {
 		auto pos = ctx.begin();
 		while (pos != ctx.end() && *pos != '}') {
-			if (*pos == 'n' )
+			if (*pos == 'n')
 				new_line = true;
 			++pos;
 		}
-		return pos;  // expect `}` at this position, otherwise, 
-	}
+		return pos;
+		//FIXME(skc): this should throw if *pos != '}' 
+		//because this should error when it is not. 
+		//however this is not an huge issue...
 
+	}
 		auto format(const SKC::GE::key_mod & obj, std::format_context & ctx) const {
 			auto string = std::string();
 			if (new_line) {
 				string += "===KEY MODIFIER STATE===\n";
 			}
 			else {
-				string += "KMS ->";
+			string += "Key State ->";
 
 			}
 			
