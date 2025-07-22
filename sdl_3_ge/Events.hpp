@@ -1,7 +1,5 @@
 #pragma once
-
-#include <SDL3/SDL.h>
-
+//stdlib stuff
 #include <print>
 #include <functional>
 #include <vector>
@@ -12,6 +10,11 @@
 #include <filesystem> 
 #include <cassert>
 #include <stacktrace>
+
+//3rd party deps
+#include <SDL3/SDL.h>
+
+//first party deps
 #include "./Vector.hpp"
 #ifndef U32
 #define U32 static_cast<uint32_t>
