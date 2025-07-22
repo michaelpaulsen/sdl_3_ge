@@ -11,7 +11,7 @@ namespace SKC::Math {
 			ret += max; 
 		}
 		while (ret > max) {
-			ret -= min; 
+			ret -= max; 
 		}
 		return ret; 
 	}
