@@ -184,17 +184,25 @@
     <ClCompile Include="sdl_3_ge.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="concepts.hpp" />
-    <ClInclude Include="Console.hpp" />
-    <ClInclude Include="CVar.hpp" />
-    <ClInclude Include="DBG_functions.h" />
-    <ClInclude Include="Events.hpp" />
-    <ClInclude Include="game_pad.hpp" />
-    <ClInclude Include="Imgui_window.hpp" />
-    <ClInclude Include="Window.hpp" />
-    <ClInclude Include="key_util.hpp" />
-    <ClInclude Include="lua_cxx.hpp" />
-    <ClInclude Include="main.hpp" />
+    <ClInclude Include="header\Color.hpp" />
+    <ClInclude Include="header\concepts.hpp" />
+    <ClInclude Include="header\Console.hpp" />
+    <ClInclude Include="header\CVar.hpp" />
+    <ClInclude Include="header\DBG_functions.h" />
+    <ClInclude Include="header\ECS.hpp" />
+    <ClInclude Include="header\Events.hpp" />
+    <ClInclude Include="header\fileio.hpp" />
+    <ClInclude Include="header\game_pad.hpp" />
+    <ClInclude Include="header\Imgui_window.hpp" />
+    <ClInclude Include="header\key_util.hpp" />
+    <ClInclude Include="header\lua_cxx.hpp" />
+    <ClInclude Include="header\main.hpp" />
+    <ClInclude Include="header\Math.hpp" />
+    <ClInclude Include="header\perlin.hpp" />
+    <ClInclude Include="header\printFmtutils.hpp" />
+    <ClInclude Include="header\Room.hpp" />
+    <ClInclude Include="header\Vector.hpp" />
+    <ClInclude Include="header\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

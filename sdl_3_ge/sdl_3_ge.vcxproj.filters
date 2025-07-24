@@ -20,37 +20,61 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="concepts.hpp">
+    <ClInclude Include="header\Color.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Console.hpp">
+    <ClInclude Include="header\concepts.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DBG_functions.h">
+    <ClInclude Include="header\Console.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lua_cxx.hpp">
+    <ClInclude Include="header\CVar.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="main.hpp">
+    <ClInclude Include="header\DBG_functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="key_util.hpp">
+    <ClInclude Include="header\ECS.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="game_pad.hpp">
+    <ClInclude Include="header\Events.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Events.hpp">
+    <ClInclude Include="header\fileio.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Window.hpp">
+    <ClInclude Include="header\game_pad.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CVar.hpp">
+    <ClInclude Include="header\Imgui_window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Imgui_window.hpp">
+    <ClInclude Include="header\key_util.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\lua_cxx.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\main.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\Math.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\perlin.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\printFmtutils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\Room.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\Vector.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

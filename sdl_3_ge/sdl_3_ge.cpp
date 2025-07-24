@@ -1,296 +1,290 @@
 // sdl_3_ge.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#define EVENT_LAMBDA  [&console](SDL_Event e) mutable -> SKC::GE::event_t
-
-#include "main.hpp"
-#include "./DBG_functions.h"
-
 #include <cmath> 
 #include <vector>
 #include <ctime>
+#include <fstream>
+#include <format>
+#include <print>
+#include <thread>
 
-static constexpr size_t MAX_INPUT_LEN = 200; 
-int  to_seconds(int h, int m, int s) {
-    return (h * 3600) + (m * 60) + s; 
+
+#include "header/Vector.hpp"
+#include "header/main.hpp"
+#include "header/DBG_functions.h"
+#include "header/ECS.hpp"
+#include "header/printFmtutils.hpp"
+#include "header/Room.hpp"
+
+constexpr size_t MESSAGE_SIZE = 255;
+void increment_minutes(int& hour, int& minute, int increment = 1) {
+	minute += increment;
+	if (minute >= 60) {
+		minute -= 60;
+		++hour; 
+		if (hour > 24) {
+			hour -= 24;
+		}
+	}
+	if(minute < 0) {
+		minute += 60;
+		--hour; 
+		if (hour < 0) {
+			hour += 24;
+		}
+	}
 }
-std::string calc_time_remaining(time_t now, int start_h, int start_m, int start_s, bool loop = false) {
-    //std::string out{}; 
-    tm local_tm{};
-    localtime_s(&local_tm, &now);
-    int seconds_since_start_of_day = to_seconds(local_tm.tm_hour, local_tm.tm_min, local_tm.tm_sec);
-    
-    long long target_time = to_seconds(start_h, start_m, start_s);
-    long long difference = target_time - seconds_since_start_of_day;
-    bool count_up = false; 
-    if (difference < 0) {
-        if (!loop) return "Starting Soon";
-        difference = seconds_since_start_of_day - target_time;
-        count_up = true; 
-    }
-    //while (difference < 0) difference += (24ll * 3600);
-    int hour{};
-    while (difference > 3600) {
-        difference -= 3600; 
-        ++hour; 
-    }
-    int min{}; 
-    while (difference > 60) {
-        difference -= 60;
-        ++min;
-    }
-    return std::format("Starting in T{}{:0>2}:{:0>2}:{:0>2}",count_up?'+' : '-',hour, min, difference);
+void increment_seconds(int& hour, int& minute, int& second, int increment = 1) {
+	second += increment;
+	if (second >= 60) {
+		second -= 60;
+		increment_minutes(hour, minute);
+	}
+	if(second < 0) {
+		second += 60;
+		increment_minutes(hour, minute, -1);
 
+	}
+}
+void increment_time(int& hour, int& minute, int& second, int mode, bool inc, int increment = 1) {
+	
+	if (inc) {
+		
+		if (mode == 0) {
+			hour = SKC::Math::wrap(hour + increment, 0, 23);
+		}
+		if (mode == 1) {
+			increment_minutes(hour, minute, increment);
+		}	
+		if (mode == 2) {
+			increment_seconds(hour, minute, second, increment);
+		}
+	}
 }
 
-namespace fs = std::filesystem;
+auto now_as_time_t() {
+	auto current_time = std::chrono::system_clock::now();
+	auto timet = std::chrono::system_clock::to_time_t(current_time);
+	tm time_struct;
+	localtime_s(&time_struct, &timet);
+	return time_struct; 
+}
+long long get_seconds(int hour, int minute, int second) {
+	//convert the time to seconds since the start of the day
+	return (hour * 60 + minute) * 60 + second;
+}
+long long get_current_time() {
+	//get the current time in seconds since the start of the day
+	tm time_struct =  now_as_time_t();
+	return get_seconds(time_struct.tm_hour, time_struct.tm_min, time_struct.tm_sec);
+}
+std::string time_until(int hour, int minute, int second) {
+	auto current_time = get_current_time(); 
+	auto target_time = get_seconds(hour, minute, second);
+	if (target_time < current_time)  return "starting soon";
+	auto time_diff = target_time - current_time;
+	return std::format("{:02}:{:02}:{:02}", time_diff / 3600, (time_diff / 60) % 60, time_diff % 60);
+}
 
 int main(SKC::Console& console, main_info_t info) {
-    console.Informln("entered main function");
-    std::string data = std::string(MAX_INPUT_LEN, 0);
- 
+	int text_alpha = 255; 
+	int hour = info.args.get_as("hour", 9), //default 9 am
+	 minute = info.args.get_as("minute", 30), //default 30 minutes
+	 second = info.args.get_as("second", 0); //default 0 seconds
+	//TODO(skc) : handle window settings in main.hpp 
+	int window_h{ info.args.get_as("h",1080) }, window_w{ info.args.get_as("w",1920) };
+	bool do_render{ info.args.get_as("render", true) };
+	bool degug_mode{ info.args.get_as("debug", false) };
+	if (!do_render) return 0; 
+	
+	uint64_t last_frame_time{}; 
+	Uint64 frame{};
+	//auto r1 = SKC::GE::room("test",65,65); 
+	double draw_time = 0, fframe = 0; 
 
-    float mouse_x{}, mouse_y{}, size{ 1440 }, text_scale{ 0.650f },  rot{}, rot_speed{ -1 };
-    int window_h{1080}, window_w{1920}, f{},
-        counter{}, advatage{},
-        die_roll{}, die_roll1{}, die_roll2{},
-        start_h{ 9 }, start_m{ 30 }, start_s{ 0 };
-    std::vector<int> dice{2,4,6,8,10,20,100}; 
-    bool loop_timer{ false }, show_debug_window{ true };
-    Uint64 frame{};
-    //TODO(skc) : handle window setting in main.hpp 
-    if (info.args.has("h")) {
-        auto cvar = info.args.get_as<int>("h");
-        window_h = cvar.value(); 
-    }
-     if (info.args.has("w")) {
-         auto cvar = info.args.get_as<int>("w");
-         window_w = cvar.value();
-     }
-    
-    auto window = SKC::GE::imgui_window("test window", window_w, window_h, SDL_WINDOW_RESIZABLE);
-    auto window_name = window.get_window_title(); 
-    SDL_Event evnt{};
-    bool quit = false;
-    auto event_handler = SKC::GE::event_handler();
-    float x = 59.f;
-    float y = 14.f;
-    ImVec4 text_color{0.71f,0.082f,0.082f,1.f};
-    
-    
-    
-    //default key event
-    Uint64 last_frame_time{0};
-    
-    //TODO(skc): implement a function that does this automatically
-    SDL_Surface *surface = SDL_LoadBMP("./test_image.bmp");
-    if (!surface) {
-        console.Errorln("SDL_ERROR ", SDL_GetError());
-        exit(-1);
-    }
-    //FONT STUFF 
-    //TODO (skc) : create a resource class. 
-    auto font_dir = fs::path("C:\\Windows\\Fonts");
-    auto font_path = font_dir / "calibrib.ttf";
+	auto window = SKC::GE::imgui_window("SKELETON GAME ENGINE TEST APPLICATION",
+		window_w, window_h,
+		SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT);
+	
+	//auto player_texture = window.create_texture_from_path("./player Icon.bmp"); 
+	//hint to sdl that I want it to listen for events even when the window is not focused
+	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+	int x = 0, y = 0;
+	SKC::GE::event_handler<true> event_handler{};
 
 
-    if (!fs::directory_entry(font_path).exists()) {
-        return 0;
-    }
-  
-    auto font = TTF_OpenFont(font_path.generic_string().c_str(), 64);
-    auto font_big = TTF_OpenFont(font_path.generic_string().c_str(), 200);
 
-    auto keyevent = [&size, &show_debug_window, &console](SDL_Event e) mutable {
-        auto key_event = e.key;
-        auto key = key_event.key;
-        if (e.type == SDL_EVENT_KEY_UP) {
-            if (key == SDLK_ESCAPE) {
-                show_debug_window = !show_debug_window;
-                return SKC::GE::event_t::CONTINUE;
+	
+	//TODO(skc) : make this a function in the window class
+	int font_size = 24 * 4;
+	auto font = TTF_OpenFont("./fonts/arial.ttf", font_size);
+//=========MAIN LOOP START =========
+	bool inc = true;
+	auto message = std::string(MESSAGE_SIZE, char(0));
+	window.set_background_color(0,0,0,0);
+	while (true) {
+		bool rendering_text = false;
+		Uint64 draw_start_tick = SDL_GetTicks(), draw_end_ticks = 0;
+		//window.set_render_scale(2); 
+		window.clear();
+		event_handler.pollevents(); 
+		auto keymod_state = event_handler.get_key_mods(); 
+		if (event_handler.quit()) break; 
+		
+		
+		bool window_resized = event_handler.window_resized();
+		if (window_resized) {
+			window.update_window_size();
+		}
+#pragma region set the mode
+		int mode = 2; 
+		if (event_handler.get_key_mods().shift()) mode = 0;
+		if (event_handler.get_key_mods().ctrl()) mode = 1;
+#pragma endregion
+#pragma region render text
+		auto x_pos = window.from_normilzed_width(.5) + x;
+		auto y_pos = window.from_normilzed_height(.5) + y;
+		if (get_current_time() > get_seconds(hour, minute, second)) {
+			text_alpha -= 2;
+		}
+		else if (text_alpha != 255) {
+			text_alpha += 8;
+		}
+		if (text_alpha <   0) text_alpha =   0;
+		if (text_alpha > 255) text_alpha = 255;
 
-            }
-            if (key == SDLK_PLUS) {
-                size += 10; 
-            }
-            if (key == SDLK_MINUS) {
-                size -= 10;
-            }
-        }
-        return SKC::GE::event_t::CONTINUE;
+		if (text_alpha > 0) {
+			rendering_text = true; 
+			window.render_text_centered_simple(std::format("starting at {}:{:02}:{:02}", hour, minute, second),
+				font,
+				x_pos - 20,
+				y_pos - (font_size*1.5),
+				255, 255, 255, text_alpha
+			);
+			window.render_text_centered_simple(
+				time_until(hour, minute, second),
+				font, 
+				x_pos,
+				y_pos,
+				255, 255, 255, text_alpha
+			);
+		}
+		
+#pragma endregion
+#pragma region accept user input 
+		//if(event_handler.)
+		constexpr int INC_FRAME = 16; 
+		auto l_key_state = event_handler.get_arrow_key_state(SKC::GE::arrow_direction_t::RIGHT), 
+			j_key_state = event_handler.get_arrow_key_state(SKC::GE::arrow_direction_t::LEFT) ;
+		if (event_handler.scroll_wheel_y() != 0) {
+			if (event_handler.get_key_mods().shift()) {
+				if (event_handler.get_key_mods().alt()) {
+					y += event_handler.scroll_wheel_y() * 4; //move text up and down
+				}
+				else {
+					x += event_handler.scroll_wheel_y() * 4; //move text left and righ
+				}
+			}
+			else {
+				font_size += event_handler.scroll_wheel_y(); 
+				TTF_CloseFont(font);
+				font = TTF_OpenFont("./fonts/arial.ttf", font_size);
 
-        };
-    auto mouse_event = EVENT_LAMBDA{
-        auto motion = e.motion;
-        console.Inform("mouse ", motion.which, " moved to -> ", motion.x, " ", motion.y, '\r');
-        return SKC::GE::event_t::CONTINUE;
-    };
+			}
+			
+			
+		}
+		if (event_handler.get_key_state('`').down) {
+			if (inc) {
+				degug_mode = !degug_mode;
+			}
+			inc = false;
+		} 
+		else if (event_handler.get_key_state('n').down && event_handler.get_key_mods().ctrl()) {
+			tm time_struct = now_as_time_t();
+			hour = time_struct.tm_hour;
+			minute = time_struct.tm_min;
+			second = time_struct.tm_sec - 1;
+			inc = false;
+		}
+		else if (l_key_state.down) {
+			increment_time(hour, minute, second, mode, inc);
+				
+			inc = !(frame% INC_FRAME);
+		}
+		else if (j_key_state.down) {
+			increment_time(hour, minute, second, mode, inc, -1);
+			inc = !(frame % INC_FRAME);
+		}
+		else {
+			inc = true;
+		}
+#pragma endregion
+		//=====imgui CODE ====
+#pragma region imgui code
+		window.set_render_scale(1);
 
-    auto test_texture = window.create_texture_from_surface(surface); 
-    SDL_DestroySurface(surface); 
-    window.set_background_color({ 0, 0, 0,0 });
-    
-    event_handler.register_event(SDL_EVENT_KEY_UP, keyevent);
-    event_handler.register_event(SDL_EVENT_KEY_DOWN, keyevent);
-    event_handler.register_event(SDL_EVENT_MOUSE_MOTION, 
-        [&console, &mouse_x, &mouse_y](SDL_Event e) mutable -> SKC::GE::event_t {
-            mouse_x = e.motion.x;
-            mouse_y = e.motion.y;
-            return SKC::GE::event_t::CONTINUE; 
-        });
-    event_handler.register_event(SDL_EVENT_WINDOW_RESIZED, [&console, &window, &window_h, &window_w](SDL_Event e) {
-        window.update_window_size();
-        window.get_window_dimentions(window_w, window_h); 
-        return SKC::GE::event_t::CONTINUE;
-    });
-   
-    
-    event_handler.register_event(SDL_EVENT_MOUSE_WHEEL, [&console, &window, &rot_speed](SDL_Event e) {
-        auto wheel = e.wheel; 
-        console.Print("\rmouse wheel event whith ", wheel.x, 'x', wheel.y, "and mouse pos of ", wheel.mouse_x, 'x', wheel.mouse_y,'\r');
-        rot_speed += wheel.y; 
-        return SKC::GE::event_t::CONTINUE; 
-    });
-   
-    while (!quit) {
-        Uint64 draw_start_tick = SDL_GetTicks(), draw_end_ticks = 0;
-    
-        while (SDL_PollEvent(&evnt)) {
-            console.ClearLine();
-            auto evnd = event_handler.do_event(evnt);
-            ImGui_ImplSDL3_ProcessEvent(&evnt);
-            
-            if (evnd == SKC::GE::event_t::QUIT) {
-                quit = true;
-                break;
-            }
-            if (evnd == SKC::GE::event_t::NO_FUNCT) {
+		window.start_frame();
+		
 
-                //TODO(skc):remove all of this code for the event API... 
-                switch (evnt.type) {
+		if(degug_mode) { 
+			ImGui::Begin("DBG window 1", &degug_mode);
+			if (frame) {
+			ImGui::Text(std::format("last frame time (ms) : {}", last_frame_time).c_str());
+			ImGui::Text(std::format("average frame time (ms) : {:0.3} ({:0.6} fps)", (draw_time/fframe), 1000/(draw_time / fframe)).c_str());
+			ImGui::Text(std::format("FPS : {}", 1000.f / last_frame_time).c_str());
+			ImGui::Text(std::format("target FPS : {}", 1000.f/TARGET_RENDER_TIME).c_str());
+			}
+			ImGui::Checkbox("rendering the text", &rendering_text); 
+			 
+			ImGui::Text(std::format("font size : {}", font_size).c_str());
+			ImGui::Text(std::format("text pos: {}x{}", x,y).c_str());
+			ImGui::End();
+		
+		
+			ImGui::Begin("DBG settings window");
+			ImGui::Checkbox("window resized event", &window_resized);
+			ImGui::Checkbox("inc", &inc);
+			ImGui::InputText("message", message.data(), MESSAGE_SIZE);
+			ImGui::SliderInt("start hour", &hour, 0, 23);
+			ImGui::SliderInt("start minute", &minute, 0, 59);
+			ImGui::SliderInt("start second", &second, 0, 59);
+			ImGui::End();
+		}
+		window.render(); 
+		window.draw_imgui_data();
+#pragma endregion
+		window.present();
+		//get the number of threads that are running in the program
+		
+		
+		//=== FRAME RATE LIMIT CODE! ===  
+		//DO ALL DRAWING BEFORE ABOVE LINE   
+		//(^ is here for searchablility DO NOT REMOVE) 
+		//TODO(skc) This should be a function in the window class 
+		//named something like window::wait_for_next_frame(uint64_t &render_time);
+		draw_end_ticks = SDL_GetTicks();
+		//this is the current tick since the SDL_Timer modual was started
+		auto rt = draw_end_ticks - draw_start_tick;
+		Uint32 wait_time = static_cast<Uint32>(TARGET_RENDER_TIME) - static_cast<Uint32>(rt);
+		//this is the number of ticks that has passed since the start of the draw code
+		if (rt > TARGET_RENDER_TIME) wait_time = 0;
+		//rt is unsigned so we need to check if it is greater than the time we want to spend 
+		//rendering if so we set it to 0 
+		SDL_Delay(wait_time);
+		fframe++;
+		if (rt < TARGET_RENDER_TIME) {
+			last_frame_time = TARGET_RENDER_TIME;
+		}
+		else {
+			last_frame_time = rt;
+		}
+		draw_time += last_frame_time;
+		++frame;
+		
 
-                case SDL_EVENT_GAMEPAD_AXIS_MOTION: {
-                    auto gp_axis_motion = evnt.gaxis;
-                    int gp_axis = gp_axis_motion.axis;
-                    int value = gp_axis_motion.value;
-                    double r = (double)value / (double)32767;
-                    console.ClearLine().Print("\raxis ", gp_axis, " is value ", r);
-                    break;
-                }
-                case SDL_EVENT_GAMEPAD_REMAPPED: {
-                    break;
-                }
-                default: {
-                    auto type = evnt.type;
-                    if (type <= SDL_EVENT_WINDOW_LAST && type >= SDL_EVENT_WINDOW_FIRST) {
-                        console.ClearLine().Print("unhandled window event\r");
-                        break;
-                    }
-                    std::cout << std::format("unhandled event of type 0x{:04x}\r", evnt.type);
-                    break;
-                }
-                }
-
-            }
-
-        }
-
-        
-        
-        window.start_frame(); 
-        if (show_debug_window) {
-
-            ImGui::Begin("options menue!", &show_debug_window);                          // Create a window called "Hello, world!" and append into it.
-            
-            ImGui::SeparatorText("Text Stuff");
-            
-            //ImGui::Text("last frame time %d ms (%0.2f fps) ", last_frame_time, 1000.f/(float)last_frame_time);
-            ImGui::InputText("test", data.data(), MAX_INPUT_LEN+1);
-            ImGui::SliderFloat("text X pos", &x, 0.f, (float)window_w);
-            ImGui::SliderFloat ("text y pos", &y,0.f, (float)window_h);
-            ImGui::DragFloat("text scale factor", &text_scale,.05f,0.01f,0.f);
-            ImGui::ColorEdit3("text color", (float*)&text_color);
-            //text_color
-            ImGui::SeparatorText("Timer Stuff");
-            ImGui::Checkbox("loop timer", &loop_timer);
-            ImGui::SliderInt("Start Hour", &start_h, 0, 24);
-            ImGui::SliderInt("Start Minute", &start_m, 0, 59);
-            ImGui::SliderInt("Start Second", &start_s, 0, 59);
-
-            ImGui::SeparatorText("Rotation Stuff");
-            ImGui::SliderFloat("rotation ", &rot, 0.f, 360.f, "%.0f deg");
-            ImGui::SliderFloat("rotation unwind speed", &rot_speed, -360.f, 360.f, "%.0f deg/frame");
-            ImGui::DragFloat("face zoom",&size);
-           
-            
-            ImGui::End();
-
-        }
-        window.render();
-        window.clear();
-        float aspect = (float)test_texture->w / (float)test_texture->h;
-        SKC::GE::Frect pos = { 
-            (float)window.from_normilzed_width(.5) - (size * aspect) / 2,
-            (float)window.from_normilzed_height(.5) - size/2, size* aspect , size};
-        //#B51515;
-        window.draw_texture_rotated(test_texture,pos, rot);
-        window.set_window_render_scale(text_scale);
-#pragma warning(push)
-#pragma warning( disable : 4244)
-        window.render_text_simple(std::format("{}", data), font_big, x / text_scale, y / text_scale, text_color.x * 255, text_color.y * 255, text_color.z * 255);
-        auto now = time(0);
-        tm time_stamp{}; 
-        localtime_s(&time_stamp, &now); 
-
-
-        window.render_text_simple(
-            calc_time_remaining(now, start_h, start_m, start_s, true), font_big,
-            x / text_scale, (y / text_scale)+ 256/text_scale,
-            text_color.x * 255, text_color.y * 255, text_color.z * 255);
-        
-#pragma warning(pop)
-        if (frame >= 60) {
-            if ((frame % 60) < 30) {
-                window.set_window_title(std::format("{} ({} frame : {})", window_name, info.args.get_as<std::string>("exe_path").value(),frame%60));
-            }
-            else {
-                window.set_window_title(std::format("{} (frame:{})", window_name, frame%60));
-            }
-        }
-        window.set_window_render_scale(1);
-        auto str = std::format("{:0>2}:{:0>2}:{:0>2}", time_stamp.tm_hour, time_stamp.tm_min, time_stamp.tm_sec); 
-        auto tmp_y = (float)window.from_normilzed_height(.90); 
-        window.render_text_simple(str,
-            font, 16, tmp_y,0,0,0,200);
-        window.draw_imgui_data();
-        window.present();
-        rot += rot_speed;
-        while(rot < 0) rot = rot+360;
-        while(rot > 360) rot -= 360;
-        
-        
-        if (quit) break;
-        
-        //FRAME RATE LIMIT CODE! DO ALL DRAWING BEFORE THIS LINE   
-        //(^ is here for searchablility DO NOT REMOVE) 
-        draw_end_ticks = SDL_GetTicks();
-        //this is the current tick since the SDL_Timer modual was started
-        auto rt = draw_end_ticks - draw_start_tick;
-        Uint32 wait_time = static_cast<Uint32>(TARGET_RENDER_TIME) - static_cast<Uint32>(rt);
-        //this is the number of ticks that has passed since the start of the draw code
-        if (rt> TARGET_RENDER_TIME) wait_time = 0;
-        //rt is unsigned so we need to check if it is greater than the time we want to spend 
-        //rendering if so we set it to 0 
-        SDL_Delay(wait_time);
-        if (rt < TARGET_RENDER_TIME) {
-            last_frame_time = TARGET_RENDER_TIME;
-        }
-        else {
-            last_frame_time = rt;
-
-        }
-
-        ++frame; 
-    }
-    return 0;
+	}
+	
+	return 0;
 }

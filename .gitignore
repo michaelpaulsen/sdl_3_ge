@@ -367,3 +367,6 @@ FodyWeavers.xsd
 *.jpg
 *.kra
 *.bmp
+/sdl_3_ge/room_1.bin
+/sdl_3_ge/room_1.skr
+/sdl_3_ge/notes.txt
