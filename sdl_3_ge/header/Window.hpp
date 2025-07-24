@@ -287,6 +287,7 @@ namespace SKC::GE {
 					return texture.tex;
 				}
 			}
+			return (SDL_Texture *)nullptr; //return nullptr if not found
 		}
 		void draw_texture(SDL_Texture *txt) {
 			SDL_RenderTexture(m_renderer, txt, NULL, NULL);
