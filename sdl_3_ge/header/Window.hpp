@@ -44,13 +44,12 @@ namespace SKC::GE {
 			SDL_image_texture_wrapper operator=(SDL_image_texture_wrapper&& other) noexcept
 			{
 				if (this == &other) return std::move(*this); //self assignment check
-				tid = ++next_tid;
 				this->~SDL_image_texture_wrapper(); //destroy the current object
+				tid = ++next_tid;
 				this->path = other.path; //copy the path
 				this->tex = other.tex; //move the texture pointer
 				other.tex = nullptr; //nullify the other texture pointer
 				tex = other.tex;
-				other.tid = 0;
 				return std::move(*this); 
 			};
 
