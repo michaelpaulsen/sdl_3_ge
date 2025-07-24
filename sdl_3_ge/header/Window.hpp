@@ -258,8 +258,12 @@ namespace SKC::GE {
 			SDL_RenderPoint(m_renderer, x, y);
 		}
 		void clear() {
+			Uint8 r, g, b, a;
+			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
 			SDL_SetRenderDrawColor(m_renderer, m_background_color.r, m_background_color.g, m_background_color.b, m_background_color.a);
 			SDL_RenderClear(m_renderer);
+			SDL_SetRenderDrawColor(m_renderer, r, g, b, a);
+
 		};
 		void present() {
 			SDL_RenderPresent(m_renderer);
