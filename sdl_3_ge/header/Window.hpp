@@ -373,5 +373,25 @@ namespace SKC::GE {
 			SDL_DestroyTexture(text_texture);
 			return true;
 		}
+		bool render_text_centered_simple(std::string text,
+			TTF_Font* font,
+			float x, float y,
+			c_t r = 255, c_t g = 255, c_t b = 255, c_t a = 255) {
+			auto text_surface = TTF_RenderText_Blended(font,
+				text.c_str(), text.size(),
+				{ r,g,b,a });
+			if (!text_surface) return false;
+			auto texture_w = text_surface->w;
+			auto texture_h = text_surface->h;
+			auto text_texture = SDL_CreateTextureFromSurface(
+				m_renderer, text_surface);
+			//doing this here so that the surface gets freed 
+			//no matter what
+			SDL_DestroySurface(text_surface);
+			if (!text_texture) return false;
+			draw_texture(text_texture, Frect(x - (texture_w / 2.0f), y - (texture_h / 2.0f), (float)texture_w, (float)texture_h));
+			SDL_DestroyTexture(text_texture);
+			return true;
+		}
 	};
 }
