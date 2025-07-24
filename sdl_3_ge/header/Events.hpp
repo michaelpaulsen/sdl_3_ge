@@ -175,6 +175,7 @@ namespace SKC::GE {
 		bool m_window_is_minimized{ false }; 
 		bool m_has_key_event{ false }; 
 
+		int m_scroll_wheel_x{ 0 }, m_scroll_wheel_y{0};
 		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA};
 
 		key_mod m_keymod_state{}; 
@@ -239,7 +240,8 @@ namespace SKC::GE {
 		auto last_joy_pos_r() const noexcept { return m_last_joy_relitive_pos; }
 		auto mouse_position() const noexcept { return m_mouse_position; }
 		auto cursor_position() const noexcept { return m_cursor_position; }
-
+		auto scroll_wheel_x() const noexcept { return m_scroll_wheel_x; }
+		auto scroll_wheel_y() const noexcept { return m_scroll_wheel_y; }
 	
 		auto get_key_state(unsigned char key) const noexcept  {
 			try {
@@ -262,6 +264,9 @@ namespace SKC::GE {
 			m_window_resized = false;
 			m_system_theme_changed = false;
 			m_fullscreen_status = full_screen_state_change_t::NO_CHANGE;
+			m_scroll_wheel_y = 0;
+			m_scroll_wheel_x = 0;
+			
 			SDL_Event evnt{}; 
 			while (SDL_PollEvent(&evnt)) {
 				if constexpr (_use_IMGUI) {
@@ -380,6 +385,11 @@ namespace SKC::GE {
 							break;
 
 						}
+				case SDL_EVENT_MOUSE_WHEEL: {
+					m_scroll_wheel_x = evnt.wheel.x;
+					m_scroll_wheel_y = evnt.wheel.y;
+					break; 
+				}
 				case SDL_EVENT_TEXT_EDITING:
 				case SDL_EVENT_TEXT_INPUT:               /**< Keyboard text input */
 				case SDL_EVENT_KEYMAP_CHANGED: {
