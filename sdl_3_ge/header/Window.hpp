@@ -83,6 +83,7 @@ namespace SKC::GE {
 			SDL_DestroyRenderer(m_renderer);
 			SDL_DestroyWindow(m_window);
 		}
+#pragma region --The Non-rendering API--
 		
 		
 		/*
@@ -213,12 +214,12 @@ namespace SKC::GE {
 			SDL_GetRenderDrawColor(m_renderer, &color.r, &color.g, &color.b, &color.a); 
 			return color;  
 		}
-		
+#pragma endregion
 		/*
 		* --Intrinsics API-- 
 		* These are the functions that change the contents of the screen. 
 		*/
-		
+#pragma region --Intrinsics API--
 		void draw_rectangle(Frect rect) {
 			SDL_RenderRect(m_renderer, &rect);
 		}
@@ -269,7 +270,7 @@ namespace SKC::GE {
 			SDL_RenderPresent(m_renderer);
 		}
 		
-		
+#pragma endregion
 		/*
 		*--texture API-- 
 		*this is where all of the code 
@@ -281,6 +282,7 @@ namespace SKC::GE {
 		//once I am sure that all of the SDL functions are wrapped in the ID based API I will make this private.
 		//I make no guarantees that this will not cause a use after free error.
 		//Though it should not be possible based off of how classes work in C++.
+#pragma region --SDL_Texture* API--
 		auto get_tex_from_tid(size_t tid) {
 			for (const auto& texture : m_image_textures) {
 				if (texture == tid) {
@@ -289,6 +291,7 @@ namespace SKC::GE {
 			}
 			return (SDL_Texture *)nullptr; //return nullptr if not found
 		}
+		
 		void draw_texture(SDL_Texture *txt) {
 			SDL_RenderTexture(m_renderer, txt, NULL, NULL);
 		}
@@ -313,11 +316,11 @@ namespace SKC::GE {
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
 
 		}
-
+#pragma endregion
 //The ID based Texture format API 
 		//NOTE(skc): this is the API that you should be using by default. the only reason 
 		//you would use the SDL_Texture* API is if you are using a texture that is generated progrimatically.
-		
+#pragma region --ID based Texture API--
 		void draw_texture(size_t tid) {
 			auto txt = get_tex_from_tid(tid); 
 			if (!txt) return; 
@@ -348,12 +351,12 @@ namespace SKC::GE {
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
 
 		}
-
+#pragma endregion
 		/*
 		*--TEXT API--
 		* this is where all of the code for Text rendering goes
 		*/
-
+#pragma region --Text API--
 		bool render_text_simple(std::string text,
 			TTF_Font* font,
 			float x, float y,
@@ -394,5 +397,6 @@ namespace SKC::GE {
 			SDL_DestroyTexture(text_texture);
 			return true;
 		}
+#pragma endregion
 	};
 }
