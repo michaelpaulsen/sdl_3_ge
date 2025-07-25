@@ -73,6 +73,32 @@ namespace SKC::GE {
 		//font stuff. 
 		path_t m_font_dir; 
 		TTF_TextEngine* m_text_engine; 
+
+		SDL_Surface* blit_surface_with_resize(SDL_Surface* dst, SDL_Surface* src, int x, int y) {
+			int needed_width = x + src->w;
+			int needed_height = y + src->h;
+			//if we don't need to resize the window then we should just use the desination surface.
+			rect src_rect = { x,y,src->w,src->h }; 
+			if (!(needed_height > dst->h || needed_width > dst->w)) {
+				SDL_BlitSurface(src, NULL, dst, &src_rect);
+				return dst; 
+			}
+			//if we need to resize than create a new surface and cpy dst to it
+			if (needed_height < dst->h) needed_height = dst->h;
+			if (needed_width < dst->w) needed_width  = dst->w;
+
+			auto new_surface = SDL_CreateSurface(needed_width, needed_height, dst->format);
+			if (!new_surface) return dst; // if we cannot make a new surface than just return the old one 
+			//TODO(skc) : make this fail some way...
+			
+			SDL_BlitSurface(dst, NULL, new_surface, NULL);
+			SDL_BlitSurface(src, NULL, new_surface, &src_rect);
+			SDL_DestroySurface(dst); 
+			return new_surface; 
+
+			
+		}
+
 	public: 
 		window(std::string title, int  width, int height, SDL_WindowFlags flags) : m_width { width }, m_height{ height } {
 			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer);
