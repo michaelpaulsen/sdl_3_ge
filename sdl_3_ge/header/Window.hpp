@@ -3,11 +3,13 @@
 #include <filesystem>
 #include <map>
 #include <vector>
+#include <ranges>
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
+#include "font_options.hpp"
 #include "Color.hpp"
 namespace SKC::GE {
 
@@ -444,5 +446,91 @@ namespace SKC::GE {
 			return true;
 		}
 #pragma endregion
+		bool render_text(std::string text, TTF_Font* font, font_options options) {
+			std::vector<std::string> lines;
+
+			if (TTF_GetFontSize(font) <= 0) return false; 
+
+			if (text.empty())return false;
+
+			//if we are told to not seperate any lines then we just render the text as a single line
+			if(options.line_separator == font_options::LINE_SEPERATOR_NONE) {
+				//if the line separator is none then we just render the text as a single line
+				if (options.text_alignment == options.TEXT_ALIGNMENT_CENTER) {
+					return render_text_centered_simple(text, font, options.x, options.y, options.color.r, options.color.g, options.color.b, options.color.a);
+				}
+				return render_text_simple(text, font, options.x, options.y, options.color.r, options.color.g, options.color.b, options.color.a);
+			} 
+			namespace rng = std::ranges;
+			
+			namespace views = std::ranges::views;
+			if (options.line_separator == font_options::LINE_SEPARATOR_NEWLINE) {
+				lines = rng::to<std::vector<std::string>>(rng::views::split(text, '\n')
+					| views::transform([](auto&& str) { return std::string(str.begin(), str.end()); }));
+			}
+			else if (options.line_separator == font_options::LINE_SEPARATOR_CRLF) {
+				lines = rng::to<std::vector<std::string>>(rng::views::split(text, "\r\n")
+					| views::transform([](auto&& str) { return std::string(str.begin(), str.end()); }));
+			}
+			
+			auto line_y = 0; 
+			SDL_Surface* text_surface = nullptr;
+			for(const auto& line : lines) {
+				auto text_line_surface = TTF_RenderText_Blended(font, line.c_str(), line.size(),
+					{ options.color.r,options.color.g,options.color.b,options.color.a });
+				if(!text_line_surface) {
+					//TODO(skc) : handle error
+					return false; 
+				}
+				if(!text_surface) {
+					text_surface = SDL_CreateSurface(text_line_surface->w, text_line_surface->h, text_line_surface->format);
+					SDL_BlitSurface(text_line_surface, NULL, text_surface, NULL);
+					if (!text_surface) { return false; } 
+				}
+				else {
+					auto x = 0;
+					if(options.text_alignment == font_options::TEXT_ALIGNMENT_CENTER) {
+						auto tw1 = text_surface->w, tw2 = text_line_surface->w;
+						if(tw1 != tw2) {
+							x = (tw1 - tw2)/2; //center the text
+						}
+					}
+					text_surface = blit_surface_with_resize(text_surface, text_line_surface, x, line_y);
+				}
+				
+				if(options.line_height_mode == font_options::LINE_HEIGHT_MODE_ADDITIVE) {
+					line_y += TTF_GetFontSize(font) + options.line_hight; //add the line height to the y position
+				}
+				else if (options.line_height_mode == font_options::LINE_HEIGHT_MODE_MULTIPLICATIVE) {
+					line_y += TTF_GetFontSize(font) * options.line_hight; //add the line height to the y position
+
+				}
+				SDL_DestroySurface(text_line_surface);
+			}
+			if (!text_surface) return false;
+			auto texture_w = text_surface->w;
+			auto texture_h = text_surface->h;
+			auto text_texture = SDL_CreateTextureFromSurface(m_renderer, text_surface);
+			//doing this here so that the surface gets freed
+			//no matter what
+			SDL_DestroySurface(text_surface);
+			if (!text_texture) return false;
+			Frect pos = {options.x, options.y, (float)texture_w, (float)texture_h };
+			if(options.text_alignment == font_options::TEXT_ALIGNMENT_CENTER) {
+				pos.x -= (texture_w / 2.0f);
+				
+			}
+			else if(options.text_alignment == font_options::TEXT_ALIGNMENT_RIGHT) {
+				pos.x -= texture_w; //move the x position to the right
+			}
+			if(options.text_alignment == font_options::LINE_ALIGNMENT_BOTTOM) {
+				pos.y -= texture_h;
+			}else if(options.text_alignment == font_options::LINE_ALIGNMENT_CENTER) {
+				pos.y -= (texture_h / 2.0f);
+			}
+			auto rt = SDL_RenderTexture(m_renderer, text_texture, NULL, &pos);
+			SDL_DestroyTexture(text_texture);
+			return rt; 
+		}
 	};
 }
