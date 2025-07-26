@@ -1,10 +1,13 @@
 #pragma once
 #include <string>
 #include <filesystem>
+#include <map>
+#include <vector>
+
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
-#include <map>
-//this is where the color stuff is stored. 
+#include <SDL3_ttf/SDL_ttf.h>
+
 #include "Color.hpp"
 namespace SKC::GE {
 
@@ -58,7 +61,6 @@ namespace SKC::GE {
 			bool operator== (size_t other) const { return tid == other; }
 
 		};
-	protected: 
 		using c_t = Uint8;
 		std::vector< SDL_image_texture_wrapper> m_image_textures{};
 		int m_x{}, m_y{}, m_width, m_height;
