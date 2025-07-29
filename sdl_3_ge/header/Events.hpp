@@ -174,6 +174,7 @@ namespace SKC::GE {
 		bool m_system_theme_changed{ false }; 
 		bool m_window_is_minimized{ false }; 
 		bool m_has_key_event{ false }; 
+		bool m_mouse_focus{ false }; 
 
 		int m_scroll_wheel_x{ 0 }, m_scroll_wheel_y{0};
 		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA};
@@ -221,6 +222,8 @@ namespace SKC::GE {
 		bool has_dropped_data() const noexcept { return m_dropped_data_type != drop_event_data_type_t::NO_DROPPED_DATA; }
 		bool has_key_event() const noexcept { return m_has_key_event; }
 		bool window_resized() const noexcept { return m_window_resized; }
+		bool mouse_focus() const noexcept { return m_mouse_focus; }
+
 		//NOTE(skc) : this is not const because it is kinda important to not ignore the user when they
 		// drop something into the aplication so the flag is only cleared when the consumer calls this function.	
 		//NOTE(skc) :IF YOU'RE TRYING TO ACCEPT DATA FROM "DROP" EVENTS CALL THIS EVERY FRAME DO NOT
@@ -388,6 +391,15 @@ namespace SKC::GE {
 				case SDL_EVENT_MOUSE_WHEEL: {
 					m_scroll_wheel_x = evnt.wheel.x;
 					m_scroll_wheel_y = evnt.wheel.y;
+					break; 
+				}
+				case SDL_EVENT_WINDOW_MOUSE_ENTER: {
+					m_mouse_focus = true;
+					break; 
+				}
+				case SDL_EVENT_WINDOW_MOUSE_LEAVE: 
+				{
+					m_mouse_focus = false;
 					break; 
 				}
 				case SDL_EVENT_TEXT_EDITING:
