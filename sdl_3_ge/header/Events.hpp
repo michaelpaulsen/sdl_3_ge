@@ -341,6 +341,18 @@ namespace SKC::GE {
 					auto down = keyevnt.down;
 					auto repeat = keyevnt.repeat;
 					m_keymod_state = key_mod(keyevnt.mod);
+					if (key == SDLK_EQUALS) {
+						m_key_states.at(U32('+')) = { down,repeat };
+						m_key_states.at(U32('=')) = { down,repeat };
+						break; 
+					}
+					if (key == SDLK_ASTERISK || key == SDLK_KP_MULTIPLY) {
+						m_key_states.at(U32('*')) = { down, repeat };
+						break;
+					}
+					//std::println("{}", (char)key); 
+					
+					
 					if (key < 256) {
 						m_key_states.at(key) = { down,repeat };
 						break; 
@@ -384,6 +396,16 @@ namespace SKC::GE {
 						m_key_states.at(key) = { down,repeat };
 								break; 
 							}
+					if(key == SDLK_LALT || key == SDLK_RALT) {
+						break; 
+					}
+					if (key == SDLK_LCTRL || key == SDLK_RCTRL) {
+						break;
+					}
+					if (key == SDLK_MENU || key == SDLK_CAPSLOCK) {
+						break;
+					}
+					
 							std::print("UNKNOWN EXSTENDED KEY CODE 0x{:>0x}\r", key);
 							break;
 
