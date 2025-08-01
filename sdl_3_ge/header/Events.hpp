@@ -136,13 +136,13 @@ namespace SKC::GE {
 
 	};
 
-		enum struct full_screen_state_change_t : unsigned char {
+	enum struct full_screen_state_change_t : unsigned char {
 			NO_CHANGE,
 			EXITED_FULLSCREEN,
 			ENTERED_FULL_SCREEN
 
 		};
-		enum struct drop_event_data_type_t: unsigned char {
+	enum struct drop_event_data_type_t: unsigned char {
 			NO_DROPPED_DATA,
 			FILE_DATA,
 			TEXT_DATA
@@ -176,7 +176,7 @@ namespace SKC::GE {
 		bool m_has_key_event{ false }; 
 		bool m_mouse_focus{ false }; 
 
-		int m_scroll_wheel_x{ 0 }, m_scroll_wheel_y{0};
+		float m_scroll_wheel_x{ 0 }, m_scroll_wheel_y{0};
 		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA};
 
 		key_mod m_keymod_state{}; 
@@ -362,26 +362,26 @@ namespace SKC::GE {
 					//the consumer may still have contextual reasons to treat the arrow keys differently 
 					//while still wanting them to alias their respective keys. 
 					if (key == SDLK_LEFT) {
-							if (arrow_keys_alias_WASD) m_key_states.at(U32('a')) = { keyevnt.down,keyevnt.repeat }; 
+						if (arrow_keys_alias_WASD) m_key_states.at(U32('a')) = { keyevnt.down,keyevnt.repeat }; 
 						m_arrow_state.at(UZ(arrow_direction_t::LEFT)) = { down, repeat };
-							break; 
-						}
+						break; 
+					}
 					if (key == SDLK_RIGHT) {
 						if (arrow_keys_alias_WASD) m_key_states.at(U32('d')) = { down,repeat };
 						m_arrow_state.at(UZ(arrow_direction_t::RIGHT)) = { down, repeat };
-							break;
-						}
+						break;
+					}
 					if (key == SDLK_UP) {
 						if (arrow_keys_alias_WASD) m_key_states.at(U32('w')) = { down,repeat };
 						m_arrow_state.at(UZ(arrow_direction_t::UP)) = { down, repeat };
-							break;
-						}
+						break;
+					}
 					if (key == SDLK_DOWN) {
 						if (arrow_keys_alias_WASD) m_key_states.at(U32('s')) = { down,repeat };
 						m_arrow_state.at(UZ(arrow_direction_t::DOWN)) = { down, repeat };
-							break;
-						}
-								
+						break;
+					}
+					
 					//NOTE(skc) : for some reason the char codes for the KP are 
 					//1234567890 not the ASCII layout of 0123456789 ... 
 					//this takes the key code and sets the respective bit
@@ -394,8 +394,8 @@ namespace SKC::GE {
 					if (key >= SDLK_KP_1 && key < SDLK_KP_0) {
 						key = '1' + ( key - SDLK_KP_1);
 						m_key_states.at(key) = { down,repeat };
-								break; 
-							}
+						break; 
+					}
 					if(key == SDLK_LALT || key == SDLK_RALT) {
 						break; 
 					}
@@ -406,10 +406,10 @@ namespace SKC::GE {
 						break;
 					}
 					
-							std::print("UNKNOWN EXSTENDED KEY CODE 0x{:>0x}\r", key);
-							break;
+					std::print("UNKNOWN EXSTENDED KEY CODE 0x{:>0x}\r", key);
+					break;
 
-						}
+				}
 				case SDL_EVENT_MOUSE_WHEEL: {
 					m_scroll_wheel_x = evnt.wheel.x;
 					m_scroll_wheel_y = evnt.wheel.y;
@@ -427,11 +427,11 @@ namespace SKC::GE {
 				case SDL_EVENT_TEXT_EDITING:
 				case SDL_EVENT_TEXT_INPUT:               /**< Keyboard text input */
 				case SDL_EVENT_KEYMAP_CHANGED: {
-					std::print("KB event not handled {:#>04x}\r", type);
+					std::print("KB event not handled 0x{:>04x}\r", type);
 					break;
 				}
 				default: {
-					std::print(" unhandled event type {:#>04x}\r", type);
+					std::print(" unhandled event type 0x{:>04X}\r", type);
 					break;
 				}
 				}

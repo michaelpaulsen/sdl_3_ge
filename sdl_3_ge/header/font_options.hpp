@@ -3,7 +3,7 @@
 namespace SKC::GE {
 
 	struct font_options {
-		double line_hight, x, y;
+		float line_hight, x, y;
 		color color;
 
 		enum line_hight_mode : uint8_t {

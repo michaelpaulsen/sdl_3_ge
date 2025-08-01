@@ -146,7 +146,7 @@ namespace SKC::GE {
 			return m_renderer; 
 		}
 		
-		[[depercated ("CREATE AN IMAGE TEXTURE INSTEAD")]] auto create_surface() {
+		auto create_surface() {
 			int s_width = (int)m_width / (int)m_scale_x; 
 			int s_height = (int)m_height / (int)(int)m_scale_y;
 			if (s_width <= 0) s_width = 100;
@@ -473,7 +473,7 @@ namespace SKC::GE {
 					| views::transform([](auto&& str) { return std::string(str.begin(), str.end()); }));
 			}
 			
-			auto line_y = 0; 
+			float line_y = 0; 
 			SDL_Surface* text_surface = nullptr;
 			for(const auto& line : lines) {
 				auto text_line_surface = TTF_RenderText_Blended(font, line.c_str(), line.size(),
@@ -495,7 +495,7 @@ namespace SKC::GE {
 							x = (tw1 - tw2)/2; //center the text
 						}
 					}
-					text_surface = blit_surface_with_resize(text_surface, text_line_surface, x, line_y);
+					text_surface = blit_surface_with_resize(text_surface, text_line_surface, x, (int)line_y);
 				}
 				
 				if(options.line_height_mode == font_options::LINE_HEIGHT_MODE_ADDITIVE) {
