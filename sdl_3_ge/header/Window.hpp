@@ -359,26 +359,32 @@ namespace SKC::GE {
 		}
 		void draw_texture(size_t tid, Frect pos) {
 			auto txt = get_tex_from_tid(tid);
+			if (!txt) return;
 			SDL_RenderTexture(m_renderer, txt, NULL, &pos);
 		}
 		void draw_texture(size_t tid, Frect pos, Frect atlas_pos) {
 			auto txt = get_tex_from_tid(tid);
+			if (!txt) return;
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos);
 		}
 		void draw_texture_with_afine_transform(size_t tid, Fpoint tl, Fpoint tr, Fpoint bl) {
 			auto txt = get_tex_from_tid(tid);
+			if (!txt) return;
 			SDL_RenderTextureAffine(m_renderer, txt, NULL, &tl, &tr, &bl);
 		}
 		void draw_texture_rotated(size_t tid, Frect atlas_pos, Frect pos, double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
 			auto txt = get_tex_from_tid(tid);
+			if (!txt) return;
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, NULL, flip);
 		}
 		void draw_texture_rotated(size_t tid, const Frect pos, const double angle, const SDL_FlipMode flip = SDL_FLIP_NONE) {
 			auto txt = get_tex_from_tid(tid);
+			if (!txt) return;
 			SDL_RenderTextureRotated(m_renderer, txt, NULL, &pos, angle, NULL, flip);
 		}
 		void draw_texture_rotated(size_t tid, const Frect atlas_pos, const Frect pos, const Fpoint center, const double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
 			auto txt = get_tex_from_tid(tid);
+			if (!txt) return;
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
 
 		}
