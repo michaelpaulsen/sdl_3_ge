@@ -352,6 +352,16 @@ namespace SKC::GE {
 		//NOTE(skc): this is the API that you should be using by default. the only reason 
 		//you would use the SDL_Texture* API is if you are using a texture that is generated progrimatically.
 #pragma region --ID based Texture API--
+		auto get_texture_width(size_t tid) {
+			auto txt = get_tex_from_tid(tid);
+			if(!txt) return 0; //if the texture is not found then return 0
+			return txt->w; 
+		}
+		auto get_texture_height(size_t tid) {
+			auto txt = get_tex_from_tid(tid);
+			if (!txt) return 0; //if the texture is not found then return 0
+			return txt->h;
+		}
 		void draw_texture(size_t tid) {
 			auto txt = get_tex_from_tid(tid); 
 			if (!txt) return; 
