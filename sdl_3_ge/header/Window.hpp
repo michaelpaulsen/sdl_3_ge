@@ -145,23 +145,6 @@ namespace SKC::GE {
 		auto get_renderer() {
 			return m_renderer; 
 		}
-		
-		auto create_surface() {
-			int s_width = (int)m_width / (int)m_scale_x; 
-			int s_height = (int)m_height / (int)(int)m_scale_y;
-			if (s_width <= 0) s_width = 100;
-			if (s_height <= 0) s_height = 100;
-			//TODO(skc) support Different pixel formats. 
-			//NOTE(skc) : yes this does matter... 
-			//TODO(skc) make wrapper class that automatically frees the surface.
-			if constexpr (SDL_BYTEORDER == SDL_LIL_ENDIAN) {
-				return SDL_CreateSurface(s_width, s_height, SDL_PIXELFORMAT_ABGR8888);
-			}
-			else {
-				return SDL_CreateSurface(s_width, s_height, SDL_PIXELFORMAT_RGBA8888);
-			}
-		}
-		
 		void enable_screen_saver() {
 			SDL_EnableScreenSaver();
 			m_is_screen_saver_enabled = true; 
