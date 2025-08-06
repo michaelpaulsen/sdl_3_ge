@@ -196,6 +196,7 @@ namespace SKC::GE {
 		SKC::Math::Vect2d m_cursor_position{ 0,0 };
 		SKC::Math::Vect2d m_last_joy_relitive_pos{ 0,0 };
 		SKC::Math::Vect2d m_last_mouse_pos{ 0,0 };
+		SKC::Math::Vect2d m_last_mouse_rel_pos{ 0,0 };
 		SKC::Math::Vect2d m_drag_vector{ 0,0 };		
 		SKC::Math::Vect2d m_scroll_wheel_pos{ 0,0 };
 		state_array_t<keyevent_state_t> m_key_states{};
@@ -208,7 +209,6 @@ namespace SKC::GE {
 			LEFT_MOUSE_BUTTON,
 			MIDDLE_MOUSE_BUTTON
 		};
-		
 		
 		event_handler() = default; 
 		~event_handler() = default;
@@ -256,6 +256,7 @@ namespace SKC::GE {
 		auto entered_full_screen() const noexcept { return m_fullscreen_status; }
 		auto last_joy_pos_r() const noexcept { return m_last_joy_relitive_pos; }
 		auto mouse_position() const noexcept { return m_mouse_position; }
+		auto relative_mouse_position() const noexcept { return m_last_mouse_rel_pos; }
 		auto cursor_position() const noexcept { return m_cursor_position; }
 		auto drag_vector() const noexcept { return m_drag_vector; }
 		auto scroll_wheel_pos() const noexcept { return m_scroll_wheel_pos; }
@@ -282,7 +283,7 @@ namespace SKC::GE {
 			m_system_theme_changed = false;
 			m_fullscreen_status = full_screen_state_change_t::NO_CHANGE;
 			m_scroll_wheel_pos = { 0,0 };
-			
+			m_last_mouse_rel_pos = { 0,0 }; 
 			SDL_Event evnt{}; 
 			while (SDL_PollEvent(&evnt)) {
 				if constexpr (_use_IMGUI) {
@@ -290,6 +291,7 @@ namespace SKC::GE {
 				}
 				auto type = evnt.type; 
 				switch (evnt.type) {
+#pragma region ==MISC EVENTS==
 				case SDL_EVENT_QUIT: 
 				case SDL_EVENT_RENDER_DEVICE_LOST: {
 					m_quit = true; 
@@ -299,6 +301,7 @@ namespace SKC::GE {
 					m_system_theme_changed = true; 
 					break; 
 				}
+#pragma endregion
 #pragma region ==SDL_WINDOW_EVENTS==
 				case SDL_EVENT_WINDOW_MINIMIZED:
 				case SDL_EVENT_WINDOW_HIDDEN: {
@@ -331,15 +334,17 @@ namespace SKC::GE {
 					m_window_resized = true; 
 					break; 
 				}
+#pragma endregion
+#pragma region ==MOUSE EVENTS ==
 //===MOUSE EVENTS ===//
 				case SDL_EVENT_MOUSE_MOTION: {
 					auto x = evnt.motion.x, y = evnt.motion.y; 
-					m_mouse_position = { x, y};
+					auto xrel = evnt.motion.xrel, yrel = evnt.motion.yrel;
+					m_mouse_position = { x, y };
 					m_cursor_position = { x, y };
+					m_last_mouse_rel_pos = { xrel,yrel };
 					break; 
 				}
-				
-				
 				case SDL_EVENT_MOUSE_BUTTON_DOWN: 
 				{
 					auto button = evnt.button;
@@ -372,7 +377,9 @@ namespace SKC::GE {
 					m_mouse_focus = false;
 					break; 
 				}
-//===EYBOARD EVENTS===//
+#pragma endregion
+#pragma region ===KEYBOARD EVENTS===
+				//===KEYBOARD EVENTS===//
 				case SDL_EVENT_KEY_DOWN:
 				case SDL_EVENT_KEY_UP : {
 					m_has_key_event = true; 
@@ -449,12 +456,16 @@ namespace SKC::GE {
 					break;
 
 				}
+#pragma endregion
+#pragma region ===TEXT INPUT EVENTS===	
+				//===TEXT INPUT EVENTS===	
 				case SDL_EVENT_TEXT_EDITING:
 				case SDL_EVENT_TEXT_INPUT:               /**< Keyboard text input */
 				case SDL_EVENT_KEYMAP_CHANGED: {
 					std::print("KB event not handled 0x{:>04x}\r", type);
 					break;
 				}
+#pragma endregion
 				default: {
 					std::print(" unhandled event type 0x{:>04X}\r", type);
 					break;
