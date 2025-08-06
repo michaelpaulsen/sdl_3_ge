@@ -164,6 +164,11 @@ namespace SKC::GE {
 			bool down;              
 			bool repeat;
 		};
+		struct mouse_button_state_t {
+			Uint8 clicks;
+			bool down;
+			float x, y;
+		};
 		template<typename state_t> 
 		using state_array_t = std::array<state_t, 256>;
 		template<size_t size>
@@ -175,29 +180,34 @@ namespace SKC::GE {
 		bool m_window_is_minimized{ false }; 
 		bool m_has_key_event{ false }; 
 		bool m_mouse_focus{ false }; 
+		bool m_is_dragging{ false };
+		bool m_has_started_dragging{ false };
 
-		float m_scroll_wheel_x{ 0 }, m_scroll_wheel_y{0};
-		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA};
+		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA };
 
 		key_mod m_keymod_state{}; 
 		full_screen_state_change_t m_fullscreen_status{ 0 };
 		std::string m_last_dropped_data{}; 
+		std::array<mouse_button_state_t, 256> m_mouse_keys;
 
 		//NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS 
 		//where as m_mouse_position is the raw mouse position.
-		//the way that this is updated makes it theroetically possible to miss imputs when the same input is 
-		//inputed more than once a frame but even at 30 fps that is nearly imposible
-		//+ I think that every GE in existance has a simular system... 
 		SKC::Math::Vect2d m_mouse_position{ 0,0 };
 		SKC::Math::Vect2d m_cursor_position{ 0,0 };
 		SKC::Math::Vect2d m_last_joy_relitive_pos{ 0,0 };
-		
+		SKC::Math::Vect2d m_last_mouse_pos{ 0,0 };
+		SKC::Math::Vect2d m_drag_vector{ 0,0 };		
+		SKC::Math::Vect2d m_scroll_wheel_pos{ 0,0 };
 		state_array_t<keyevent_state_t> m_key_states{};
-		state_array_t<bool> m_mouse_button_states{};
 
 		key_state_array_t<UZ(arrow_direction_t::MAX)> m_arrow_state{};
 		
 	public : 
+		enum {
+			RIGHT_MOUSE_BUTTON = 1,
+			LEFT_MOUSE_BUTTON,
+			MIDDLE_MOUSE_BUTTON
+		};
 		
 		
 		event_handler() = default; 
@@ -223,6 +233,8 @@ namespace SKC::GE {
 		bool has_key_event() const noexcept { return m_has_key_event; }
 		bool window_resized() const noexcept { return m_window_resized; }
 		bool mouse_focus() const noexcept { return m_mouse_focus; }
+		bool is_dragging() const noexcept { return m_is_dragging; }
+		bool has_started_dragging() const noexcept { return m_has_started_dragging; }
 
 		//NOTE(skc) : this is not const because it is kinda important to not ignore the user when they
 		// drop something into the aplication so the flag is only cleared when the consumer calls this function.	
@@ -233,7 +245,9 @@ namespace SKC::GE {
 			m_dropped_data_type = drop_event_data_type_t::NO_DROPPED_DATA; 
 			return ret ; 
 		}
-		 
+		auto get_mouse_button_state(unsigned char button) const {
+			return m_mouse_keys.at(UZ(button));
+		}
 		auto get_arrow_key_state(arrow_direction_t arrow) const {
 			if (arrow == arrow_direction_t::MAX) return keyevent_state_t{ false,false };
 			return m_arrow_state.at(UZ(arrow));
@@ -243,8 +257,8 @@ namespace SKC::GE {
 		auto last_joy_pos_r() const noexcept { return m_last_joy_relitive_pos; }
 		auto mouse_position() const noexcept { return m_mouse_position; }
 		auto cursor_position() const noexcept { return m_cursor_position; }
-		auto scroll_wheel_x() const noexcept { return m_scroll_wheel_x; }
-		auto scroll_wheel_y() const noexcept { return m_scroll_wheel_y; }
+		auto drag_vector() const noexcept { return m_drag_vector; }
+		auto scroll_wheel_pos() const noexcept { return m_scroll_wheel_pos; }
 	
 		auto get_key_state(unsigned char key) const noexcept  {
 			try {
@@ -262,13 +276,12 @@ namespace SKC::GE {
 		}
 
 		void pollevents() noexcept {
-
+			m_has_started_dragging = false;
 			m_has_key_event = false; 
 			m_window_resized = false;
 			m_system_theme_changed = false;
 			m_fullscreen_status = full_screen_state_change_t::NO_CHANGE;
-			m_scroll_wheel_y = 0;
-			m_scroll_wheel_x = 0;
+			m_scroll_wheel_pos = { 0,0 };
 			
 			SDL_Event evnt{}; 
 			while (SDL_PollEvent(&evnt)) {
@@ -286,7 +299,7 @@ namespace SKC::GE {
 					m_system_theme_changed = true; 
 					break; 
 				}
-				//MOUSE EVENTS
+#pragma region ==SDL_WINDOW_EVENTS==
 				case SDL_EVENT_WINDOW_MINIMIZED:
 				case SDL_EVENT_WINDOW_HIDDEN: {
 					m_window_is_minimized = true;
@@ -328,8 +341,35 @@ namespace SKC::GE {
 				
 				
 				case SDL_EVENT_MOUSE_BUTTON_DOWN: 
+				{
+					auto button = evnt.button;
+					mouse_button_state_t state = { button.clicks, button.down, button.x, button.y };
+					m_mouse_keys.at(UZ(button.button)) = state;
+					if (button.button == 1) {
+						m_has_started_dragging = true;
+						m_is_dragging = true;
+						m_last_mouse_pos = { static_cast<double>(button.x), static_cast<double>(button.y) };
+					}
+					break;
+				}
 				case SDL_EVENT_MOUSE_BUTTON_UP: {
-					
+					auto button = evnt.button;
+					mouse_button_state_t state = { button.clicks, button.down, static_cast<float>(button.x), static_cast<float>(button.y) };
+					m_mouse_keys.at(UZ(button.button)) = state;
+					m_is_dragging = false;
+					break;
+				}
+				case SDL_EVENT_MOUSE_WHEEL: {
+					m_scroll_wheel_pos = { evnt.wheel.x,  evnt.wheel.y };
+					break;
+				}
+				case SDL_EVENT_WINDOW_MOUSE_ENTER: {
+					m_mouse_focus = true;
+					break;
+				}
+				case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+				{
+					m_mouse_focus = false;
 					break; 
 				}
 //===EYBOARD EVENTS===//
@@ -350,7 +390,6 @@ namespace SKC::GE {
 						m_key_states.at(U32('*')) = { down, repeat };
 						break;
 					}
-					//std::println("{}", (char)key); 
 					
 					
 					if (key < 256) {
@@ -410,20 +449,6 @@ namespace SKC::GE {
 					break;
 
 				}
-				case SDL_EVENT_MOUSE_WHEEL: {
-					m_scroll_wheel_x = evnt.wheel.x;
-					m_scroll_wheel_y = evnt.wheel.y;
-					break; 
-				}
-				case SDL_EVENT_WINDOW_MOUSE_ENTER: {
-					m_mouse_focus = true;
-					break; 
-				}
-				case SDL_EVENT_WINDOW_MOUSE_LEAVE: 
-				{
-					m_mouse_focus = false;
-					break; 
-				}
 				case SDL_EVENT_TEXT_EDITING:
 				case SDL_EVENT_TEXT_INPUT:               /**< Keyboard text input */
 				case SDL_EVENT_KEYMAP_CHANGED: {
@@ -435,6 +460,13 @@ namespace SKC::GE {
 					break;
 				}
 				}
+			}
+			if (m_is_dragging) {
+				m_drag_vector = m_mouse_position - m_last_mouse_pos;
+				m_last_mouse_pos = m_mouse_position; 
+				}
+			else {
+				m_drag_vector = { 0,0 };
 			}
 		}
 	}; 
