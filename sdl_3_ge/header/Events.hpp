@@ -180,6 +180,7 @@ namespace SKC::GE {
 		template<size_t size>
 		using key_state_array_t = std::array<keyevent_state_t, size>;
 
+		char m_last_key =0; 
 		bool m_window_resized{ false }; 
 		bool m_quit{ false }; 
 		bool m_system_theme_changed{ false }; 
@@ -273,6 +274,9 @@ namespace SKC::GE {
 			CATCH_FINAL
 			}
 
+		char get_last_key() const noexcept {
+			return m_last_key; 
+		}
 		void pollevents() noexcept {
 			m_has_started_dragging = false;
 			m_has_key_event = false; 
@@ -398,6 +402,12 @@ namespace SKC::GE {
 					
 					if (key < 256) {
 						m_key_states.at(key) = { down,repeat };
+						if (evnt.type == SDL_EVENT_KEY_DOWN && !repeat) {
+							m_last_key = (char)key; 
+						}
+						else {
+							m_last_key = 0; 
+						}
 						break; 
 					}
 
