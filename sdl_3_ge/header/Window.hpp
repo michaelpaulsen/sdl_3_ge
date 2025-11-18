@@ -11,6 +11,7 @@
 
 #include "font_options.hpp"
 #include "Color.hpp"
+#include "Vector.hpp"
 namespace SKC::GE {
 
 	
@@ -199,11 +200,14 @@ namespace SKC::GE {
 		}
 		
 		void get_window_dimentions(int& width, int& height) const {
-			width = m_width;
-			height = m_height;
+			SDL_GetWindowSize(m_window, &width, &height); 
+		}
+		SKC::Math::Vect2i get_window_dimentions() const {
+			int w, h;
+			SDL_GetWindowSize(m_window, &w, &h);
+			return { w,h }; 
 		}
 
-		
 		void set_background_color(color other) {
 			m_background_color = other;
 		}
