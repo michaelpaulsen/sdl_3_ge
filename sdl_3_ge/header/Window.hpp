@@ -139,6 +139,18 @@ namespace SKC::GE {
 		* this is where the getters and setters are
 		* this is all code that isn't involved directly with the rendering
 		*/
+		bool save_BMPscreenshot(std::filesystem::path pth) {
+			auto pix_format = SDL_GetWindowSurface(m_window);
+			auto render_data = SDL_RenderReadPixels(m_renderer,NULL); 
+			auto surface = SDL_CreateSurfaceFrom(
+				pix_format->w, pix_format->h,
+				render_data->format, render_data->pixels, 
+				render_data->pitch);
+			auto ret = SDL_SaveBMP(surface, pth.generic_string().c_str());
+			SDL_DestroySurface(surface);
+			SDL_DestroySurface(render_data);
+			return ret;
+		}
 		auto get_window_surface() {
 			return SDL_GetWindowSurface(m_window); 
 		}
