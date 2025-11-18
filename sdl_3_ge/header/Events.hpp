@@ -27,6 +27,12 @@
 #ifndef UZ
 #define UZ static_cast<size_t>
 #endif // !U32
+//TODO(skc) : move this to its own file or something. 
+#define CATCH_FINAL catch (...) {\
+auto stack_trace = std::stacktrace::current(0);\
+std::print("error {}\nat\n\t{}", "YOU BROKE ME! I HAVE NO IDEA HOW YOU DID, BUT I AM BROKEN NOW!", stack_trace);\
+std::exit(-1); \
+}
 
 namespace SKC::GE {
 	//TODO(skc) : this file is kinda getting long.
@@ -260,21 +266,12 @@ namespace SKC::GE {
 		auto cursor_position() const noexcept { return m_cursor_position; }
 		auto drag_vector() const noexcept { return m_drag_vector; }
 		auto scroll_wheel_pos() const noexcept { return m_scroll_wheel_pos; }
-	
 		auto get_key_state(unsigned char key) const noexcept  {
 			try {
 				return m_key_states.at(UZ(key));
 			}
-			catch (...) {
-				//TODO(skc) : make a macro outa this... 
-				auto stack_trace = std::stacktrace::current(0);
-				std::print("error {}\nat\n\t{}", "YOU BROKE ME! I HAVE NO IDEA HOW YOU DID, BUT I AM BROKEN NOW!", stack_trace);
-				
-				//this should crash because it should be litterally mathmatically imposible to reach this... 
-				assert(false);
-				return keyevent_state_t{ false, false };
+			CATCH_FINAL
 			}
-		}
 
 		void pollevents() noexcept {
 			m_has_started_dragging = false;
