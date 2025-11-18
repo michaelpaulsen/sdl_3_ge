@@ -456,9 +456,27 @@ namespace SKC::GE {
 			if(options.line_separator == font_options::LINE_SEPERATOR_NONE) {
 				//if the line separator is none then we just render the text as a single line
 				if (options.text_alignment == options.TEXT_ALIGNMENT_CENTER) {
-					return render_text_centered_simple(text, font, options.x, options.y, options.color.r, options.color.g, options.color.b, options.color.a);
+					return render_text_centered_simple(
+						text,
+						font,
+						options.x,
+						options.y,
+						options.color.r,
+						options.color.g,
+						options.color.b,
+						options.color.a
+					);
 				}
-				return render_text_simple(text, font, options.x, options.y, options.color.r, options.color.g, options.color.b, options.color.a);
+				return render_text_simple(
+					text,
+					font,
+					options.x,
+					options.y,
+					options.color.r,
+					options.color.g,
+					options.color.b,
+					options.color.a
+				);
 			} 
 			namespace rng = std::ranges;
 			
@@ -509,23 +527,52 @@ namespace SKC::GE {
 			if (!text_surface) return false;
 			auto texture_w = text_surface->w;
 			auto texture_h = text_surface->h;
+			if (options.width != 0) texture_w = (int)options.width;
+			if (options.height != 0) texture_h = (int)options.height;
 			auto text_texture = SDL_CreateTextureFromSurface(m_renderer, text_surface);
 			//doing this here so that the surface gets freed
 			//no matter what
 			SDL_DestroySurface(text_surface);
 			if (!text_texture) return false;
 			Frect pos = {options.x, options.y, (float)texture_w, (float)texture_h };
-			if(options.text_alignment == font_options::TEXT_ALIGNMENT_CENTER) {
-				pos.x -= (texture_w / 2.0f);
-				
-			}
-			else if(options.text_alignment == font_options::TEXT_ALIGNMENT_RIGHT) {
-				pos.x -= texture_w; //move the x position to the right
-			}
-			if(options.text_alignment == font_options::LINE_ALIGNMENT_BOTTOM) {
-				pos.y -= texture_h;
-			}else if(options.text_alignment == font_options::LINE_ALIGNMENT_CENTER) {
-				pos.y -= (texture_h / 2.0f);
+			/*
+			   anchor point translation
+			---------------------------
+				AP_FLOATING (w*ox, h*oy)
+				AP_TOP_LEFT ( 0  ,  0  )
+			 AP_CENTER_LEFT	( 0  , -h/2)
+			 AP_BOTTOM_LEFT	( 0  , -h  ) 
+			   AP_TOP_RIGHT (-w  ,  0  )
+			AP_CENTER_RIGHT (-w  , -h/2)
+			AP_BOTTOM_RIGHT (-w  , -h  )
+			      AP_CENTER (-w/2, -h/2)
+			*/
+			switch (options.anchor_point) {
+			case font_options::AP_FLOATING:
+				pos.x += options.positionoffset_x * texture_w;
+				pos.y += options.positionoffset_y * texture_h;
+				break;
+				case font_options::AP_CENTER_LEFT:
+					pos.y -= (float)(texture_h) / 2.0f;
+					break;
+				case font_options::AP_BOTTOM_LEFT:
+					pos.y -= (float)(texture_h);
+					break;
+				case font_options::AP_TOP_RIGHT:
+					pos.x -= (float)(texture_w);
+					break;
+				case font_options::AP_CENTER_RIGHT:
+					pos.x -= (float)(texture_w);
+					pos.y -= (float)(texture_h) / 2.0f;
+					break;
+				case font_options::AP_BOTTOM_RIGHT:
+					pos.x -= (float)(texture_w);
+					pos.y -= (float)(texture_h);
+					break;
+				case font_options::AP_CENTER:
+					pos.x -= (float)(texture_w) / 2.0f;
+					pos.y -= (float)(texture_h) / 2.0f;
+					break;
 			}
 			auto rt = SDL_RenderTexture(m_renderer, text_texture, NULL, &pos);
 			SDL_DestroyTexture(text_texture);

@@ -3,7 +3,8 @@
 namespace SKC::GE {
 
 	struct font_options {
-		float line_hight, x, y;
+		float line_hight{ 1 }, x, y, positionoffset_x positionoffset_y;
+		unsigned int width, height;
 		color color;
 
 		enum line_hight_mode : uint8_t {
@@ -25,6 +26,15 @@ namespace SKC::GE {
 			LINE_SEPARATOR_NEWLINE,  //newline separator
 			LINE_SEPARATOR_CRLF,     //space separator
 		} line_separator{ LINE_SEPERATOR_NONE };
-
+		enum anchor_point : uint8_t {
+			AP_FLOAT = 0, 
+			AP_TOP_LEFT,
+			AP_CENTER_LEFT, 
+			AP_BOTTOM_LEFT,
+			AP_TOP_RIGHT,
+			AP_CENTER_RIGHT, 
+			AP_BOTTOM_RIGHT,
+			AP_CENTER,
+		} anchor_point{ AP_TOP_LEFT };
 	};
 }
