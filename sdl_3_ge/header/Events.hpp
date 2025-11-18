@@ -304,6 +304,10 @@ namespace SKC::GE {
 				}
 #pragma endregion
 #pragma region ==SDL_WINDOW_EVENTS==
+												 
+				case SDL_EVENT_WINDOW_FOCUS_LOST: {
+					break; 
+				}
 				case SDL_EVENT_WINDOW_MINIMIZED:
 				case SDL_EVENT_WINDOW_HIDDEN: {
 					m_window_is_minimized = true;
@@ -316,7 +320,8 @@ namespace SKC::GE {
 					break; 
 				}
 				case SDL_EVENT_WINDOW_MAXIMIZED:
-				case SDL_EVENT_WINDOW_RESTORED: {
+				case SDL_EVENT_WINDOW_RESTORED:
+				case SDL_EVENT_WINDOW_SHOWN: {
 					m_window_is_minimized = false;
 					m_window_resized = true;
 					break; 
