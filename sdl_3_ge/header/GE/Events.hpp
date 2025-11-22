@@ -18,7 +18,7 @@
 #include "imgui_impl_sdlrenderer3.h"
 
 //first party deps
-#include "./Vector.hpp"
+#include "../math/Vector.hpp"
 
 //TODO(skc) : move to own file?
 #ifndef U32

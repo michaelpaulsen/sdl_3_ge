@@ -6,6 +6,7 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 
+
 namespace SKC::GE {
 	class imgui_window : public window {
 		static inline size_t imgui_count = false;

@@ -10,15 +10,14 @@
 #include <SDL3_ttf/SDL_ttf.h>
 
 
-#include "./key_util.hpp"
-#include "./game_pad.hpp"
-#include "./CVar.hpp"
-#include "./lua_cxx.hpp" //name WIP
-#include "./Console.hpp"
-#include "./Events.hpp"
-#include "./Window.hpp"
-#include "./Imgui_window.hpp"
-#include "./Math.hpp"
+//#include "GE/key_util.hpp"
+#include "GE/controller/game_pad.hpp"
+#include "GE/CVar.hpp"
+#include "lua/lua_cxx.hpp" //name WIP
+#include "GE/Events.hpp"
+#include "GE/Window.hpp"
+#include "GE/Imgui_window.hpp"
+#include "math/Math.hpp"
 //TODO(skc): shouldn't be const?
 constexpr Uint64 TARGET_RENDER_TIME = static_cast<Uint64>((1. / 30.) * 1000);
 
@@ -53,21 +52,16 @@ enum SKC_E {
 
 
 #define MAIN_NAME proc_main
-int MAIN_NAME(SKC::Console&, main_info_t);
+int MAIN_NAME(main_info_t);
 
 int main(int argc, char** argv) {
     //the goal of this is to abstract away the important (and dirty) stuff like dealing with the CLI
     //arguments
-    auto console = SKC::Console();
-    console.Clear().Informln("init skc console");
-    //the above is passed on to the user via thier own main function
-    console.Informln("starting LUA VM");
 
     //this is the lua state
     auto L = Lstate_t();
     arg_list_t args = {};
    
-    console.Informln("adding ", argv[0], " to args as \"exe_path\"");
     args.emplace_back("exe_path", std::string(argv[0]));
    //TODO(skc): This still needs work! 
     //should make this better 
@@ -81,7 +75,6 @@ int main(int argc, char** argv) {
                 //NOTE(skc): have to do this here to get the first arg
                 if (!name.empty()) {
                     if (!value.empty()) {
-                        console.Informln("adding ", name, " to cvars as ", value);
                         auto last_non_space = value.find_last_not_of(' '); 
                         auto erase_len = value.length() - last_non_space; 
                         
@@ -91,7 +84,6 @@ int main(int argc, char** argv) {
                         args.emplace_back(name, value);
                     }
                     else {
-                        console.Informln("adding ", name, " to cvars as <EMPTY>");
                         args.emplace_back(name);
                     }
                 }
@@ -107,37 +99,29 @@ int main(int argc, char** argv) {
             //NOTE(skc): and this here to get the last. 
 
             if (!value.empty()) {
-                console.Informln("adding ", name, " to cvars as ", value);
                 args.emplace_back(name, value);
             }
             else {
-                console.Informln("adding ", name, " to cvars as <EMPTY>");
                 args.emplace_back(name);
             }
         }
-        console.Informln("calling user entry with ", args.size(), " arguments");
         //inform the dev on the paramiters...
     }
-    console.Informln("init SDL");
     if (!SDL_Init(SKC_SDL_INIT_FLAGS)) {
         //SDL_Init may fail if it does then we exit...
         auto error = SDL_GetError();
-        console.Errorln("UNABLE TO START SDL ERROR ", error);
-        console.Errorln("EXITING WITH sENO_SDL");
         exit(sENO_SDL);
     }
     //call the user's entry point and save the return value so that we can return it later
 
     TTF_Init();
-    auto ret = MAIN_NAME(console, {args, L});
+    auto ret = MAIN_NAME({args, L});
 
-    console.Reset();
     SDL_Quit(); //by the time that we get here we are done so we tell sdl to quit.
 
 
     //return the return value so that the OS can properly report any errors..
     if (ret != sEOK) {
-        console.Errorln("something whent wrong main funtion returned ", ret, " not ", (int)sEOK);
     }
     return ret;
 

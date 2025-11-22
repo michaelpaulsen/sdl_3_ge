@@ -11,7 +11,8 @@
 
 #include "font_options.hpp"
 #include "Color.hpp"
-#include "Vector.hpp"
+#include "../math/Vector.hpp"
+
 namespace SKC::GE {
 
 	
@@ -67,7 +68,7 @@ namespace SKC::GE {
 		using c_t = Uint8;
 		std::vector< SDL_image_texture_wrapper> m_image_textures{};
 		int m_x{}, m_y{}, m_width, m_height;
-		std::string title;
+		std::string m_title;
 		float m_scale_x{ 1 }, m_scale_y{ 1 };
 		SDL_Window* m_window;
 		SDL_Renderer* m_renderer; 
@@ -207,7 +208,7 @@ namespace SKC::GE {
 			SDL_GetWindowSize(m_window, &w, &h);
 			return { w,h }; 
 		}
-
+		
 		void set_background_color(color other) {
 			m_background_color = other;
 		}
@@ -460,7 +461,6 @@ namespace SKC::GE {
 			SDL_DestroyTexture(text_texture);
 			return true;
 		}
-#pragma endregion
 		bool render_text(std::string text, TTF_Font* font, font_options options) {
 			std::vector<std::string> lines;
 
@@ -563,8 +563,9 @@ namespace SKC::GE {
 			AP_BOTTOM_RIGHT (-w  , -h  )
 			      AP_CENTER (-w/2, -h/2)
 			*/
+			
 			switch (options.anchor_point) {
-			case font_options::AP_FLOATING:
+			case font_options::AP_FLOAT: 
 				pos.x += options.positionoffset_x * texture_w;
 				pos.y += options.positionoffset_y * texture_h;
 				break;
@@ -594,5 +595,6 @@ namespace SKC::GE {
 			SDL_DestroyTexture(text_texture);
 			return rt; 
 		}
+#pragma endregion
 	};
 }

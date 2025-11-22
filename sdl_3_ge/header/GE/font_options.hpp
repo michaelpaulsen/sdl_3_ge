@@ -3,7 +3,7 @@
 namespace SKC::GE {
 
 	struct font_options {
-		float line_hight{ 1 }, x, y, positionoffset_x positionoffset_y;
+		float line_hight{ 1 }, x, y, positionoffset_x, positionoffset_y;
 		unsigned int width, height;
 		color color;
 

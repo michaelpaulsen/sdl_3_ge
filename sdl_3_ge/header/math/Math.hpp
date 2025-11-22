@@ -40,7 +40,6 @@ namespace SKC::Math {
 	double cubic_interp(double x, double y, double z,double w,  double t) {
 		double P = (z - w) - (x - y); 
 		double Q = (x - y) - P; 
-		double R = (z - x); 
 		double S = y; 
 		return P * (t * t * t) + Q * (t * t) + S; 
 	}
