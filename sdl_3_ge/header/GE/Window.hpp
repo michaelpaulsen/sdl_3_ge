@@ -66,6 +66,7 @@ namespace SKC::GE {
 
 		};
 		using c_t = Uint8;
+		using tick_t = Uint64; 
 		std::vector< SDL_image_texture_wrapper> m_image_textures{};
 		int m_x{}, m_y{}, m_width, m_height;
 		std::string m_title;
@@ -74,12 +75,14 @@ namespace SKC::GE {
 		SDL_Renderer* m_renderer; 
 		
 		color m_background_color{}; 
-		bool m_is_screen_saver_enabled = true; 
+		bool m_is_screen_saver_enabled{ true },
+			 m_limit_frame_rate{ true };
 		
-		//font stuff. 
+		tick_t last_frame_start{}, m_last_frame_time{};
 		path_t m_font_dir; 
 		TTF_TextEngine* m_text_engine; 
 
+		float m_frame_rate{ 30 };
 		SDL_Surface* blit_surface_with_resize(SDL_Surface* dst, SDL_Surface* src, int x, int y) {
 			int needed_width = x + src->w;
 			int needed_height = y + src->h;
@@ -261,6 +264,39 @@ namespace SKC::GE {
 			color color = {}; 
 			SDL_GetRenderDrawColor(m_renderer, &color.r, &color.g, &color.b, &color.a); 
 			return color;  
+		}
+		void start_of_frame() {
+			last_frame_start = SDL_GetTicks(); 
+		}
+		void end_frame() {
+			auto now = SDL_GetTicks();
+			m_last_frame_time = (now - last_frame_start);
+
+		}
+
+		void wait_for_frame() {
+			if (!m_limit_frame_rate) return; 
+			end_frame(); 
+			auto frame_time = static_cast<Uint64>(1000.f / m_frame_rate);
+			if (m_last_frame_time < frame_time) {
+				SDL_Delay(frame_time - m_last_frame_time); 
+			}
+			end_frame();
+		}
+		tick_t delta_time() const  {
+			return m_last_frame_time; 
+		}
+		void disable_frame_rate_limiter() {
+			m_limit_frame_rate = false; 
+		}
+		void enable_frame_rate_limiter() {
+			m_limit_frame_rate = true; 
+		}
+		auto get_frame_rate()  const{
+			return m_frame_rate; 
+		}
+		void set_frame_rate(float nfps) {
+			m_frame_rate = nfps; 
 		}
 #pragma endregion
 		/*
