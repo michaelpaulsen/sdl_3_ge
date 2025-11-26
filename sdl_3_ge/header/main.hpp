@@ -1,26 +1,10 @@
 #pragma once
-
-#include <iostream>
-#include <vector>
-#include <string>
-#include <filesystem>
-#include <ranges>
-
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
-
-//#include "GE/key_util.hpp"
-#include "GE/controller/game_pad.hpp"
-#include "GE/CVar.hpp"
+#include "GE/cvars/parse_cvars.hpp"
 #include "lua/lua_cxx.hpp" //name WIP
 #include "GE/Events.hpp"
-#include "GE/Window.hpp"
-#include "GE/Imgui_window.hpp"
-#include "math/Math.hpp"
-//TODO(skc): shouldn't be const?
-constexpr Uint64 TARGET_RENDER_TIME = static_cast<Uint64>((1. / 30.) * 1000);
-
 
 
 using arg_list_t = SKC::GE::C_var_list;
@@ -60,53 +44,9 @@ int main(int argc, char** argv) {
 
     //this is the lua state
     auto L = Lstate_t();
-    arg_list_t args = {};
+    arg_list_t args = SKC::GE::parse_c_vars(argc,argv);
+    
    
-    args.emplace_back("exe_path", std::string(argv[0]));
-   //TODO(skc): This still needs work! 
-    //should make this better 
-    if (argc > 1) {
-        std::string name{}, value{};
-        for (int x = 1; x < argc; ++x) {
-            std::string arg = argv[x];
-
-
-            if ((arg.length() > 2 && (arg[0] == '-' && arg[1] == '-'))) {
-                //NOTE(skc): have to do this here to get the first arg
-                if (!name.empty()) {
-                    if (!value.empty()) {
-                        auto last_non_space = value.find_last_not_of(' '); 
-                        auto erase_len = value.length() - last_non_space; 
-                        
-                        if (erase_len) {
-                            value = value.erase(last_non_space, erase_len);
-                        }
-                        args.emplace_back(name, value);
-                    }
-                    else {
-                        args.emplace_back(name);
-                    }
-                }
-
-                name = arg.erase(0, 2);
-                value = {};
-                continue;
-            }
-            else {
-                value += std::format("{} ", arg);
-            }
-
-            //NOTE(skc): and this here to get the last. 
-
-            if (!value.empty()) {
-                args.emplace_back(name, value);
-            }
-            else {
-                args.emplace_back(name);
-            }
-        }
-        //inform the dev on the paramiters...
-    }
     if (!SDL_Init(SKC_SDL_INIT_FLAGS)) {
         //SDL_Init may fail if it does then we exit...
         auto error = SDL_GetError();

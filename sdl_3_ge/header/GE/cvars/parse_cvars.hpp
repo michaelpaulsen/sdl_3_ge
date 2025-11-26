@@ -1,6 +1,8 @@
 #pragma once 
 #include "CVar.hpp"
 #include <format>
+#include <string>
+
 namespace SKC::GE {
 	C_var_list parse_c_vars(int argc, char* argv[]) {
 		C_var_list args;
