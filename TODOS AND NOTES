@@ -1,122 +1,112 @@
 ==  TODOS ==
+folder_listener.hpp 059: TODO(skc): make it so that this can be abstracted to other platforms...
+ 
+printFmtutils.hpp 008:   TODO(skc): find better names for these..
+printFmtutils.hpp 026:   TODO(skc):
+                         ESC[#E	moves cursor to beginning of next line, # lines down
+                         ESC[#F	moves cursor to beginning of previous line, # lines up
+printFmtutils.hpp 039:   TODO(skc)
+                         https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#256-colors
+ 
 Color.hpp 013:           TODO (skc) : implement a CSS color name constructor...
                          there's like a lot of them though so that might have to be itsown file...
-
+ 
+game_pad.hpp 019:        TODO(skc): exstend this to return the names of the hat and axises
+ 
+ 
+parse_cvars.hpp 009:     TODO(skc): This still needs work!
+                         should make this better
+ 
 Events.hpp 022:          TODO(skc) : move to own file?
-Events.hpp 031:          TODO(skc) : this file is kinda getting long.
+Events.hpp 029:          TODO(skc) : move this to its own file or something.
+Events.hpp 037:          TODO(skc) : this file is kinda getting long.
                          move to own file?
-Events.hpp 033:          TODO(skc) add converstion operator for uint16_t
-Events.hpp 132:          TODO(skc) : implement -> SDL_KMOD_LEVEL5
-Events.hpp 250:          TODO(skc) : make a macro outa this...
-Events.hpp 373:          TODO(skc) : distinguish between the KP and main layout numbers.
-Events.hpp 409:          TODO(SKC): move to own file.
-Events.hpp 410:          TODO(SKC) : make this so that it only outputs in dbg mode...
+Events.hpp 039:          TODO(skc) add converstion operator for uint16_t
+Events.hpp 138:          TODO(skc) : implement -> SDL_KMOD_LEVEL5
+Events.hpp 446:          TODO(skc) : distinguish between the KP and main layout numbers.
+Events.hpp 498:          TODO(SKC): move to own file.
+Events.hpp 499:          TODO(SKC) : make this so that it only outputs in dbg mode...
+ 
+Window.hpp 022:          TODO (skc) : move all of this filesystem
+                         stuff to own file.
+Window.hpp 111:          TODO(skc) : make this fail some way...
+Window.hpp 175:          TODO (skc) : create a resource class.
+Window.hpp 550:          TODO(skc) : handle error
+ 
+ini_map_t.hpp 185:       TODO(skc): implement saving the settings back to the ini file
  
  
-game_pad.hpp 020:        TODO(skc): exstend this to return the names of the hat and axises
+settings.hpp 066:        TODO(skc) : this should warn if not empty...
+settings.hpp 187:        TODO(skc): implement saving the settings back to the ini file
  
 lua_cxx.hpp 038:         TODO(skc) implement me!
 lua_cxx.hpp 050:         TODO(skc) implement me!
  
-main.hpp 021:            TODO(skc): shouldn't be const?
-main.hpp 071:            TODO(skc): This still needs work!
-                         should make this better
  
-printFmtutils.hpp 009:   TODO(skc): find better names for these..
-printFmtutils.hpp 027:   TODO(skc):
-                         ESC[#E	moves cursor to beginning of next line, # lines down
-                         ESC[#F	moves cursor to beginning of previous line, # lines up
-printFmtutils.hpp 040:   TODO(skc)
-                         https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#256-colors
-
 Vector.hpp 056:          TODO(SKC): move to own file.
                          this should be in own file because there is no other reason that format is included in this file.
 Vector.hpp 058:          TODO(SKC) : make this so that it only outputs in dbg mode...
  
-Window.hpp 015:          TODO (skc) : move all of this filesystem
-                         stuff to own file.
-Window.hpp 104:          TODO(skc) support Different pixel formats.
-Window.hpp 106:          TODO(skc) make wrapper class that automatically frees the surface.
-Window.hpp 131:          TODO (skc) : create a resource class.
+strmanip.hpp 012:        TODO(skc): make this return expected.
  
-sdl_3_ge.cpp 098:        TODO(skc) : handle window settings in main.hpp
-sdl_3_ge.cpp 122:        TODO(skc) : make this a function in the window class
-sdl_3_ge.cpp 268:        TODO(skc) This should be a function in the window class
-                         named something like window::wait_for_next_frame(uint64_t &render_time);
+sdl_3_ge.cpp 061:        TODO(skc) : handle window settings in main.hpp
+sdl_3_ge.cpp 157:        TODO(skc): make this message customizable via the ini file
  
 
 == FIXMEs ==
- 
- 
- 
-Events.hpp 431:          FIXME(skc): this should throw if *pos != '}'
-                         because this should error when it is not.
-                         however this is not an huge issue...
 
 ==  NOTES ==
  
-CVar.hpp 024:            NOTE(skc) : I don't think I am going to like this syntax but
+printFmtutils.hpp 003:   NOTE(skc):
+                         SA https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
+printFmtutils.hpp 035:   NOTE(skc) : ANSI specifies that 1,1 is the top left of the screen.. not 0,0
+
+CVar.hpp 023:            NOTE(skc) : I don't think I am going to like this syntax but
                          I don't know a better way of doing this.
                          as<T>() just seems gross...  would much prefer as(T)..
                          the reason that I am making it so it returns an empty optional instead of
                          throwing to keep the logic code more clean.
                          it also helps to abstract away the difference between the C_var being set or not.
  
-ECS.hpp 121:             NOTE(skc) : this is going to be the only example of polymorphism in the
-                         whole project...
-                         this may still not be the best way to do it...
-ECS.hpp 128:             NOTE(skc) : we don't want to move the ECS because it should be unquie.
+parse_cvars.hpp 018:     NOTE(skc): have to do this here to get the first arg
+parse_cvars.hpp 042:     NOTE(skc): and this here to get the last.
  
-Events.hpp 184:          NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS
+Events.hpp 199:          NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS
                          where as m_mouse_position is the raw mouse position.
-                         the way that this is updated makes it theroetically possible to miss imputs when the same input is
-                         inputed more than once a frame but even at 30 fps that is nearly imposible
-                         + I think that every GE in existance has a simular system...
-Events.hpp 223:          NOTE(skc) : this is not const because it is kinda important to not ignore the user when they
+Events.hpp 245:          NOTE(skc) : this is not const because it is kinda important to not ignore the user when they
                          drop something into the aplication so the flag is only cleared when the consumer calls this function.
-Events.hpp 225:          NOTE(skc) :IF YOU'RE TRYING TO ACCEPT DATA FROM "DROP" EVENTS CALL THIS EVERY FRAME DO NOT
+Events.hpp 247:          NOTE(skc) :IF YOU'RE TRYING TO ACCEPT DATA FROM "DROP" EVENTS CALL THIS EVERY FRAME DO NOT
                          MAKE YOUR USERS WAIT FOR THEIR INPUT TO BE PROCESSED!
-Events.hpp 345:          NOTE(skc) : I set the m_arrow_state even if arrow_keys_alias_WASD is true because
+Events.hpp 418:          NOTE(skc) : I set the m_arrow_state even if arrow_keys_alias_WASD is true because
                          the consumer may still have contextual reasons to treat the arrow keys differently
                          while still wanting them to alias their respective keys.
-Events.hpp 369:          NOTE(skc) : for some reason the char codes for the KP are
+Events.hpp 442:          NOTE(skc) : for some reason the char codes for the KP are
                          1234567890 not the ASCII layout of 0123456789 ...
                          this takes the key code and sets the respective bit
-Events.hpp 412:          NOTE(SKC): FORMAT_STRING_GET is assumed to be undefed at the end of this function
+Events.hpp 501:          NOTE(SKC): FORMAT_STRING_GET is assumed to be undefed at the end of this function
                          things may break if you remove the #undef FORMAT_STRING_GET.
-
-lua_cxx.hpp 027:         NOTE(skc) : the Lua state should be a singleton more or less.
-                         if you need to make your own lua state
  
-main.hpp 033:            NOTE(skc): This has to be a reference to preven use after free...
-                         (possible bug in lua_close [not checking for the value being null])
-main.hpp 080:            NOTE(skc): have to do this here to get the first arg
-main.hpp 106:            NOTE(skc): and this here to get the last.
- 
-printFmtutils.hpp 004:   NOTE(skc):
-                         SA https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
-printFmtutils.hpp 036:   NOTE(skc) : ANSI specifies that 1,1 is the top left of the screen.. not 0,0
- 
-Room.hpp 010:            NOTE(skc) MVC++23's ABI is not finalized yet so they don't define this
-                         automatically but the feature is present
-                         so I am going to define
-                         _cpp_multidimensional_subscript
-                         
-Room.hpp 021:            NOTE(skc) there's no reason that this shouldn't work with floating point types but IDK how I want to repersent them. `1
-Room.hpp 034:            NOTE(skc): by default this should only take 1 byte per cell but 255 tile ids is limiting so
-                         I templated it.
- 
- 
-Window.hpp 040:          NOTE(skc) we may have to implement these;
-Window.hpp 105:          NOTE(skc) : yes this does matter...
-
-Window.hpp 278:          NOTE(skc): YOU REALLY SHOULD NOT USE THIS MEMBER FUNCTION (AS IT RETURNS A RAW POINTER!!!).
+Window.hpp 047:          NOTE(skc) we may have to implement these;
+Window.hpp 363:          NOTE(skc): YOU REALLY SHOULD NOT USE THIS MEMBER FUNCTION (AS IT RETURNS A RAW POINTER!!!).
                          it is only public for the SDL functions that are not wrapped in the ID based API yet.
                          once I am sure that all of the SDL functions are wrapped in the ID based API I will make this private.
                          I make no guarantees that this will not cause a use after free error.
                          Though it should not be possible based off of how classes work in C++.
-
-Window.hpp 317:          NOTE(skc): this is the API that you should be using by default. the only reason
+Window.hpp 404:          NOTE(skc): this is the API that you should be using by default. the only reason
                          you would use the SDL_Texture* API is if you are using a texture that is generated progrimatically.
  
+ini_map_t.hpp 214:       NOTE This should always be called with Template argument deduction...
+                         the reson this has an auto return type is because I want a string when the type is char const*.
  
+read_settings.hpp 039:   NOTE(skc) : the pre increment here is intentional as I want to remove the brakets
+ 
+ 
+lua_cxx.hpp 027:         NOTE(skc) : the Lua state should be a singleton more or less.
+                         if you need to make your own lua state you're most likely doing something wrong...
+ 
+main.hpp 016:            NOTE(skc): This has to be a reference to preven use after free...
+                         (possible bug in lua_close [not checking for the value being null])
+ 
+ 
+ 
+sdl_3_ge.cpp 091:        NOTE(skc): I know that this is bad practice get off my back.

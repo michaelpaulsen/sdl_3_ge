@@ -26,7 +26,7 @@ namespace SKC::lua{
 		}
 		
 		//NOTE(skc) : the Lua state should be a singleton more or less. 
-		//if you need to make your own lua state 
+		//if you need to make your own lua state you're most likely doing something wrong... 
 		Lua(Lua&) = delete; 
 		Lua(Lua&&) = delete ;
 		

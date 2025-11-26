@@ -37,38 +37,38 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='fix|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='fix|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -185,34 +185,31 @@
     <ClCompile Include="sdl_3_ge.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="header\fmt\printFmtutils.hpp" />
     <ClInclude Include="header\GE\Color.hpp" />
     <ClInclude Include="header\GE\controller\game_pad.hpp" />
-    <ClInclude Include="header\GE\CVar.hpp" />
+    <ClInclude Include="header\GE\cvars\CVar.hpp" />
+    <ClInclude Include="header\GE\cvars\parse_cvars.hpp" />
     <ClInclude Include="header\GE\Events.hpp" />
+    <ClInclude Include="header\GE\font.hpp" />
     <ClInclude Include="header\GE\font_options.hpp" />
     <ClInclude Include="header\GE\Imgui_window.hpp" />
     <ClInclude Include="header\GE\key_util.hpp" />
     <ClInclude Include="header\GE\timer.hpp" />
     <ClInclude Include="header\GE\Window.hpp" />
     <ClInclude Include="header\GE\World.hpp" />
-    <ClInclude Include="header\ini\ini_map_t.hpp" />
-    <ClInclude Include="header\ini\read_settings.hpp" />
     <ClInclude Include="header\lua\lua_cxx.hpp" />
     <ClInclude Include="header\math\Math.hpp" />
     <ClInclude Include="header\math\perlin.hpp" />
     <ClInclude Include="header\math\rand.hpp" />
     <ClInclude Include="header\math\Vector.hpp" />
-    <ClInclude Include="header\rand.hpp" />
     <ClInclude Include="header\strmanip.hpp" />
     <ClInclude Include="header\thread\smart_lock.hpp" />
     <ClInclude Include="header\timer.hpp" />
     <ClInclude Include="header\concepts.hpp" />
-    <ClInclude Include="header\Console.hpp" />
     <ClInclude Include="header\DBG_functions.h" />
-    <ClInclude Include="header\ini_map_t.hpp" />
     <ClInclude Include="header\main.hpp" />
-    <ClInclude Include="header\printFmtutils.hpp" />
-    <ClInclude Include="header\read_settings.hpp" />
+    <ClInclude Include="header\windows\file_api\folder_listener.hpp" />
     <ClInclude Include="header\World.hpp" />
     <ClInclude Include="Skc_time.hpp" />
   </ItemGroup>

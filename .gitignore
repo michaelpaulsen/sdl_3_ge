@@ -370,3 +370,13 @@ FodyWeavers.xsd
 /sdl_3_ge/room_1.bin
 /sdl_3_ge/room_1.skr
 /sdl_3_ge/notes.txt
+*.ini
+*.old
+/tmp
+/sdl_3_ge/header/ini/old
+/sdl_3_ge/header/GE/controller/game_pad.hpp
+/sdl_3_ge/header/GE/World.hpp
+/sdl_3_ge/notes (2).txt
+/sdl_3_ge/header/GE/timer.hpp
+/sdl_3_ge/Skc_time.hpp
+/sdl_3_ge/header/math/rand.hpp

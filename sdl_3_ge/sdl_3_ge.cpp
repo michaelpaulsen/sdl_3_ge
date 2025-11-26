@@ -1,287 +1,234 @@
-// sdl_3_ge.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 
-#include <cmath> 
-#include <vector>
-#include <ctime>
-#include <fstream>
+#define NOMINMAX
+
+#include <algorithm>
+#include <chrono>
 #include <format>
 #include <print>
 #include <thread>
-
-
-#include "header/Vector.hpp"
+#include "header/math/Math.hpp"
+#include "header/GE/Events.hpp"
+#include "header/GE/imgui_window.hpp"
+#include "header/GE/window.hpp"
+#include "header/ini/settings.hpp"
 #include "header/main.hpp"
-#include "header/DBG_functions.h"
+#include "header/math/Vector.hpp"
+#include "header/filesys/windows/folder_listener.hpp"
+#include "header/GE/font.hpp"
+#include "header/format/printFmtutils.hpp"
 
-constexpr size_t MESSAGE_SIZE = 255;
-void increment_minutes(int& hour, int& minute, int increment = 1) {
-	minute += increment;
-	if (minute >= 60) {
-		minute -= 60;
-		++hour; 
-		if (hour > 24) {
-			hour -= 24;
-		}
-	}
-	if(minute < 0) {
-		minute += 60;
-		--hour; 
-		if (hour < 0) {
-			hour += 24;
-		}
-	}
+auto get_current_day() {
+	namespace chr = std::chrono;
+	using sysclk = chr::system_clock;
+	return chr::floor<chr::days>(chr::current_zone()->to_local(sysclk::now()));
 }
-void increment_seconds(int& hour, int& minute, int& second, int increment = 1) {
-	second += increment;
-	if (second >= 60) {
-		second -= 60;
-		increment_minutes(hour, minute);
-	}
-	if(second < 0) {
-		second += 60;
-		increment_minutes(hour, minute, -1);
+auto now_as_lt(){
+	namespace chr = std::chrono;
+	using sysclk = chr::system_clock;
+	return chr::current_zone()->to_local(sysclk::now());
+}
+double drand() {
+	return (double)rand() / (double)RAND_MAX; 
+}
+ 
+int main(main_info_t info) {
+	bool do_fade = false; 
+	int fade_frames{};
+	SKC::GE::c_t text_alpha = 255; 
+	SKC::GE::c_t bg_alpha = 128;
+	SKC::INI::settings_t settings("./settings.ini");
 
-	}
-}
-void increment_time(int& hour, int& minute, int& second, int mode, bool inc, int increment = 1) {
+#pragma region set the default values for the program
+	SKC::Math::Vect2i window_size = {
+		settings.or_else("window", "width", 1080),
+		settings.or_else("window", "height", 720)
+	};
+
+	bool do_render{settings.or_else("misc", "render", info.args.get_as("render", true))}; 
+	auto window_name{ settings.or_else<std::string> ("window", "name", "UNTITLED WINDOW") };
 	
-	if (inc) {
-		
-		if (mode == 0) {
-			hour = SKC::Math::wrap(hour + increment, 0, 23);
-		}
-		if (mode == 1) {
-			increment_minutes(hour, minute, increment);
-		}	
-		if (mode == 2) {
-			increment_seconds(hour, minute, second, increment);
-		}
-	}
-}
-
-auto now_as_time_t() {
-	auto current_time = std::chrono::system_clock::now();
-	auto timet = std::chrono::system_clock::to_time_t(current_time);
-	tm time_struct;
-	localtime_s(&time_struct, &timet);
-	return time_struct; 
-}
-long long get_seconds(int hour, int minute, int second) {
-	//convert the time to seconds since the start of the day
-	return (hour * 60 + minute) * 60 + second;
-}
-long long get_current_time() {
-	//get the current time in seconds since the start of the day
-	tm time_struct =  now_as_time_t();
-	return get_seconds(time_struct.tm_hour, time_struct.tm_min, time_struct.tm_sec);
-}
-std::string time_until(int hour, int minute, int second) {
-	auto current_time = get_current_time(); 
-	auto target_time = get_seconds(hour, minute, second);
-	if (target_time < current_time)  return "starting soon";
-	auto time_diff = target_time - current_time;
-	return std::format("{:02}:{:02}:{:02}", time_diff / 3600, (time_diff / 60) % 60, time_diff % 60);
-}
-
-int main(SKC::Console& console, main_info_t info) {
-	int text_alpha = 255; 
-	int hour = info.args.get_as("hour", 9), //default 9 am
-	 minute = info.args.get_as("minute", 30), //default 30 minutes
-	 second = info.args.get_as("second", 0); //default 0 seconds
-	//TODO(skc) : handle window settings in main.hpp 
-	int window_h{ info.args.get_as("h",1080) }, window_w{ info.args.get_as("w",1920) };
-	bool do_render{ info.args.get_as("render", true) };
-	bool degug_mode{ info.args.get_as("debug", false) };
-	if (!do_render) return 0; 
 	
-	uint64_t last_frame_time{}; 
 	Uint64 frame{};
-	//auto r1 = SKC::GE::room("test",65,65); 
-	double draw_time = 0, fframe = 0; 
-
-	auto window = SKC::GE::imgui_window("SKELETON GAME ENGINE TEST APPLICATION",
-		window_w, window_h,
-		SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT);
-	
-	//auto player_texture = window.create_texture_from_path("./player Icon.bmp"); 
-	//hint to sdl that I want it to listen for events even when the window is not focused
-	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
-	int x = 0, y = 0;
-	SKC::GE::event_handler<true> event_handler{};
-
-
 
 	
-	//TODO(skc) : make this a function in the window class
-	int font_size = 24 * 4;
-	auto font = TTF_OpenFont("./fonts/arial.ttf", font_size);
+	SKC::GE::event_handler<false> event_handler{};
+	int start_hour = settings.or_else("time", "hour", 9);
+	int start_minute = settings.or_else("time", "minute", 0);
+	int start_second = settings.or_else("time", "second", 0); 
+
+#pragma endregion
+	
+	if (!do_render) return 1; 
+	//TODO(skc) : handle window settings in main.hpp 
+	auto window = SKC::GE::window(
+		window_name,
+		window_size.x,
+		window_size.y,
+		SDL_WINDOW_RESIZABLE |
+		SDL_WINDOW_TRANSPARENT
+	);
+	
+
+
+	//key combo stuff
+	char LFK = 0;
+	int next_map_frame_counter = 0, dice_counter = 0;
+	float w = 186, h = 16; 
+	window.set_background_color(SKC::GE::color(0, 0, 0, 128));
+	std::string tmessage = ""; 
+	auto font = SKC::GE::font("./fonts/FiraCode-Regular.ttf", 128); 
+	auto font_outline = SKC::GE::font("./fonts/FiraCode-Regular.ttf", 128); 
+	auto font_small = SKC::GE::font("./fonts/FiraCode-Regular.ttf", 64); 
+	auto font_small_outline = SKC::GE::font("./fonts/FiraCode-Regular.ttf", 64); 
+	font_outline.make_out_line_font(2); 
+	font_small_outline.make_out_line_font(2); 
+	
+	if (!font || !font_small) {
+		return -1;
+	}
+
+	auto fl = std::jthread(SKC::file_api::watch_directory,
+		std::filesystem::path("./"),
+		//NOTE(skc): I know that this is bad practice get off my back. 
+		[&](SKC::file_api::fs_change_info_t info) mutable {
+			if (info.fname == "settings.ini") {
+				settings.reload();
+				std::println("reloading settings ");
+				start_hour = settings.or_else("time", "hour", 9);
+				start_minute = settings.or_else("time", "minute", 0);
+				start_second = settings.or_else("time", "second", 0);
+				window_name = settings.or_else<std::string>("window", "name", "UNTITLED WINDOW");
+				window.set_title(window_name); 
+				return; 
+			}
+
+			std::println("path : {} action {}", info.fname.string(), info.action);
+		},
+		SKC::file_api::defnotfilt,
+		true
+	);
 //=========MAIN LOOP START =========
-	bool inc = true;
-	auto message = std::string(MESSAGE_SIZE, char(0));
-	window.set_background_color(0,0,0,0);
 	while (true) {
-		bool rendering_text = false;
-		Uint64 draw_start_tick = SDL_GetTicks(), draw_end_ticks = 0;
-		//window.set_render_scale(2); 
-		window.clear();
+
+		window.start_of_frame(); 
+		LFK = event_handler.get_last_key() ? event_handler.get_last_key() : LFK; 
 		event_handler.pollevents(); 
-		auto keymod_state = event_handler.get_key_mods(); 
-		if (event_handler.quit()) break; 
-		
-		
-		bool window_resized = event_handler.window_resized();
-		if (window_resized) {
-			window.update_window_size();
-		}
-#pragma region set the mode
-		int mode = 2; 
-		if (event_handler.get_key_mods().shift()) mode = 0;
-		if (event_handler.get_key_mods().ctrl()) mode = 1;
-#pragma endregion
-#pragma region render text
-		auto x_pos = window.from_normilzed_width(.5) + x;
-		auto y_pos = window.from_normilzed_height(.5) + y;
-		if (get_current_time() > get_seconds(hour, minute, second)) {
-			text_alpha -= 2;
-		}
-		else if (text_alpha != 255) {
-			text_alpha += 8;
-		}
-		if (text_alpha <   0) text_alpha =   0;
-		if (text_alpha > 255) text_alpha = 255;
+		//if the event handler has a quit event then we need to exit the main loop
+		if (event_handler.quit()) break;
 
-		if (text_alpha > 0) {
-			rendering_text = true; 
-			window.render_text_centered_simple(std::format("starting at {}:{:02}:{:02}", hour, minute, second),
-				font,
-				x_pos - 20,
-				y_pos - (font_size*1.5),
-				255, 255, 255, text_alpha
-			);
-			window.render_text_centered_simple(
-				time_until(hour, minute, second),
-				font, 
-				x_pos,
-				y_pos,
-				255, 255, 255, text_alpha
-			);
+		//handle window resize events
+		if (event_handler.window_resized()) {
+			window.update_window_size(); 
+			window_size = window.get_window_dimentions();
+			std::println("\n\nwindow resized to {}x{}", window_size.x, window_size.y);
 		}
 		
-#pragma endregion
 #pragma region accept user input 
-		//if(event_handler.)
-		constexpr int INC_FRAME = 16; 
-		auto l_key_state = event_handler.get_arrow_key_state(SKC::GE::arrow_direction_t::RIGHT), 
-			j_key_state = event_handler.get_arrow_key_state(SKC::GE::arrow_direction_t::LEFT) ;
-		if (event_handler.scroll_wheel_y() != 0) {
-			if (event_handler.get_key_mods().shift()) {
-				if (event_handler.get_key_mods().alt()) {
-					y += event_handler.scroll_wheel_y() * 4; //move text up and down
-				}
-				else {
-					x += event_handler.scroll_wheel_y() * 4; //move text left and righ
-				}
-			}
-			else {
-				font_size += event_handler.scroll_wheel_y(); 
-				TTF_CloseFont(font);
-				font = TTF_OpenFont("./fonts/arial.ttf", font_size);
-
-			}
-			
-			
-		}
-		if (event_handler.get_key_state('`').down) {
-			if (inc) {
-				degug_mode = !degug_mode;
-			}
-			inc = false;
-		} 
-		else if (event_handler.get_key_state('n').down && event_handler.get_key_mods().ctrl()) {
-			tm time_struct = now_as_time_t();
-			hour = time_struct.tm_hour;
-			minute = time_struct.tm_min;
-			second = time_struct.tm_sec - 1;
-			inc = false;
-		}
-		else if (l_key_state.down) {
-			increment_time(hour, minute, second, mode, inc);
-				
-			inc = !(frame% INC_FRAME);
-		}
-		else if (j_key_state.down) {
-			increment_time(hour, minute, second, mode, inc, -1);
-			inc = !(frame % INC_FRAME);
-		}
-		else {
-			inc = true;
-		}
 #pragma endregion
-		//=====imgui CODE ====
-#pragma region imgui code
+		window.set_background_color(SKC::GE::color(0, 0, 0, bg_alpha));
+		window.clear();
+		int pxl = 0;
+		
+		int prev_x = 0, prev_y = 0;
 		window.set_render_scale(1);
 
-		window.start_frame();
-		
-
-		if(degug_mode) { 
-			ImGui::Begin("DBG window 1", &degug_mode);
-			if (frame) {
-			ImGui::Text(std::format("last frame time (ms) : {}", last_frame_time).c_str());
-			ImGui::Text(std::format("average frame time (ms) : {:0.3} ({:0.6} fps)", (draw_time/fframe), 1000/(draw_time / fframe)).c_str());
-			ImGui::Text(std::format("FPS : {}", 1000.f / last_frame_time).c_str());
-			ImGui::Text(std::format("target FPS : {}", 1000.f/TARGET_RENDER_TIME).c_str());
+		if (!(frame % 30)) {
+			namespace chr = std::chrono;
+			using sysclk = chr::system_clock;
+			auto cur_time = chr::hh_mm_ss{ now_as_lt() - get_current_day() };
+			auto hrs = start_hour - cur_time.hours().count();
+			auto mns = (start_minute - cur_time.minutes().count());
+			auto sec = (start_second - cur_time.seconds().count());
+			
+			if (mns < 0) {
+				--hrs; 
+				mns += 59;
 			}
-			ImGui::Checkbox("rendering the text", &rendering_text); 
-			 
-			ImGui::Text(std::format("font size : {}", font_size).c_str());
-			ImGui::Text(std::format("text pos: {}x{}", x,y).c_str());
-			ImGui::End();
+			if (sec < 0) {
+				--mns; 
+				sec += 60;
+			}
+			if (hrs < 0) {
+				do_fade = true; 
+			}
+			else {
+				do_fade = false; 
+			}
 		
-		
-			ImGui::Begin("DBG settings window");
-			ImGui::Checkbox("window resized event", &window_resized);
-			ImGui::Checkbox("inc", &inc);
-			ImGui::InputText("message", message.data(), MESSAGE_SIZE);
-			ImGui::SliderInt("start hour", &hour, 0, 23);
-			ImGui::SliderInt("start minute", &minute, 0, 59);
-			ImGui::SliderInt("start second", &second, 0, 59);
-			ImGui::End();
+			//TODO(skc): make this message customizable via the ini file
+			if (!do_fade) {
+				tmessage = std::format("starting soon\n {:02}:{:02}:{:02}",  hrs, mns, sec);
+			}
+			else {
+				tmessage = "stream starting soon";
+			}
 		}
-		window.render(); 
-		window.draw_imgui_data();
-#pragma endregion
-		window.present();
-		//get the number of threads that are running in the program
-		
-		
-		//=== FRAME RATE LIMIT CODE! ===  
-		//DO ALL DRAWING BEFORE ABOVE LINE   
-		//(^ is here for searchablility DO NOT REMOVE) 
-		//TODO(skc) This should be a function in the window class 
-		//named something like window::wait_for_next_frame(uint64_t &render_time);
-		draw_end_ticks = SDL_GetTicks();
-		//this is the current tick since the SDL_Timer modual was started
-		auto rt = draw_end_ticks - draw_start_tick;
-		Uint32 wait_time = static_cast<Uint32>(TARGET_RENDER_TIME) - static_cast<Uint32>(rt);
-		//this is the number of ticks that has passed since the start of the draw code
-		if (rt > TARGET_RENDER_TIME) wait_time = 0;
-		//rt is unsigned so we need to check if it is greater than the time we want to spend 
-		//rendering if so we set it to 0 
-		SDL_Delay(wait_time);
-		fframe++;
-		if (rt < TARGET_RENDER_TIME) {
-			last_frame_time = TARGET_RENDER_TIME;
+		if (do_fade) {
+			if (fade_frames > 60) {
+				if (text_alpha > 0) {
+					--text_alpha;
+				}
+				if (frame % 2 == 0 && bg_alpha > 0) {
+					--bg_alpha;
+				}
+			}
+			++fade_frames;
 		}
-		else {
-			last_frame_time = rt;
+		if (!do_fade) {
+			if (text_alpha < 255) {
+				++text_alpha;
+			}
+			if (bg_alpha < 128 and frame % 2 == 0) {
+				++bg_alpha;
+			}
+			fade_frames = 0; 
 		}
-		draw_time += last_frame_time;
-		++frame;
-		
+		if (text_alpha > 0) {
+			auto font_settings = SKC::GE::font_options{};
+			font_settings.x = window_size.x / 2;
+			font_settings.y = window_size.y / 2;
+			font_settings.line_separator = SKC::GE::font_options::LINE_SEPARATOR_NEWLINE;
+			font_settings.text_alignment = SKC::GE::font_options::TEXT_ALIGNMENT_CENTER;
+			font_settings.line_alignment = SKC::GE::font_options::LINE_ALIGNMENT_CENTER;
+			font_settings.anchor_point = SKC::GE::font_options::AP_CENTER;
+			font_settings.color = SKC::GE::color(
+				SKC::Math::map(sin((double)frame / 100.), -1, 1, 128, 255),
+				SKC::Math::map(sin((double)frame / 250.), -1, 1, 128, 255),
+				SKC::Math::map(sin((double)frame / 121.), -1, 1, 128, 255),
+				text_alpha
+			);
+			auto outline_font_settings = font_settings;
+			outline_font_settings.color = SKC::GE::color(0, 0, 0, text_alpha); 
 
+			window.render_text(tmessage, *font_outline, outline_font_settings);
+			window.render_text(tmessage, *font, font_settings);
+			
+			
+			
+			font_settings.y = 64;
+			font_settings.x = 10;
+			font_settings.line_alignment = SKC::GE::font_options::LINE_ALIGNMENT_TOP;
+			font_settings.anchor_point = SKC::GE::font_options::AP_TOP_LEFT;
+			
+			outline_font_settings = font_settings;
+			outline_font_settings.color = SKC::GE::color(0, 0, 0, text_alpha);
+
+			auto stream_title = settings.or_else<std::string>("stream", "title", "");
+			auto pre_title_text = settings.or_else<std::string>("stream", "action", "STREAM TITLE");
+			
+			if (not stream_title.empty()) {
+				window.render_text(std::format("stream title \n{}", stream_title), *font_small_outline, outline_font_settings);
+				window.render_text(std::format("stream title \n{}", stream_title), *font_small, font_settings);
+			}
+			else {}
+
+		}
+		window.present();
+		window.wait_for_frame();
+		std::print("frame rate {}{}\r", 1.f / ((float)(window.delta_time()) / 1000),SKC::fmt::clear_line_after);
+		++frame;
+#pragma endregion
 	}
-	
+	fl.request_stop(); 
 	return 0;
 }
