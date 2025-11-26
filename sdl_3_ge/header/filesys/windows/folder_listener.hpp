@@ -27,7 +27,7 @@ namespace SKC::file_api {
 		
 		void print_error_string() {
 			LPSTR messageBuffer = nullptr;
-			DWORD charsCopied = FormatMessageA(
+			FormatMessageA(
 				FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 				NULL,
 				GetLastError(),
@@ -135,7 +135,7 @@ namespace SKC::file_api {
 			BOOL result = ReadDirectoryChangesW(
 				hDir,
 				buffer.data(),
-				buffer.size(),
+				(DWORD)buffer.size(),
 				watch_subdirs,
 				notf_filter,
 				&bytesReturned,

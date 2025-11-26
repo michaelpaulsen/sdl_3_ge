@@ -1,5 +1,11 @@
 #pragma once
 #include <format>
+
+#pragma warning( push ) // Save the current warning state
+#pragma warning( disable : 4100 ) // Disable warning C4996 (e.g., for deprecated functions like `scanf`)
+
+// Your code that generates warning C4996
+
 namespace SKC::fmt {
 		//NOTE(skc): 
 		// SA https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
@@ -209,3 +215,4 @@ template<> struct std::formatter<SKC::fmt::fmt_set_palleted_color> {
 		return std::format_to(ctx.out(), "{}{};{};{}m", SKC::fmt::es, obj.mode,   fg_color, bg_color);
 	}
 };
+#pragma warning( pop ) // Restore the previous warning state

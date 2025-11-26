@@ -49,7 +49,6 @@ int main(int argc, char** argv) {
    
     if (!SDL_Init(SKC_SDL_INIT_FLAGS)) {
         //SDL_Init may fail if it does then we exit...
-        auto error = SDL_GetError();
         exit(sENO_SDL);
     }
     //call the user's entry point and save the return value so that we can return it later

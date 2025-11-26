@@ -9,11 +9,12 @@ namespace SKC::GE {
 	};
 	class font {
 		std::filesystem::path m_path; 
-		unsigned int m_size{}, m_outline{0};
+		float m_size{ 0 };
+		int m_outline{ 0 };
 		TTF_Font *m_font; 
 	public:
 		font() = delete;
-		font(std::filesystem::path path, int size): m_path(path),  m_size(size) {
+		font(std::filesystem::path path, float size): m_path(path),  m_size(size) {
 			m_font = TTF_OpenFont(path.string().c_str(), size); 
 		};
 		font(font&) = delete; 
@@ -48,7 +49,7 @@ namespace SKC::GE {
 			TTF_SetFontOutline(m_font, outline_size); 
 			m_outline = outline_size;
 		}
-		void set_size(int size) {
+		void set_size(float size) {
 			if (size == m_size) return;
 			m_size = size;
 			TTF_SetFontSize(m_font, size); 

@@ -195,7 +195,7 @@ namespace SKC::GE {
 		key_mod m_keymod_state{}; 
 		full_screen_state_change_t m_fullscreen_status{ 0 };
 		std::string m_last_dropped_data{}; 
-		std::array<mouse_button_state_t, 256> m_mouse_keys;
+		std::array<mouse_button_state_t, 256> m_mouse_keys{0};
 
 		//NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS 
 		//where as m_mouse_position is the raw mouse position.

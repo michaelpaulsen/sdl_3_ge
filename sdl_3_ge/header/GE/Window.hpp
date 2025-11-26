@@ -274,7 +274,7 @@ namespace SKC::GE {
 			end_frame(); 
 			auto frame_time = static_cast<Uint64>(1000.f / m_frame_rate);
 			if (m_last_frame_time < frame_time) {
-				SDL_Delay(frame_time - m_last_frame_time); 
+				SDL_Delay((Uint32)(frame_time - m_last_frame_time));
 			}
 			end_frame();
 		}

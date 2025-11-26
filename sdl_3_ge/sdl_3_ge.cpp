@@ -72,8 +72,6 @@ int main(main_info_t info) {
 
 	//key combo stuff
 	char LFK = 0;
-	int next_map_frame_counter = 0, dice_counter = 0;
-	float w = 186, h = 16; 
 	window.set_background_color(SKC::GE::color(0, 0, 0, 128));
 	std::string tmessage = ""; 
 	auto font = SKC::GE::font("./fonts/FiraCode-Regular.ttf", 128); 
@@ -127,9 +125,7 @@ int main(main_info_t info) {
 #pragma endregion
 		window.set_background_color(SKC::GE::color(0, 0, 0, bg_alpha));
 		window.clear();
-		int pxl = 0;
 		
-		int prev_x = 0, prev_y = 0;
 		window.set_render_scale(1);
 
 		if (!(frame % 30)) {
@@ -185,16 +181,16 @@ int main(main_info_t info) {
 		}
 		if (text_alpha > 0) {
 			auto font_settings = SKC::GE::font_options{};
-			font_settings.x = window_size.x / 2;
-			font_settings.y = window_size.y / 2;
+			font_settings.x = (float)window_size.x / 2;
+			font_settings.y = (float)window_size.y / 2;
 			font_settings.line_separator = SKC::GE::font_options::LINE_SEPARATOR_NEWLINE;
 			font_settings.text_alignment = SKC::GE::font_options::TEXT_ALIGNMENT_CENTER;
 			font_settings.line_alignment = SKC::GE::font_options::LINE_ALIGNMENT_CENTER;
 			font_settings.anchor_point = SKC::GE::font_options::AP_CENTER;
 			font_settings.color = SKC::GE::color(
-				SKC::Math::map(sin((double)frame / 100.), -1, 1, 128, 255),
-				SKC::Math::map(sin((double)frame / 250.), -1, 1, 128, 255),
-				SKC::Math::map(sin((double)frame / 121.), -1, 1, 128, 255),
+				(SKC::GE::c_t)SKC::Math::map(sin((double)frame / 100.), -1, 1, 128, 255),
+				(SKC::GE::c_t)SKC::Math::map(sin((double)frame / 250.), -1, 1, 128, 255),
+				(SKC::GE::c_t)SKC::Math::map(sin((double)frame / 121.), -1, 1, 128, 255),
 				text_alpha
 			);
 			auto outline_font_settings = font_settings;
