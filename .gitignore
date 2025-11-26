@@ -380,3 +380,5 @@ FodyWeavers.xsd
 /sdl_3_ge/header/GE/timer.hpp
 /sdl_3_ge/Skc_time.hpp
 /sdl_3_ge/header/math/rand.hpp
+*.exe
+*.bat

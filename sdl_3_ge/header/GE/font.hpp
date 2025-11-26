@@ -31,11 +31,11 @@ namespace SKC::GE {
 			TTF_CloseFont(m_font);
 		}
 		font operator=(font&) = delete; 
-		font operator=(font&& other) noexcept {
+		void operator=(font&& other) noexcept {
 			*this = std::move(other); 
 		}
 		
-		font operator=(std::filesystem::path path) {
+		void operator=(std::filesystem::path path) {
 			
 			TTF_CloseFont(m_font);
 			m_font = TTF_OpenFont(path.string().c_str(), m_size);

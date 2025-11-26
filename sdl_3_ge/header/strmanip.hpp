@@ -8,7 +8,7 @@
 
 namespace SKC{
 
-	static std::expected<std::string, std::string> [[nodiscard]] read_whole_file(std::filesystem::path path) {
+	[[nodiscard]]  static std::expected<std::string, std::string>  read_whole_file(std::filesystem::path path) {
 		auto input = std::ifstream(path);
 		//TODO(skc): make this return expected.
 		if (not input.is_open()) return std::unexpected("ERROR UNABLE TO OPEN FILE");

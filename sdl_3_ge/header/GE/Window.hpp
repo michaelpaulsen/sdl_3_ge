@@ -608,6 +608,8 @@ namespace SKC::GE {
 				case font_options::AP_CENTER_LEFT:
 					pos.y -= (float)(texture_h) / 2.0f;
 					break;
+				case font_options::AP_TOP_LEFT:
+					break;
 				case font_options::AP_BOTTOM_LEFT:
 					pos.y -= (float)(texture_h);
 					break;
