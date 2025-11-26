@@ -79,8 +79,6 @@ namespace SKC::GE {
 			 m_limit_frame_rate{ true };
 		
 		tick_t last_frame_start{}, m_last_frame_time{};
-		path_t m_font_dir; 
-		TTF_TextEngine* m_text_engine; 
 
 		float m_frame_rate{ 30 };
 		SDL_Surface* blit_surface_with_resize(SDL_Surface* dst, SDL_Surface* src, int x, int y) {
@@ -127,10 +125,8 @@ namespace SKC::GE {
 		}
 
 	public: 
-		window(std::string title, int  width, int height, SDL_WindowFlags flags) : m_width { width }, m_height{ height } {
+		window(std::string title, int  width, int height, SDL_WindowFlags flags) noexcept  : m_width { width }, m_height{ height } {
 			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer);
-			m_font_dir = path_t("./fonts"); 
-			m_text_engine = TTF_CreateRendererTextEngine(m_renderer); 
 		}
 		~window() {
 			SDL_DestroyRenderer(m_renderer);
@@ -174,7 +170,6 @@ namespace SKC::GE {
 		bool is_screen_saver_enabled() const {
 			return m_is_screen_saver_enabled;
 		}
-
 		auto create_texture_from_surface(SDL_Surface *surface) {
 			return SDL_CreateTextureFromSurface(m_renderer, surface);
 		}
@@ -345,10 +340,15 @@ namespace SKC::GE {
 		void clear() {
 			Uint8 r, g, b, a;
 			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
-			SDL_SetRenderDrawColor(m_renderer, m_background_color.r, m_background_color.g, m_background_color.b, m_background_color.a);
+			SDL_SetRenderDrawColor(
+				m_renderer,
+				m_background_color.r,
+				m_background_color.g,
+				m_background_color.b,
+				m_background_color.a
+			);
 			SDL_RenderClear(m_renderer);
 			SDL_SetRenderDrawColor(m_renderer, r, g, b, a);
-
 		};
 		void present() {
 			SDL_RenderPresent(m_renderer);
