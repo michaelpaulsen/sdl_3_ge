@@ -103,7 +103,7 @@ namespace SKC::file_api {
 		);
 
 		if (hDir == INVALID_HANDLE_VALUE) {
-			std::cerr << "Failed to open directory. Error: " << GetLastError() << std::endl;
+			std::print(stderr, "Failed to open directory. Error: {}", GetLastError());
 			exit(1);
 		}
 		return hDir; 
@@ -123,7 +123,7 @@ namespace SKC::file_api {
 		overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL); // Manual-reset event
 		
 		if (overlapped.hEvent == NULL) {
-			std::cerr << "Failed to create event. Error: " << GetLastError() << std::endl;
+			std::print(stderr,"Failed to create event. Error: {} ", GetLastError());
 			CloseHandle(hDir);
 			exit(-1);
 		}
@@ -144,7 +144,7 @@ namespace SKC::file_api {
 			);
 			
 			if (!result && GetLastError() != ERROR_IO_PENDING) {
-				std::cerr << "ReadDirectoryChangesW failed. Error: " << GetLastError() << std::endl;
+				std::print(stderr, "ReadDirectoryChangesW failed. Error: {} ", GetLastError());
 				CloseHandle(overlapped.hEvent);
 				CloseHandle(hDir);
 				return;
