@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <filesystem>
-#include <map>
 #include <vector>
 #include <ranges>
 
@@ -12,6 +11,7 @@
 #include "font_options.hpp"
 #include "Color.hpp"
 #include "../math/Vector.hpp"
+#include "texture.hpp"
 
 namespace SKC::GE {
 
@@ -23,46 +23,9 @@ namespace SKC::GE {
 	//TODO (skc) : move all of this filesystem 
 	//stuff to own file. 
 	namespace fs = std::filesystem; 
-	using path_t = fs::path; 
 	class window {
 	protected:
 		
-		struct SDL_image_texture_wrapper {
-			inline static size_t next_tid = 0;
-			SDL_Texture* tex;
-			fs::path path;
-			size_t tid;
-			SDL_image_texture_wrapper(SDL_Texture* _t, fs::path pth = fs::path()) : tid(++next_tid), tex(_t), path(pth) {}
-			~SDL_image_texture_wrapper() {
-				SDL_DestroyTexture(tex);
-			}
-			SDL_image_texture_wrapper(SDL_image_texture_wrapper&& other) noexcept {
-				tid = other.tid;
-				tex = other.tex;
-				other.tex = nullptr;
-				other.tid = 0;
-
-			}
-			//NOTE(skc) we may have to implement these; 
-			SDL_image_texture_wrapper(const SDL_image_texture_wrapper& other) = delete;
-			SDL_image_texture_wrapper operator=(const SDL_image_texture_wrapper&) = delete;
-			SDL_image_texture_wrapper operator=(SDL_image_texture_wrapper&& other) noexcept
-			{
-				if (this == &other) return std::move(*this); //self assignment check
-				this->~SDL_image_texture_wrapper(); //destroy the current object
-				tid = other.tid;
-				this->path = other.path; //copy the path
-				this->tex = other.tex; //move the texture pointer
-				other.tex = nullptr; //nullify the other texture pointer
-				tex = other.tex;
-				return std::move(*this); 
-			};
-
-			bool operator ==(const SDL_image_texture_wrapper& other) const { return path == other.path; }
-			bool operator ==(const fs::path& other) const { return path == other; }
-			bool operator== (size_t other) const { return tid == other; }
-
-		};
 		using c_t = Uint8;
 		using tick_t = Uint64; 
 		std::vector< SDL_image_texture_wrapper> m_image_textures{};
@@ -138,7 +101,7 @@ namespace SKC::GE {
 		* this is where the getters and setters are
 		* this is all code that isn't involved directly with the rendering
 		*/
-		bool save_BMPscreenshot(std::filesystem::path pth) {
+		bool save_BMPscreenshot(fs::path pth) {
 			auto pix_format = SDL_GetWindowSurface(m_window);
 			auto render_data = SDL_RenderReadPixels(m_renderer,NULL); 
 			auto surface = SDL_CreateSurfaceFrom(
@@ -172,7 +135,7 @@ namespace SKC::GE {
 			return SDL_CreateTextureFromSurface(m_renderer, surface);
 		}
 		//TODO (skc) : create a resource class. 
-		auto create_texture_from_path(std::filesystem::path pth) {
+		auto create_texture_from_path(fs::path pth) {
 			SDL_Surface* surface = IMG_Load(pth.generic_string().c_str());
 			if (!surface) return 0ull;
 			auto tex = create_texture_from_surface(surface);
