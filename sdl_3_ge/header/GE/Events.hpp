@@ -90,7 +90,8 @@ namespace SKC::GE {
 		
 		key_state_array_t<256> m_key_states{};
 		key_state_array_t<UZ(arrow_direction_t::MAX)> m_arrow_state{};
-		
+		key_state_array_t<24> m_function_key_states{};
+
 	public : 
 		enum {
 			RIGHT_MOUSE_BUTTON = 1,
@@ -140,6 +141,10 @@ namespace SKC::GE {
 			if (arrow == arrow_direction_t::MAX) return keyevent_state_t{ false,false };
 			return m_arrow_state.at(UZ(arrow));
 		}
+		auto get_function_key_state(unsigned char fkey) const {
+			if (fkey < 1 || fkey > 24) return keyevent_state_t{ false,false };
+			return m_function_key_states.at(UZ(fkey - 1));
+		}
 		auto& get_key_mods() const noexcept { return m_keymod_state; }
 		auto entered_full_screen() const noexcept { return m_fullscreen_status; }
 		auto last_joy_pos_r() const noexcept { return m_last_joy_relitive_pos; }
@@ -154,8 +159,8 @@ namespace SKC::GE {
 			if (key >= 256) {
 				return keyevent_state_t{ false,false };
 			}
-				return m_key_states.at(UZ(key));
-			}
+			return m_key_states.at(UZ(key));
+		}
 
 		char get_last_key() const noexcept {
 			return m_last_key; 
@@ -342,6 +347,16 @@ namespace SKC::GE {
 						key = '1' + ( key - SDLK_KP_1);
 						m_key_states.at(key) = { down,repeat };
 						break; 
+					}
+					if (key >= SDLK_F1 && key <= SDLK_F12) {
+						auto fkey_index = key - SDLK_F1;
+						m_function_key_states.at(UZ(fkey_index)) = { down,repeat };
+						break;
+					}
+					if (key >= SDLK_F13 && key <= SDLK_F24) {
+						auto fkey_index = (key - SDLK_F13) + 12;
+						m_function_key_states.at(UZ(fkey_index)) = { down,repeat };
+						break;
 					}
 					std::print("UNKNOWN EXSTENDED KEY CODE 0x{:>0x}\r", key);
 					break;
