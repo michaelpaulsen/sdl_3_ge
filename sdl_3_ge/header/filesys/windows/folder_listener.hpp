@@ -61,7 +61,7 @@ namespace SKC::file_api {
 	struct fs_change_info_t {
 		std::filesystem::path fname{}, old_name{};
 		DWORD action;
-		std::string get_event_type_as_string() const {
+		std::string get_action() const {
 			switch (action) {
 			case FILE_ACTION_ADDED:
 				return "FILE_ACTION_ADDED";
@@ -76,12 +76,6 @@ namespace SKC::file_api {
 			default:
 				return "UNKNOWN FILE ACTION";
 			}
-		}
-		std::string to_string() const{
-			std::string re = fname.generic_string();
-			re += " had a "; 
-			re += get_event_type_as_string(); 
-			return re + " event";
 		}
 	};
 	
