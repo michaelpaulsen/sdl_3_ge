@@ -1,21 +1,12 @@
 #pragma once
 //stdlib stuff
 #include <print>
-#include <functional>
-#include <vector>
-#include <algorithm>
-#include <expected> 
 #include <string> 
 #include <array> 
-#include <filesystem> 
-#include <cassert>
-#include <stacktrace> 
 
 //3rd party deps
 #include <SDL3/SDL.h>
-#include "imgui.h"
 #include "imgui_impl_sdl3.h"
-#include "imgui_impl_sdlrenderer3.h"
 
 //first party deps
 #include "../math/Vector.hpp"
@@ -28,12 +19,6 @@
 #ifndef UZ
 #define UZ static_cast<size_t>
 #endif // !U32
-//TODO(skc) : move this to its own file or something. 
-#define CATCH_FINAL catch (...) {\
-auto stack_trace = std::stacktrace::current(0);\
-std::print("error {}\nat\n\t{}", "YOU BROKE ME! I HAVE NO IDEA HOW YOU DID, BUT I AM BROKEN NOW!", stack_trace);\
-std::exit(-1); \
-}
 
 namespace SKC::GE {
 
@@ -73,8 +58,6 @@ namespace SKC::GE {
 			bool down;
 			float x, y;
 		};
-		template<typename state_t> 
-		using state_array_t = std::array<state_t, 256>;
 		template<size_t size>
 		using key_state_array_t = std::array<keyevent_state_t, size>;
 
@@ -104,8 +87,8 @@ namespace SKC::GE {
 		SKC::Math::Vect2d m_last_mouse_rel_pos{ 0,0 };
 		SKC::Math::Vect2d m_drag_vector{ 0,0 };		
 		SKC::Math::Vect2d m_scroll_wheel_pos{ 0,0 };
-		state_array_t<keyevent_state_t> m_key_states{};
 		
+		key_state_array_t<256> m_key_states{};
 		key_state_array_t<UZ(arrow_direction_t::MAX)> m_arrow_state{};
 		
 	public : 
@@ -165,11 +148,13 @@ namespace SKC::GE {
 		auto cursor_position() const noexcept { return m_cursor_position; }
 		auto drag_vector() const noexcept { return m_drag_vector; }
 		auto scroll_wheel_pos() const noexcept { return m_scroll_wheel_pos; }
-		auto get_key_state(unsigned char key) const noexcept  {
-			try {
-				return m_key_states.at(UZ(key));
+		auto get_key_state(unsigned char key) const noexcept {
+			//NOTE(skc) : this is impossible to happen 
+			//but its better to be safe than sorry!
+			if (key >= 256) {
+				return keyevent_state_t{ false,false };
 			}
-			CATCH_FINAL
+				return m_key_states.at(UZ(key));
 			}
 
 		char get_last_key() const noexcept {
@@ -293,6 +278,12 @@ namespace SKC::GE {
 					auto down = keyevnt.down;
 					auto repeat = keyevnt.repeat;
 					m_keymod_state = key_mod(keyevnt.mod);
+					
+					if (key == SDLK_LALT || key == SDLK_RALT
+						|| key == SDLK_MENU || key == SDLK_CAPSLOCK
+						|| key == SDLK_LCTRL || key == SDLK_RCTRL) {
+						break;
+					}
 					if (key == SDLK_EQUALS) {
 						m_key_states.at(U32('+')) = { down,repeat };
 						m_key_states.at(U32('=')) = { down,repeat };
@@ -350,15 +341,6 @@ namespace SKC::GE {
 					if (key >= SDLK_KP_1 && key < SDLK_KP_0) {
 						key = '1' + ( key - SDLK_KP_1);
 						m_key_states.at(key) = { down,repeat };
-						break; 
-					}
-					if(key == SDLK_LALT || key == SDLK_RALT) {
-						break; 
-					}
-					if (key == SDLK_LCTRL || key == SDLK_RCTRL) {
-						break;
-					}
-					if (key == SDLK_MENU || key == SDLK_CAPSLOCK) {
 						break; 
 					}
 					std::print("UNKNOWN EXSTENDED KEY CODE 0x{:>0x}\r", key);
