@@ -32,14 +32,12 @@ namespace SKC::GE {
 			SDL_Texture* tex;
 			fs::path path;
 			size_t tid;
-			SDL_image_texture_wrapper(SDL_Texture* _t, fs::path pth = fs::path()) : tid(++next_tid), tex(_t), path(pth) {
-
-			}
+			SDL_image_texture_wrapper(SDL_Texture* _t, fs::path pth = fs::path()) : tid(++next_tid), tex(_t), path(pth) {}
 			~SDL_image_texture_wrapper() {
 				SDL_DestroyTexture(tex);
 			}
 			SDL_image_texture_wrapper(SDL_image_texture_wrapper&& other) noexcept {
-				tid = ++next_tid;
+				tid = other.tid;
 				tex = other.tex;
 				other.tex = nullptr;
 				other.tid = 0;
@@ -52,7 +50,7 @@ namespace SKC::GE {
 			{
 				if (this == &other) return std::move(*this); //self assignment check
 				this->~SDL_image_texture_wrapper(); //destroy the current object
-				tid = ++next_tid;
+				tid = other.tid;
 				this->path = other.path; //copy the path
 				this->tex = other.tex; //move the texture pointer
 				other.tex = nullptr; //nullify the other texture pointer
