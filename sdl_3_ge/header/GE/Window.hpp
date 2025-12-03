@@ -113,12 +113,6 @@ namespace SKC::GE {
 			SDL_DestroySurface(render_data);
 			return ret;
 		}
-		auto get_window_surface() {
-			return SDL_GetWindowSurface(m_window); 
-		}
-		auto get_renderer() {
-			return m_renderer; 
-		}
 		void enable_screen_saver() {
 			SDL_EnableScreenSaver();
 			m_is_screen_saver_enabled = true; 
