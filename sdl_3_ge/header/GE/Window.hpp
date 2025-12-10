@@ -45,6 +45,8 @@ namespace SKC::GE {
 
 		float m_frame_rate{ 30 };
 		SDL_Surface* blit_surface_with_resize(SDL_Surface* dst, SDL_Surface* src, int x, int y) {
+			if (!dst || !src) return dst;
+			if (!src->w || !src->h) return dst;
 			int needed_width = x + src->w;
 			int needed_height = y + src->h;
 			//if we don't need to resize the surface then we should just use it.
@@ -90,6 +92,7 @@ namespace SKC::GE {
 	public: 
 		window(std::string title, int  width, int height, SDL_WindowFlags flags) noexcept  : m_width { width }, m_height{ height } {
 			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer);
+			m_image_textures.reserve(128); 
 			m_is_fullscreen = (flags & SDL_WINDOW_FULLSCREEN) != 0;
 			m_is_bordered = (flags & SDL_WINDOW_BORDERLESS) == 0;
 		}
@@ -529,10 +532,21 @@ namespace SKC::GE {
 					//TODO(skc) : handle error
 					return false; 
 				}
+				if (text_line_surface->w <= 0 || text_line_surface->h <= 0 || !text_line_surface->format) {
+					// skip empty/invalid line but advance line_y as appropriate
+					if (options.line_height_mode == font_options::LINE_HEIGHT_MODE_ADDITIVE) {
+						line_y += TTF_GetFontSize(font) + options.line_hight;
+					}
+					else {
+						line_y += TTF_GetFontSize(font) * options.line_hight;
+					}
+					SDL_DestroySurface(text_line_surface);
+					continue;
+				}
 				if(!text_surface) {
 					text_surface = SDL_CreateSurface(text_line_surface->w, text_line_surface->h, text_line_surface->format);
+					if (!text_surface) { return false; }
 					SDL_BlitSurface(text_line_surface, NULL, text_surface, NULL);
-					if (!text_surface) { return false; } 
 				}
 				else {
 					auto x = 0;
@@ -560,23 +574,23 @@ namespace SKC::GE {
 			if (options.width != 0) texture_w = (int)options.width;
 			if (options.height != 0) texture_h = (int)options.height;
 			auto text_texture = SDL_CreateTextureFromSurface(m_renderer, text_surface);
-			//doing this here so that the surface gets freed
+			//NOTE(skc) : doing this here so that the surface gets freed
 			//no matter what
 			SDL_DestroySurface(text_surface);
 			if (!text_texture) return false;
 			Frect pos = {options.x, options.y, (float)texture_w, (float)texture_h };
-			/*
-			   anchor point translation
-			---------------------------
-				AP_FLOATING (w*ox, h*oy)
-				AP_TOP_LEFT ( 0  ,  0  )
-			 AP_CENTER_LEFT	( 0  , -h/2)
-			 AP_BOTTOM_LEFT	( 0  , -h  ) 
-			   AP_TOP_RIGHT (-w  ,  0  )
-			AP_CENTER_RIGHT (-w  , -h/2)
-			AP_BOTTOM_RIGHT (-w  , -h  )
-			      AP_CENTER (-w/2, -h/2)
-			*/
+			//NOTE(skc) : 
+			//   anchor point translation
+			//---------------------------
+			//    AP_FLOATING (w*ox, h*oy)
+			//	  AP_TOP_LEFT ( 0  ,  0  )
+			// AP_CENTER_LEFT ( 0  , -h/2)
+			// AP_BOTTOM_LEFT ( 0  , -h  ) 
+			//   AP_TOP_RIGHT (-w  ,  0  )
+			//AP_CENTER_RIGHT (-w  , -h/2)
+			//AP_BOTTOM_RIGHT (-w  , -h  )
+			//      AP_CENTER (-w/2, -h/2)
+			
 			
 			switch (options.anchor_point) {
 			case font_options::AP_FLOAT: 
