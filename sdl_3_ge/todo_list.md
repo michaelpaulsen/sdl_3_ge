@@ -32,9 +32,7 @@
 #### from the *window API*
 * ***test*** SDL_DisableScreenSaver
 * ***test*** SDL_EnableScreenSaver 
-* SDL_SetWindowFullscreen
 * SDL_SetWindowFullscreenMode
-* SDL_SetWindowBordered
 * SDL_SetWindowSize
 * SDL_FlashWindow
 * SDL_CreatePopupWindow
@@ -47,13 +45,9 @@
 * SDL_GetWindowPixelDensity
 * SDL_GetWindowPixelFormat
 * SDL_GetWindowPosition
-* SDL_[Get/Set]WindowTitle 
-
-
 
 ## Events.hpp
-* move event_discriptor definition to own file 
-* continue moving hot path evnents into *member* callbacks
+
 ## game_pad.hpp
 * make function that returns the name of an axis/hat when pressed
 
@@ -70,8 +64,6 @@
 
 ## general to-dos 
 * reformat and add comments to main.hpp
-* move TARGET_RENDER_TIME to window class and make it non-const 
-
 
 ## resource mangigment and other stuff
 * better API for CLI/Console settings

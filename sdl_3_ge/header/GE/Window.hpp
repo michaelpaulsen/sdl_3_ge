@@ -37,7 +37,9 @@ namespace SKC::GE {
 		
 		color m_background_color{}; 
 		bool m_is_screen_saver_enabled{ true },
-			 m_limit_frame_rate{ true };
+			 m_limit_frame_rate{ true }, 
+			m_is_fullscreen{ false },
+			m_is_bordered{ true };
 		
 		tick_t last_frame_start{}, m_last_frame_time{};
 
@@ -88,6 +90,8 @@ namespace SKC::GE {
 	public: 
 		window(std::string title, int  width, int height, SDL_WindowFlags flags) noexcept  : m_width { width }, m_height{ height } {
 			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer);
+			m_is_fullscreen = (flags & SDL_WINDOW_FULLSCREEN) != 0;
+			m_is_bordered = (flags & SDL_WINDOW_BORDERLESS) == 0;
 		}
 		~window() {
 			SDL_DestroyRenderer(m_renderer);
@@ -112,6 +116,25 @@ namespace SKC::GE {
 			SDL_DestroySurface(surface);
 			SDL_DestroySurface(render_data);
 			return ret;
+		}
+		//TODO(skc): add getter and settere for window 
+		//fullscreen display mode. 
+		bool set_window_full_screen(bool is_fullscreen) {
+			if (is_fullscreen == m_is_fullscreen) return false;
+			m_is_fullscreen = is_fullscreen;
+			return SDL_SetWindowFullscreen(m_window, is_fullscreen);
+
+		}
+		bool set_window_border(bool is_bordered) {
+			if (is_bordered == m_is_bordered) return false;
+			m_is_bordered = is_bordered;
+			return SDL_SetWindowBordered(m_window, is_bordered);
+		}
+		bool is_window_fullscreen() const {
+			return m_is_fullscreen;
+		}
+		bool is_window_bordered() const {
+			return m_is_bordered; 
 		}
 		void enable_screen_saver() {
 			SDL_EnableScreenSaver();
