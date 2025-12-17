@@ -80,6 +80,7 @@ namespace SKC::INI
 					);
 					continue;
 				}
+				if (std::ranges::to<std::string>(a | std::views::drop_while([](auto ch) { return isspace(ch);})).empty()) continue;
 				if (not a.contains('=')) {
 					std::println("[WARNING] line {} isnt a key value pair", a); 
 					continue;
