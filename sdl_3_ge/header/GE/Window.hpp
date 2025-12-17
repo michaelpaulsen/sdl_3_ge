@@ -39,7 +39,8 @@ namespace SKC::GE {
 		bool m_is_screen_saver_enabled{ true },
 			 m_limit_frame_rate{ true }, 
 			m_is_fullscreen{ false },
-			m_is_bordered{ true };
+			m_is_bordered{ true },
+			m_is_visible{ true };
 		
 		tick_t last_frame_start{}, m_last_frame_time{};
 
@@ -95,6 +96,7 @@ namespace SKC::GE {
 			m_image_textures.reserve(128); 
 			m_is_fullscreen = (flags & SDL_WINDOW_FULLSCREEN) != 0;
 			m_is_bordered = (flags & SDL_WINDOW_BORDERLESS) == 0;
+			m_is_visible = (flags & SDL_WINDOW_HIDDEN) == 0;
 		}
 		~window() {
 			SDL_DestroyRenderer(m_renderer);
@@ -165,7 +167,6 @@ namespace SKC::GE {
 				//return tex; 
 
 		}
-		
 		void update_window_size() {
 			rect ret{};
 			SDL_GetRenderSafeArea(m_renderer, &ret);
@@ -273,6 +274,19 @@ namespace SKC::GE {
 		}
 		void set_frame_rate(float nfps) {
 			m_frame_rate = nfps; 
+		}
+		bool is_visible() const {
+			return m_is_visible; 
+		}
+		void show() {
+			if (m_is_visible) return; 
+			SDL_ShowWindow(m_window);
+			m_is_visible = true; 
+		}
+		void hide() {
+			if (!m_is_visible) return; 
+			SDL_HideWindow(m_window);
+			m_is_visible = false; 
 		}
 #pragma endregion
 		/*
