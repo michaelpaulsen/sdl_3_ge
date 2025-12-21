@@ -3,19 +3,14 @@
 #include <SDL3_ttf/SDL_ttf.h>
 
 #include "GE/cvars/parse_cvars.hpp"
-#include "lua/lua_cxx.hpp" //name WIP
 #include "GE/Events.hpp"
 
 
 using arg_list_t = SKC::GE::C_var_list;
-using Lstate_t = SKC::lua::Lua;
 
 struct main_info_t {
     //std::string fname;
     arg_list_t args;
-    Lstate_t& lua_state;
-    //NOTE(skc): This has to be a reference to preven use after free...
-    //(possible bug in lua_close [not checking for the value being null])
 };
 enum SKC_E {
     sEOK,
@@ -43,7 +38,6 @@ int main(int argc, char** argv) {
     //arguments
 
     //this is the lua state
-    auto L = Lstate_t();
     arg_list_t args = SKC::GE::parse_c_vars(argc,argv);
     
    
@@ -54,7 +48,7 @@ int main(int argc, char** argv) {
     //call the user's entry point and save the return value so that we can return it later
 
     TTF_Init();
-    auto ret = MAIN_NAME({args, L});
+    auto ret = MAIN_NAME({args});
 
     SDL_Quit(); //by the time that we get here we are done so we tell sdl to quit.
 
