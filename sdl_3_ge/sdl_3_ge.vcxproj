@@ -185,6 +185,7 @@
     <ClCompile Include="sdl_3_ge.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="header\fileio.hpp" />
     <ClInclude Include="header\fmt\printFmtutils.hpp" />
     <ClInclude Include="header\GE\Color.hpp" />
     <ClInclude Include="header\GE\controller\game_pad.hpp" />
@@ -195,9 +196,10 @@
     <ClInclude Include="header\GE\font_options.hpp" />
     <ClInclude Include="header\GE\Imgui_window.hpp" />
     <ClInclude Include="header\GE\key_util.hpp" />
+    <ClInclude Include="header\GE\level\level.hpp" />
+    <ClInclude Include="header\GE\texture.hpp" />
     <ClInclude Include="header\GE\timer.hpp" />
     <ClInclude Include="header\GE\Window.hpp" />
-    <ClInclude Include="header\GE\World.hpp" />
     <ClInclude Include="header\lua\lua_cxx.hpp" />
     <ClInclude Include="header\math\Math.hpp" />
     <ClInclude Include="header\math\perlin.hpp" />
@@ -210,7 +212,6 @@
     <ClInclude Include="header\DBG_functions.h" />
     <ClInclude Include="header\main.hpp" />
     <ClInclude Include="header\windows\file_api\folder_listener.hpp" />
-    <ClInclude Include="header\World.hpp" />
     <ClInclude Include="Skc_time.hpp" />
   </ItemGroup>
   <ItemGroup>

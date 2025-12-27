@@ -37,7 +37,6 @@
 * SDL_FlashWindow
 * SDL_CreatePopupWindow
 * SDL_GetClosestFullscreenDisplayMode
-* SDL_GetCurrentDisplayMode
 * SDL_GetCurrentDisplayOrientation
 * SDL_GetWindowBordersSize 
 * SDL_GetWindowFlags
@@ -46,7 +45,8 @@
 * SDL_GetWindowPixelFormat
 * SDL_GetWindowPosition
 
-## Events.hpp
+## random number generator 
+*function to choose from a span.  
 
 ## game_pad.hpp
 * make function that returns the name of an axis/hat when pressed

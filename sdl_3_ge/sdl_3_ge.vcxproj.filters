@@ -38,9 +38,6 @@
     <ClInclude Include="header\strmanip.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\World.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\math\Math.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -80,9 +77,6 @@
     <ClInclude Include="header\GE\Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\GE\World.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\thread\smart_lock.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -99,6 +93,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\GE\cvars\parse_cvars.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\GE\texture.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\GE\level\level.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\fileio.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
