@@ -426,6 +426,11 @@ namespace SKC::GE {
 			if (!texture) return;
 			SDL_SetTextureBlendMode(texture, blend_mode);
 		}
+		auto set_texture_color_mod(size_t tid, c_t r, c_t g, c_t b) {
+			auto texture = get_tex_from_tid(tid);
+			if (!texture) return false;
+			return SDL_SetTextureColorMod(texture, r, g, b);
+		}
 		auto get_texture_width(size_t tid) {
 			auto txt = get_tex_from_tid(tid);
 			if(!txt) return 0; //if the texture is not found then return 0
