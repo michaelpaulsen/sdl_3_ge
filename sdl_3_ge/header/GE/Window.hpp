@@ -7,10 +7,13 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3/SDL_rect.h>
+#include <print>
+#include <cstdio>
 
-#include "font_options.hpp"
-#include "Color.hpp"
 #include "../math/Vector.hpp"
+#include "Color.hpp"
+#include "font_options.hpp"
 #include "texture.hpp"
 
 namespace SKC::GE {
@@ -156,16 +159,29 @@ namespace SKC::GE {
 		auto create_texture_from_surface(SDL_Surface *surface) {
 			return SDL_CreateTextureFromSurface(m_renderer, surface);
 		}
-		//TODO (skc) : create a resource class. 
-		auto create_texture_from_path(fs::path pth) {
+
+		[[nodiscard]] auto create_texture_from_path(fs::path pth) {
+			if (!fs::exists(pth) || fs::is_directory(pth)) {
+				std::println(stderr, "[ERROR] trying to create texture with invalid path {}", pth.string());
+			}
 			SDL_Surface* surface = IMG_Load(pth.generic_string().c_str());
 			if (!surface) return 0ull;
 			auto tex = create_texture_from_surface(surface);
+			
+			//NOTE(skc) doing this here so that the surface gets freed 
+			//even if the texture creation fails.
+
 			SDL_DestroySurface(surface);
+			
+			if (!tex) return 0ull;
+			
+			//NOTE(skc): 
+			//default to blending mode for images with transparency
+			//because this is the expected default behavior.
+			//and if you don't want blending you can always change it later.
+			SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
 			m_image_textures.emplace_back(tex, pth);
 			return m_image_textures.back().tid; 
-				//return tex; 
-
 		}
 		void update_window_size() {
 			rect ret{};
@@ -400,6 +416,16 @@ namespace SKC::GE {
 		//NOTE(skc): this is the API that you should be using by default. the only reason 
 		//you would use the SDL_Texture* API is if you are using a texture that is generated progrimatically.
 #pragma region --ID based Texture API--
+		void set_texture_alpha_mod(size_t tid, uint8_t mod) {
+			auto texture = get_tex_from_tid(tid); 
+			if (!texture) return;
+			SDL_SetTextureAlphaMod(texture, mod);
+		}
+		void set_texture_blend_mode(size_t tid, SDL_BlendMode blend_mode) {
+			auto texture = get_tex_from_tid(tid);
+			if (!texture) return;
+			SDL_SetTextureBlendMode(texture, blend_mode);
+		}
 		auto get_texture_width(size_t tid) {
 			auto txt = get_tex_from_tid(tid);
 			if(!txt) return 0; //if the texture is not found then return 0
