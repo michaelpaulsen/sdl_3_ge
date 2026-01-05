@@ -237,7 +237,7 @@ namespace SKC::GE {
 			return (double)py / (double)m_height;
 		}
 		
-		color get_draw_color() {
+		color get_draw_color()  const {
 			color color = {}; 
 			SDL_GetRenderDrawColor(m_renderer, &color.r, &color.g, &color.b, &color.a); 
 			return color;  
@@ -297,32 +297,32 @@ namespace SKC::GE {
 		void draw_rectangle(Frect rect) {
 			SDL_RenderRect(m_renderer, &rect);
 		}
-		void draw_rectangle(float x, float y, float w, float h) {
+		void draw_rectangle(float x, float y, float w, float h) const {
 			Frect rect = { x,y,w,h }; 
 			SDL_RenderRect(m_renderer, &rect);
 		}
 		
-		void fill_rectangle(Frect rect) {
+		void fill_rectangle(Frect rect)  const{
 			SDL_RenderFillRect(m_renderer, &rect);
 		}
-		void fill_rectangle(float x, float y, float w, float h) {
+		void fill_rectangle(float x, float y, float w, float h) const {
 			Frect rect = { x,y,w,h };
 			SDL_RenderFillRect(m_renderer, &rect);
 		}
 		
-		void draw_line(Frect rect) {
+		void draw_line(Frect rect) const {
 			SDL_RenderLine(m_renderer, rect.x, rect.y, rect.w, rect.h); 
 		}
-		void draw_line(Fpoint p1, Fpoint p2) {
+		void draw_line(Fpoint p1, Fpoint p2) const {
 			SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y);
 		}
-		void draw_line(Fpoint p1, float x2, float y2) {
+		void draw_line(Fpoint p1, float x2, float y2) const  {
 			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
 		}
-		void draw_line(float x1, float y1 , float x2, float y2) {
+		void draw_line(float x1, float y1 , float x2, float y2) const {
 			SDL_RenderLine(m_renderer, x1, y1, x2, y2);
 		}
-		void draw_line( float x2, float y2, Fpoint p1) {
+		void draw_line( float x2, float y2, Fpoint p1) const {
 			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
 		}
 
