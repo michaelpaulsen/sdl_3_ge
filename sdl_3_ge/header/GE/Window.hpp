@@ -93,6 +93,13 @@ namespace SKC::GE {
 			
 		}
 
+		Math::Vect2i get_size_of_uniform_atlas(SDL_Texture* txt, int size) {
+			if (!txt) return { 0,0 };
+			return Math::Vect2i{
+				txt->w / size,
+				txt->h / size
+			};
+		}
 	public: 
 		window(std::string title, int  width, int height, SDL_WindowFlags flags) noexcept  : m_width { width }, m_height{ height } {
 			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer);
@@ -113,6 +120,7 @@ namespace SKC::GE {
 		* this is where the getters and setters are
 		* this is all code that isn't involved directly with the rendering
 		*/
+
 		bool save_BMPscreenshot(fs::path pth) {
 			auto pix_format = SDL_GetWindowSurface(m_window);
 			auto render_data = SDL_RenderReadPixels(m_renderer,NULL); 
@@ -173,6 +181,14 @@ namespace SKC::GE {
 			//even if the texture creation fails.
 
 			SDL_DestroySurface(surface);
+			
+			if (!tex) return 0ull;
+			
+			//NOTE(skc): 
+			//default to blending mode for images with transparency
+			//because this is the expected default behavior.
+			//and if you don't want blending you can always change it later.
+			SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
 			m_image_textures.emplace_back(tex, pth);
 			return m_image_textures.back().tid; 
 		}
@@ -246,7 +262,7 @@ namespace SKC::GE {
 			return (double)py / (double)m_height;
 		}
 		
-		color get_draw_color() {
+		color get_draw_color()  const {
 			color color = {}; 
 			SDL_GetRenderDrawColor(m_renderer, &color.r, &color.g, &color.b, &color.a); 
 			return color;  
@@ -306,35 +322,34 @@ namespace SKC::GE {
 		void draw_rectangle(Frect rect) {
 			SDL_RenderRect(m_renderer, &rect);
 		}
-		void draw_rectangle(float x, float y, float w, float h) {
+		void draw_rectangle(float x, float y, float w, float h) const {
 			Frect rect = { x,y,w,h }; 
 			SDL_RenderRect(m_renderer, &rect);
 		}
 		
-		void fill_rectangle(Frect rect) {
+		void fill_rectangle(Frect rect)  const{
 			SDL_RenderFillRect(m_renderer, &rect);
 		}
-		void fill_rectangle(float x, float y, float w, float h) {
+		void fill_rectangle(float x, float y, float w, float h) const {
 			Frect rect = { x,y,w,h };
 			SDL_RenderFillRect(m_renderer, &rect);
 		}
 		
-		void draw_line(Frect rect) {
+		void draw_line(Frect rect) const {
 			SDL_RenderLine(m_renderer, rect.x, rect.y, rect.w, rect.h); 
 		}
-		void draw_line(Fpoint p1, Fpoint p2) {
+		void draw_line(Fpoint p1, Fpoint p2) const {
 			SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y);
 		}
-		void draw_line(Fpoint p1, float x2, float y2) {
+		void draw_line(Fpoint p1, float x2, float y2) const  {
 			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
 		}
-		void draw_line(float x1, float y1 , float x2, float y2) {
+		void draw_line(float x1, float y1 , float x2, float y2) const {
 			SDL_RenderLine(m_renderer, x1, y1, x2, y2);
 		}
-		void draw_line( float x2, float y2, Fpoint p1) {
+		void draw_line( float x2, float y2, Fpoint p1) const {
 			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
 		}
-
 		void draw_pixel(Fpoint p) {
 			SDL_RenderPoint(m_renderer, p.x, p.y);
 		}
@@ -403,12 +418,27 @@ namespace SKC::GE {
 		void draw_texture_rotated(SDL_Texture* txt, const Frect atlas_pos, const Frect pos, const Fpoint center, const double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
 
-		}
+		}		
 #pragma endregion
 //The ID based Texture format API 
 		//NOTE(skc): this is the API that you should be using by default. the only reason 
 		//you would use the SDL_Texture* API is if you are using a texture that is generated progrimatically.
 #pragma region --ID based Texture API--
+		void set_texture_alpha_mod(size_t tid, uint8_t mod) {
+			auto texture = get_tex_from_tid(tid); 
+			if (!texture) return;
+			SDL_SetTextureAlphaMod(texture, mod);
+		}
+		void set_texture_blend_mode(size_t tid, SDL_BlendMode blend_mode) {
+			auto texture = get_tex_from_tid(tid);
+			if (!texture) return;
+			SDL_SetTextureBlendMode(texture, blend_mode);
+		}
+		auto set_texture_color_mod(size_t tid, c_t r, c_t g, c_t b) {
+			auto texture = get_tex_from_tid(tid);
+			if (!texture) return false;
+			return SDL_SetTextureColorMod(texture, r, g, b);
+		}
 		auto get_texture_width(size_t tid) {
 			auto txt = get_tex_from_tid(tid);
 			if(!txt) return 0; //if the texture is not found then return 0
@@ -454,6 +484,26 @@ namespace SKC::GE {
 			if (!txt) return;
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
 
+		}
+		Math::Vect2i get_size_of_uniform_atlas(size_t tid, int size) {
+			auto txt = get_tex_from_tid(tid);
+			if (!txt) return { 0,0 };
+			return get_size_of_uniform_atlas(txt, size);
+		}
+		//TODO(skc) : should make a class that stores Texture atlases 
+		void draw_from_uniform_atlas(size_t tid, Frect pos, int size, size_t atlas_x, size_t atlas_y) {
+			auto txt = get_tex_from_tid(tid);
+			if (!txt) return;
+			auto atlas_size = get_size_of_uniform_atlas(txt, size); 
+			size_t ax = atlas_x % atlas_size.x;
+			size_t ay = atlas_y % atlas_size.y;
+			Frect atlas_pos = {
+				(float)(ax * size),
+				(float)(ay * size),
+				(float)size,
+				(float)size
+			};
+			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos); 
 		}
 #pragma endregion
 		/*
@@ -566,6 +616,10 @@ namespace SKC::GE {
 					SDL_DestroySurface(text_line_surface);
 					continue;
 				}
+				//NOTE(skc) : 
+				// if this is the first line then we just set the text surface to the line surface
+				//otherwise we align the line surface to the text surface based on the alignment option
+
 				if(!text_surface) {
 					text_surface = SDL_CreateSurface(text_line_surface->w, text_line_surface->h, text_line_surface->format);
 					if (!text_surface) { return false; }
@@ -644,6 +698,9 @@ namespace SKC::GE {
 					pos.y -= (float)(texture_h) / 2.0f;
 					break;
 			}
+			//TODO(skc) : make this a settings option 
+			SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_BLEND);
+			SDL_SetTextureAlphaMod(text_texture, options.color.a);
 			auto rt = SDL_RenderTexture(m_renderer, text_texture, NULL, &pos);
 			SDL_DestroyTexture(text_texture);
 			return rt; 
