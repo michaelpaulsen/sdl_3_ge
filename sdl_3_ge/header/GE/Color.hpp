@@ -13,7 +13,9 @@ namespace SKC::GE {
 		color(c_t r, c_t g, c_t b, c_t a = 255) : r(r),g(g),b(b), a(a){ }
 		// TODO (skc) : implement a CSS color name constructor...
 		//there's like a lot of them though so that might have to be itsown file... 
-
+		operator SDL_Color() const {
+			return SDL_Color{ r,g,b,a };
+		}
 	};
 	
 }

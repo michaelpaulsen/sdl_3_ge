@@ -365,17 +365,15 @@ namespace SKC::GE {
 		*/
 #pragma region --Text API--
 		bool render_text_simple(std::string text,
-			TTF_Font* font,
-			float x, float y,
-			c_t r = 255, c_t g = 255, c_t b = 255, c_t a = 255) {
-			auto text_surface = TTF_RenderText_Blended(font,
-				text.c_str(), text.size(),
-				{ r,g,b,a });
+			TTF_Font* font, float x, float y, color font_color
+		) {
+			auto text_surface = TTF_RenderText_Blended(
+				font, text.c_str(), text.size(), font_color
+			);
 			if (!text_surface) return false;
 			auto texture_w = text_surface->w;
 			auto texture_h = text_surface->h;
-			auto text_texture = SDL_CreateTextureFromSurface(
-				m_renderer, text_surface);
+			auto text_texture = SDL_CreateTextureFromSurface( m_renderer, text_surface);
 			//doing this here so that the surface gets freed 
 			//no matter what
 			SDL_DestroySurface(text_surface);
@@ -385,13 +383,12 @@ namespace SKC::GE {
 			SDL_DestroyTexture(text_texture);
 			return true;
 		}
-		bool render_text_centered_simple(std::string text,
-			TTF_Font* font,
-			float x, float y,
-			c_t r = 255, c_t g = 255, c_t b = 255, c_t a = 255) {
-			auto text_surface = TTF_RenderText_Blended(font,
-				text.c_str(), text.size(),
-				{ r,g,b,a });
+		bool render_text_centered_simple(
+			std::string text, TTF_Font* font, float x, float y, color font_color
+		) {
+			auto text_surface = TTF_RenderText_Blended(
+				font, text.c_str(), text.size(),font_color
+			);
 			if (!text_surface) return false;
 			auto texture_w = text_surface->w;
 			auto texture_h = text_surface->h;
@@ -408,46 +405,35 @@ namespace SKC::GE {
 			return true;
 		}
 		bool render_text(std::string text, TTF_Font* font, font_options options) {
+			namespace rng = std::ranges;
+			namespace views = std::ranges::views;
+			
 			std::vector<std::string> lines;
 
 			if (TTF_GetFontSize(font) <= 0) return false; 
-
 			if (text.empty())return false;
+
 
 			//if we are told to not seperate any lines then we just render the text as a single line
 			if(options.line_separator == font_options::LINE_SEPERATOR_NONE) {
 				//if the line separator is none then we just render the text as a single line
 				if (options.text_alignment == options.TEXT_ALIGNMENT_CENTER) {
 					return render_text_centered_simple(
-						text,
-						font,
-						options.x,
-						options.y,
-						options.color.r,
-						options.color.g,
-						options.color.b,
-						options.color.a
+						text, font, options.x, options.y, options.color
+						
 					);
 				}
 				return render_text_simple(
-					text,
-					font,
-					options.x,
-					options.y,
-					options.color.r,
-					options.color.g,
-					options.color.b,
-					options.color.a
+					text, font, options.x, options.y,
+					options.color
 				);
 			} 
-			namespace rng = std::ranges;
 			
-			namespace views = std::ranges::views;
 			if (options.line_separator == font_options::LINE_SEPARATOR_NEWLINE) {
 				lines = rng::to<std::vector<std::string>>(rng::views::split(text, '\n')
 					| views::transform([](auto&& str) { return std::string(str.begin(), str.end()); }));
 			}
-			else if (options.line_separator == font_options::LINE_SEPARATOR_CRLF) {
+			if (options.line_separator == font_options::LINE_SEPARATOR_CRLF) {
 				lines = rng::to<std::vector<std::string>>(rng::views::split(text, "\r\n")
 					| views::transform([](auto&& str) { return std::string(str.begin(), str.end()); }));
 			}
@@ -455,8 +441,9 @@ namespace SKC::GE {
 			float line_y = 0; 
 			SDL_Surface* text_surface = nullptr;
 			for(const auto& line : lines) {
-				auto text_line_surface = TTF_RenderText_Blended(font, line.c_str(), line.size(),
-					{ options.color.r,options.color.g,options.color.b,options.color.a });
+				auto text_line_surface = TTF_RenderText_Blended(
+					font, line.c_str(), line.size(), options.color
+				);
 				if(!text_line_surface) {
 					//TODO(skc) : handle error
 					return false; 
@@ -497,10 +484,9 @@ namespace SKC::GE {
 				}
 				else if (options.line_height_mode == font_options::LINE_HEIGHT_MODE_MULTIPLICATIVE) {
 					line_y += TTF_GetFontSize(font) * options.line_hight; //add the line height to the y position
-
 				}
 				SDL_DestroySurface(text_line_surface);
-			}
+			} //for(const auto& line : lines)
 			if (!text_surface) return false;
 			auto texture_w = text_surface->w;
 			auto texture_h = text_surface->h;
@@ -512,11 +498,13 @@ namespace SKC::GE {
 			SDL_DestroySurface(text_surface);
 			if (!text_texture) return false;
 			Frect pos = {options.x, options.y, (float)texture_w, (float)texture_h };
-			//NOTE(skc) : I know that this is a code smell but this file is getting too big
 			auto ap = options.anchor_point;
+			//NOTE(skc) : I know that this is a code smell but this file is getting too big
 #include "./private/position_from_anchor_point.hpp"
 			//TODO(skc) : make this a settings option 
 			SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_BLEND);
+			//NOTE(skc) : SDL_TTF ingores the alpha channel so we have to set it manually?
+			//(IDK why but alpha doesn't work unless we do this)
 			SDL_SetTextureAlphaMod(text_texture, options.color.a);
 			auto rt = SDL_RenderTexture(m_renderer, text_texture, NULL, &pos);
 			SDL_DestroyTexture(text_texture);
