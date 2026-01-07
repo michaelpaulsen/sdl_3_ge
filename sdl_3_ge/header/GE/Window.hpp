@@ -48,50 +48,10 @@ namespace SKC::GE {
 		tick_t last_frame_start{}, m_last_frame_time{};
 
 		float m_frame_rate{ 30 };
-		SDL_Surface* blit_surface_with_resize(SDL_Surface* dst, SDL_Surface* src, int x, int y) {
-			if (!dst || !src) return dst;
-			if (!src->w || !src->h) return dst;
-			int needed_width = x + src->w;
-			int needed_height = y + src->h;
-			//if we don't need to resize the surface then we should just use it.
-			rect src_rect = { x,y,src->w,src->h }; 
-			bool x_is_positive = (x > 0);
-			bool y_is_positive = (y > 0);
-
-			bool both_cords_are_positive = x_is_positive && y_is_positive;
-			bool needs_resize = (needed_height > dst->h || needed_width > dst->w);
-			if ((!needs_resize) && both_cords_are_positive) {
-				SDL_BlitSurface(src, NULL, dst, &src_rect);
-				return dst; 
-			}
-
-			SDL_Rect dst_rect = { 0,0,dst->w,dst->h };
-			if (needed_height < dst->h) needed_height = dst->h;
-			if (needed_width < dst->w) needed_width  = dst->w;
-			if (!x_is_positive) { needed_width += -x; }
-			//if the y coordinate is negative then we need to add the height of the source surface to the destination surface height
-			if (!y_is_positive)	 { 
-				dst_rect.y = src->h + -y;
-				needed_height += -y; 
-
-			}
-
-			auto new_surface = SDL_CreateSurface(needed_width, needed_height, dst->format);
-			if (!new_surface) return dst; // if we cannot make a new surface than just return the old one 
-			//TODO(skc) : make this fail some way...
-			if (!x_is_positive) {
-				dst_rect.x = (-x);
-				src_rect.x = 0; 
-			}
-			
-
-			SDL_BlitSurface(dst, NULL, new_surface, &dst_rect);
-			SDL_BlitSurface(src, NULL, new_surface, &src_rect);
-			SDL_DestroySurface(dst); 
-			return new_surface; 
-
-			
-		}
+		//NOTE(skc): I know that this is a code smell but this file is getting too big
+		//also this function can be used outside of this class so it makes sense to 
+		//have it in its own file.
+		#include "./private/blit_surface_with_resize.hpp"
 
 		Math::Vect2i get_size_of_uniform_atlas(SDL_Texture* txt, int size) {
 			if (!txt) return { 0,0 };
@@ -99,6 +59,14 @@ namespace SKC::GE {
 				txt->w / size,
 				txt->h / size
 			};
+		}
+		auto get_tex_from_tid(size_t tid) {
+			for (const auto& texture : m_image_textures) {
+				if (texture == tid) {
+					return texture.tex;
+				}
+			}
+			return (SDL_Texture*)nullptr; //return nullptr if not found
 		}
 	public: 
 		window(std::string title, int  width, int height, SDL_WindowFlags flags) noexcept  : m_width { width }, m_height{ height } {
@@ -133,25 +101,19 @@ namespace SKC::GE {
 			SDL_DestroySurface(render_data);
 			return ret;
 		}
-		//TODO(skc): add getter and settere for window 
+		//TODO(skc): add getter and setters for window 
 		//fullscreen display mode. 
 		bool set_window_full_screen(bool is_fullscreen) {
 			if (is_fullscreen == m_is_fullscreen) return false;
 			m_is_fullscreen = is_fullscreen;
 			return SDL_SetWindowFullscreen(m_window, is_fullscreen);
-
 		}
 		bool set_window_border(bool is_bordered) {
 			if (is_bordered == m_is_bordered) return false;
 			m_is_bordered = is_bordered;
 			return SDL_SetWindowBordered(m_window, is_bordered);
 		}
-		bool is_window_fullscreen() const {
-			return m_is_fullscreen;
-		}
-		bool is_window_bordered() const {
-			return m_is_bordered; 
-		}
+	
 		void enable_screen_saver() {
 			SDL_EnableScreenSaver();
 			m_is_screen_saver_enabled = true; 
@@ -161,12 +123,7 @@ namespace SKC::GE {
 			m_is_screen_saver_enabled = false;
 
 		}
-		bool is_screen_saver_enabled() const {
-			return m_is_screen_saver_enabled;
-		}
-		auto create_texture_from_surface(SDL_Surface *surface) {
-			return SDL_CreateTextureFromSurface(m_renderer, surface);
-		}
+
 
 		[[nodiscard]] auto create_texture_from_path(fs::path pth) {
 			if (!fs::exists(pth) || fs::is_directory(pth)) {
@@ -175,7 +132,7 @@ namespace SKC::GE {
 			}
 			SDL_Surface* surface = IMG_Load(pth.generic_string().c_str());
 			if (!surface) return 0ull;
-			auto tex = create_texture_from_surface(surface);
+			auto tex = SDL_CreateTextureFromSurface(m_renderer, surface);
 			
 			//NOTE(skc) doing this here so that the surface gets freed 
 			//even if the texture creation fails.
@@ -201,31 +158,13 @@ namespace SKC::GE {
 			m_height = ret.h;
 		}
 		
-		rect get_window_rect() const{
-			return { m_x, m_y, m_width,m_height }; 
-		}
+		rect get_window_rect() const{return { m_x, m_y, m_width,m_height };}
 		
-		void get_window_dimentions(int& width, int& height) const {
-			SDL_GetWindowSize(m_window, &width, &height); 
-		}
+		void get_window_dimentions(int& width, int& height) const { SDL_GetWindowSize(m_window, &width, &height); }
 		SKC::Math::Vect2i get_window_dimentions() const {
 			int w, h;
 			SDL_GetWindowSize(m_window, &w, &h);
 			return { w,h }; 
-		}
-		
-		void set_background_color(color other) {
-			m_background_color = other;
-		}
-		void set_background_color(c_t r, c_t g, c_t b, c_t a = 255) {
-			m_background_color = { r,g,b,a }; 
-		}
-
-		void set_draw_color(color color) {
-			SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, 255);
-		}
-		void set_draw_color(c_t r, c_t g, c_t b, c_t a = 255) {
-			SDL_SetRenderDrawColor(m_renderer, r, g, b, a); 
 		}
 		
 		void set_render_scale(float new_scale) {
@@ -241,35 +180,31 @@ namespace SKC::GE {
 			m_scale_y = new_y_scale;
 			SDL_SetRenderScale(m_renderer, new_x_scale, new_y_scale);
 		}
-		
-		const std::string get_window_title() const {
-			return SDL_GetWindowTitle(m_window);
-		}
-		void set_title(std::string title) {
-			SDL_SetWindowTitle(m_window, title.c_str());
-		}
-
-		double from_normilzed_width(double U) const {
-			return U * (double)m_width; 
-		}
-		double to_normilzed_width(int px) const {
-			return (double)px / (double)m_width;
-		}
-		double from_normilzed_height(double V) const {
-			return V * (double)m_height;
-		}
-		double to_normilzed_height(int py) const{
-			return (double)py / (double)m_height;
-		}
+		auto get_frame_rate()  const { return m_frame_rate; }
+		bool is_screen_saver_enabled() const { return m_is_screen_saver_enabled; }
+		bool is_visible() const { return m_is_visible; }
+		bool is_window_bordered() const { return m_is_bordered; }
+		bool is_window_fullscreen() const { return m_is_fullscreen; }
+		const std::string get_window_title() const { return SDL_GetWindowTitle(m_window); }
+		double from_normilzed_height(double V) const { return V * (double)m_height;}
+		double from_normilzed_width(double U) const {return U * (double)m_width;}
+		double to_normilzed_height(int py) const { return (double)py / (double)m_height; }
+		double to_normilzed_width(int px) const { return (double)px / (double)m_width;}
+		void disable_frame_rate_limiter() { m_limit_frame_rate = false; }
+		void enable_frame_rate_limiter() { m_limit_frame_rate = true; }
+		void set_background_color(c_t r, c_t g, c_t b, c_t a = 255) { m_background_color = { r,g,b,a }; }
+		void set_background_color(color other) { m_background_color = other; }
+		void set_draw_color(c_t r, c_t g, c_t b, c_t a = 255) { SDL_SetRenderDrawColor(m_renderer, r, g, b, a); }
+		void set_draw_color(color color) { SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, 255); }
+		void set_frame_rate(float nfps) { m_frame_rate = nfps; }
+		void set_title(std::string title) { SDL_SetWindowTitle(m_window, title.c_str()); }
 		
 		color get_draw_color()  const {
 			color color = {}; 
 			SDL_GetRenderDrawColor(m_renderer, &color.r, &color.g, &color.b, &color.a); 
 			return color;  
 		}
-		void start_of_frame() {
-			last_frame_start = SDL_GetTicks(); 
-		}
+		void start_of_frame() { last_frame_start = SDL_GetTicks(); }
 		void end_frame() {
 			auto now = SDL_GetTicks();
 			m_last_frame_time = (now - last_frame_start);
@@ -285,24 +220,7 @@ namespace SKC::GE {
 			}
 			end_frame();
 		}
-		tick_t delta_time() const  {
-			return m_last_frame_time; 
-		}
-		void disable_frame_rate_limiter() {
-			m_limit_frame_rate = false; 
-		}
-		void enable_frame_rate_limiter() {
-			m_limit_frame_rate = true; 
-		}
-		auto get_frame_rate()  const{
-			return m_frame_rate; 
-		}
-		void set_frame_rate(float nfps) {
-			m_frame_rate = nfps; 
-		}
-		bool is_visible() const {
-			return m_is_visible; 
-		}
+		tick_t delta_time() const  { return m_last_frame_time; }
 		void show() {
 			if (m_is_visible) return; 
 			SDL_ShowWindow(m_window);
@@ -335,27 +253,14 @@ namespace SKC::GE {
 			SDL_RenderFillRect(m_renderer, &rect);
 		}
 		
-		void draw_line(Frect rect) const {
-			SDL_RenderLine(m_renderer, rect.x, rect.y, rect.w, rect.h); 
-		}
-		void draw_line(Fpoint p1, Fpoint p2) const {
-			SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y);
-		}
-		void draw_line(Fpoint p1, float x2, float y2) const  {
-			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
-		}
-		void draw_line(float x1, float y1 , float x2, float y2) const {
-			SDL_RenderLine(m_renderer, x1, y1, x2, y2);
-		}
-		void draw_line( float x2, float y2, Fpoint p1) const {
-			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
-		}
-		void draw_pixel(Fpoint p) {
-			SDL_RenderPoint(m_renderer, p.x, p.y);
-		}
-		void draw_pixel(float x, float y) {
-			SDL_RenderPoint(m_renderer, x, y);
-		}
+		void draw_line(Frect rect) const { SDL_RenderLine(m_renderer, rect.x, rect.y, rect.w, rect.h); }
+		void draw_line(Fpoint p1, Fpoint p2) const { SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y); }
+		void draw_line(Fpoint p1, float x2, float y2) const  { SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2); }
+		void draw_line(float x1, float y1 , float x2, float y2) const { SDL_RenderLine(m_renderer, x1, y1, x2, y2); }
+		void draw_line( float x2, float y2, Fpoint p1) const { SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2); }
+		void draw_pixel(Fpoint p) { SDL_RenderPoint(m_renderer, p.x, p.y); }
+		void draw_pixel(float x, float y) { SDL_RenderPoint(m_renderer, x, y); }
+		void present() { SDL_RenderPresent(m_renderer); }
 		void clear() {
 			Uint8 r, g, b, a;
 			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
@@ -369,9 +274,6 @@ namespace SKC::GE {
 			SDL_RenderClear(m_renderer);
 			SDL_SetRenderDrawColor(m_renderer, r, g, b, a);
 		};
-		void present() {
-			SDL_RenderPresent(m_renderer);
-		}
 		
 #pragma endregion
 		/*
@@ -380,49 +282,7 @@ namespace SKC::GE {
 		*that involves rendering textures goes 
 		*/
 		
-		//NOTE(skc): YOU REALLY SHOULD NOT USE THIS MEMBER FUNCTION (AS IT RETURNS A RAW POINTER!!!).
-		//it is only public for the SDL functions that are not wrapped in the ID based API yet. 
-		//once I am sure that all of the SDL functions are wrapped in the ID based API I will make this private.
-		//I make no guarantees that this will not cause a use after free error.
-		//Though it should not be possible based off of how classes work in C++.
-#pragma region --SDL_Texture* API--
-		auto get_tex_from_tid(size_t tid) {
-			for (const auto& texture : m_image_textures) {
-				if (texture == tid) {
-					return texture.tex;
-				}
-			}
-			return (SDL_Texture *)nullptr; //return nullptr if not found
-		}
-		
-		void draw_texture(SDL_Texture *txt) {
-			SDL_RenderTexture(m_renderer, txt, NULL, NULL);
-		}
-		void draw_texture(SDL_Texture *txt, Frect pos) {
-			SDL_RenderTexture(m_renderer, txt, NULL, &pos);
-		}
-		void draw_texture(SDL_Texture *txt, Frect pos, Frect atlas_pos) {
-			SDL_RenderTexture(m_renderer, txt, &atlas_pos , &pos );
-		}
 
-		void draw_texture_with_afine_transform(SDL_Texture *txt, Fpoint tl, Fpoint tr, Fpoint bl ) {
-			SDL_RenderTextureAffine(m_renderer, txt, NULL, &tl, &tr, &bl);
-		}
-
-		void draw_texture_rotated(SDL_Texture* txt, Frect atlas_pos, Frect pos, double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
-			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, NULL, flip);
-		}
-		void draw_texture_rotated(SDL_Texture* txt, const Frect pos, const double angle, const SDL_FlipMode flip = SDL_FLIP_NONE) {
-			SDL_RenderTextureRotated(m_renderer, txt, NULL, &pos, angle, NULL, flip); 
-		}
-		void draw_texture_rotated(SDL_Texture* txt, const Frect atlas_pos, const Frect pos, const Fpoint center, const double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
-			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
-
-		}		
-#pragma endregion
-//The ID based Texture format API 
-		//NOTE(skc): this is the API that you should be using by default. the only reason 
-		//you would use the SDL_Texture* API is if you are using a texture that is generated progrimatically.
 #pragma region --ID based Texture API--
 		void set_texture_alpha_mod(size_t tid, uint8_t mod) {
 			auto texture = get_tex_from_tid(tid); 
@@ -527,7 +387,8 @@ namespace SKC::GE {
 			//no matter what
 			SDL_DestroySurface(text_surface);
 			if (!text_texture) return false;
-			draw_texture(text_texture, Frect(x, y, (float)texture_w, (float)texture_h));
+			auto rect = Frect(x, y, (float)texture_w, (float)texture_h);
+			SDL_RenderTexture(m_renderer, text_texture, &rect, NULL);
 			SDL_DestroyTexture(text_texture);
 			return true;
 		}
@@ -547,7 +408,9 @@ namespace SKC::GE {
 			//no matter what
 			SDL_DestroySurface(text_surface);
 			if (!text_texture) return false;
-			draw_texture(text_texture, Frect(x - (texture_w / 2.0f), y - (texture_h / 2.0f), (float)texture_w, (float)texture_h));
+			auto rect = Frect(x - (texture_w / 2.0f), y - (texture_h / 2.0f), (float)texture_w, (float)texture_h); 
+			SDL_RenderTexture(m_renderer, text_texture, &rect, NULL);
+
 			SDL_DestroyTexture(text_texture);
 			return true;
 		}
@@ -656,48 +519,9 @@ namespace SKC::GE {
 			SDL_DestroySurface(text_surface);
 			if (!text_texture) return false;
 			Frect pos = {options.x, options.y, (float)texture_w, (float)texture_h };
-			//NOTE(skc) : 
-			//   anchor point translation
-			//---------------------------
-			//    AP_FLOATING (w*ox, h*oy)
-			//	  AP_TOP_LEFT ( 0  ,  0  )
-			// AP_CENTER_LEFT ( 0  , -h/2)
-			// AP_BOTTOM_LEFT ( 0  , -h  ) 
-			//   AP_TOP_RIGHT (-w  ,  0  )
-			//AP_CENTER_RIGHT (-w  , -h/2)
-			//AP_BOTTOM_RIGHT (-w  , -h  )
-			//      AP_CENTER (-w/2, -h/2)
-			
-			
-			switch (options.anchor_point) {
-			case font_options::AP_FLOAT: 
-				pos.x += options.positionoffset_x * texture_w;
-				pos.y += options.positionoffset_y * texture_h;
-				break;
-				case font_options::AP_CENTER_LEFT:
-					pos.y -= (float)(texture_h) / 2.0f;
-					break;
-				case font_options::AP_TOP_LEFT:
-					break;
-				case font_options::AP_BOTTOM_LEFT:
-					pos.y -= (float)(texture_h);
-					break;
-				case font_options::AP_TOP_RIGHT:
-					pos.x -= (float)(texture_w);
-					break;
-				case font_options::AP_CENTER_RIGHT:
-					pos.x -= (float)(texture_w);
-					pos.y -= (float)(texture_h) / 2.0f;
-					break;
-				case font_options::AP_BOTTOM_RIGHT:
-					pos.x -= (float)(texture_w);
-					pos.y -= (float)(texture_h);
-					break;
-				case font_options::AP_CENTER:
-					pos.x -= (float)(texture_w) / 2.0f;
-					pos.y -= (float)(texture_h) / 2.0f;
-					break;
-			}
+			//NOTE(skc) : I know that this is a code smell but this file is getting too big
+			auto ap = options.anchor_point;
+#include "./private/position_from_anchor_point.hpp"
 			//TODO(skc) : make this a settings option 
 			SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_BLEND);
 			SDL_SetTextureAlphaMod(text_texture, options.color.a);
