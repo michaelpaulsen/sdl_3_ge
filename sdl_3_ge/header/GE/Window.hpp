@@ -16,6 +16,8 @@
 #include "font_options.hpp"
 #include "texture.hpp"
 
+#define PRIV_GET_TEX_(name, ret) auto name = get_tex_from_tid(tid);\
+                      if (!name) return ret;
 namespace SKC::GE {
 
 	
@@ -285,33 +287,27 @@ namespace SKC::GE {
 
 #pragma region --ID based Texture API--
 		void set_texture_alpha_mod(size_t tid, uint8_t mod) {
-			auto texture = get_tex_from_tid(tid); 
-			if (!texture) return;
+			PRIV_GET_TEX_(texture)
 			SDL_SetTextureAlphaMod(texture, mod);
 		}
 		void set_texture_blend_mode(size_t tid, SDL_BlendMode blend_mode) {
-			auto texture = get_tex_from_tid(tid);
-			if (!texture) return;
+			PRIV_GET_TEX_(texture)
 			SDL_SetTextureBlendMode(texture, blend_mode);
 		}
 		auto set_texture_color_mod(size_t tid, c_t r, c_t g, c_t b) {
-			auto texture = get_tex_from_tid(tid);
-			if (!texture) return false;
+			PRIV_GET_TEX_(texture,false)
 			return SDL_SetTextureColorMod(texture, r, g, b);
 		}
 		bool set_texture_scale_mode(size_t tid, SDL_ScaleMode scale_mode) {
-			auto texture = get_tex_from_tid(tid);
-			if (!texture) return false;
+			PRIV_GET_TEX_(texture, false)
 			return SDL_SetTextureScaleMode(texture, scale_mode);
 		}
 		auto get_texture_width(size_t tid) {
-			auto txt = get_tex_from_tid(tid);
-			if(!txt) return 0; //if the texture is not found then return 0
+			PRIV_GET_TEX_(txt, 0)
 			return txt->w; 
 		}
 		auto get_texture_height(size_t tid) {
-			auto txt = get_tex_from_tid(tid);
-			if (!txt) return 0; //if the texture is not found then return 0
+			PRIV_GET_TEX_(txt, 0)
 			return txt->h;
 		}
 		void draw_texture(size_t tid) {
@@ -320,45 +316,37 @@ namespace SKC::GE {
 			SDL_RenderTexture(m_renderer, txt, NULL, NULL);
 		}
 		void draw_texture(size_t tid, Frect pos) {
-			auto txt = get_tex_from_tid(tid);
-			if (!txt) return;
+			PRIV_GET_TEX_(txt)
 			SDL_RenderTexture(m_renderer, txt, NULL, &pos);
 		}
 		void draw_texture(size_t tid, Frect pos, Frect atlas_pos) {
-			auto txt = get_tex_from_tid(tid);
-			if (!txt) return;
+			PRIV_GET_TEX_(txt)
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos);
 		}
 		void draw_texture_with_afine_transform(size_t tid, Fpoint tl, Fpoint tr, Fpoint bl) {
-			auto txt = get_tex_from_tid(tid);
-			if (!txt) return;
+			PRIV_GET_TEX_(txt)
 			SDL_RenderTextureAffine(m_renderer, txt, NULL, &tl, &tr, &bl);
 		}
 		void draw_texture_rotated(size_t tid, Frect atlas_pos, Frect pos, double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
-			auto txt = get_tex_from_tid(tid);
-			if (!txt) return;
+			PRIV_GET_TEX_(txt)
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, NULL, flip);
 		}
 		void draw_texture_rotated(size_t tid, const Frect pos, const double angle, const SDL_FlipMode flip = SDL_FLIP_NONE) {
-			auto txt = get_tex_from_tid(tid);
-			if (!txt) return;
+			PRIV_GET_TEX_(txt)
 			SDL_RenderTextureRotated(m_renderer, txt, NULL, &pos, angle, NULL, flip);
 		}
 		void draw_texture_rotated(size_t tid, const Frect atlas_pos, const Frect pos, const Fpoint center, const double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
-			auto txt = get_tex_from_tid(tid);
-			if (!txt) return;
+			PRIV_GET_TEX_(txt)
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
 
 		}
 		Math::Vect2i get_size_of_uniform_atlas(size_t tid, int size) {
-			auto txt = get_tex_from_tid(tid);
-			if (!txt) return { 0,0 };
+			PRIV_GET_TEX_(txt, (Math::Vect2i{ 0,0 }))
 			return get_size_of_uniform_atlas(txt, size);
 		}
 		//TODO(skc) : should make a class that stores Texture atlases 
 		void draw_from_uniform_atlas(size_t tid, Frect pos, int size, size_t atlas_x, size_t atlas_y) {
-			auto txt = get_tex_from_tid(tid);
-			if (!txt) return;
+			PRIV_GET_TEX_(txt)
 			auto atlas_size = get_size_of_uniform_atlas(txt, size); 
 			size_t ax = atlas_x % atlas_size.x;
 			size_t ay = atlas_y % atlas_size.y;
@@ -537,3 +525,5 @@ namespace SKC::GE {
 #pragma endregion
 	};
 }
+//NOTE(skc): this is heere to scope this macro because it should not be used outside of this file.
+#undef PRIV_GET_TEX_
