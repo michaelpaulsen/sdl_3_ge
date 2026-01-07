@@ -1,5 +1,11 @@
 
 #pragma once
+//NOTE(skc): this seems to be the best (and most portable) way of checking for platform 
+//headers (as __has_include was included in the standard to do just that)
+//in the Uinix versions of this we may need to do more work to decide what flavor of unix like 
+//kernel we have (because BSD and Linux do some things differenetly) 
+// but I do not have a way of testing this on Linux/BSD so that is TBD ... 
+
 #if !__has_include(<Windows.h>)
 #error attempting to include windows files when the windows headers are not present... 
 #endif 
@@ -12,17 +18,29 @@
 #include <functional>
 #include <string>
 
+#include "../file_change_info.hpp"
+#include <cstdint>
+
 namespace SKC::file_api {
-	
+	//NOTE(skc) : this is meant to be used in if constexpr statements to take into account the differences between 
+	// the UNIX and windows file system APIs. 
 	enum FILE_SYS_API {
 		WINODOWS = 0, 
 		LINUX,
 		POSIX_OTHER,
 		CURRENT = WINODOWS
 	};
+	//NOTE(skc) : this is here to abstract away the fact that the values for these
+	//are not the same on every platform. 
+	//this should be defined in every implementation of this libary.
+	enum FILE_ACTION : uint64_t {
+		FA_ADDED    = FILE_ACTION_ADDED           ,
+		FA_MODIFIED = FILE_ACTION_REMOVED         ,
+		FA_REMOVED	= FILE_ACTION_MODIFIED        ,
+		FA_RENAMED  = FILE_ACTION_RENAMED_NEW_NAME
+	};
 
-
-	namespace _win32_priv {
+	namespace win32_priv_ {
 		
 		
 		void print_error_string() {
@@ -47,61 +65,38 @@ namespace SKC::file_api {
 			WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), strTo.data(), size_needed, NULL, NULL);
 			return strTo;
 		}
+		auto create_dir_handle(std::filesystem::path directory_path) {
+
+
+
+			HANDLE hDir = CreateFileW(
+				directory_path.c_str(), // Replace with your directory
+				FILE_LIST_DIRECTORY,
+				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+				NULL,
+				OPEN_EXISTING,
+				FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+				NULL
+			);
+
+			if (hDir == INVALID_HANDLE_VALUE) {
+				std::print(stderr, "Failed to open directory. Error: {}", GetLastError());
+				exit(1);
+			}
+			return hDir;
+		}
 	}
 
+	//this is constexpr so that we can use it do default a paramiter 
 	static constexpr DWORD defnotfilt =
 		FILE_NOTIFY_CHANGE_CREATION |
 		FILE_NOTIFY_CHANGE_FILE_NAME |
 		FILE_NOTIFY_CHANGE_SIZE |
 		FILE_NOTIFY_CHANGE_LAST_WRITE;
-	
-	
-	
-	//TODO(skc): make it so that this can be abstracted to other platforms... 
-	struct fs_change_info_t {
-		std::filesystem::path fname{}, old_name{};
-		DWORD action;
-		std::string get_action() const {
-			switch (action) {
-			case FILE_ACTION_ADDED:
-				return "FILE_ACTION_ADDED";
-			case FILE_ACTION_REMOVED:
-				return "FILE_ACTION_REMOVED";
-			case FILE_ACTION_MODIFIED:
-				return "FILE_ACTION_MODIFIED";
-			case FILE_ACTION_RENAMED_OLD_NAME:
-				return "RENAMED";
-			case FILE_ACTION_RENAMED_NEW_NAME:
-				return "RENAMED";
-			default:
-				return "UNKNOWN FILE ACTION";
-			}
-		}
-	};
-	
 	using fs_callback_fntn_t = std::function<void(fs_change_info_t cinfo)>;
 	
 	
-	auto create_dir_handle(std::filesystem::path directory_path) {
-
-
-
-		HANDLE hDir = CreateFileW(
-			directory_path.c_str(), // Replace with your directory
-			FILE_LIST_DIRECTORY,
-			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-			NULL,
-			OPEN_EXISTING,
-			FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-			NULL
-		);
-
-		if (hDir == INVALID_HANDLE_VALUE) {
-			std::print(stderr, "Failed to open directory. Error: {}", GetLastError());
-			exit(1);
-		}
-		return hDir; 
-	}
+	
 
 	void watch_directory(
 		std::stop_token st,
@@ -111,7 +106,7 @@ namespace SKC::file_api {
 		bool watch_subdirs = true
 	) {
 
-		auto hDir = create_dir_handle(directory_path);
+		auto hDir = win32_priv_::create_dir_handle(directory_path);
 		DWORD bytesReturned;
 		OVERLAPPED overlapped = { 0 };
 		overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL); // Manual-reset event
@@ -138,7 +133,8 @@ namespace SKC::file_api {
 			);
 			
 			if (!result && GetLastError() != ERROR_IO_PENDING) {
-				std::print(stderr, "ReadDirectoryChangesW failed. Error: {} ", GetLastError());
+				std::println(stderr, "ReadDirectoryChangesW failed. Error: {} ", GetLastError());
+				win32_priv_::print_error_string(); 
 				CloseHandle(overlapped.hEvent);
 				CloseHandle(hDir);
 				return;
@@ -150,19 +146,19 @@ namespace SKC::file_api {
 				if (GetOverlappedResult(hDir, &overlapped, &bytesReturned, TRUE)) {
 					FILE_NOTIFY_INFORMATION *notification = (FILE_NOTIFY_INFORMATION*)buffer.data();
 					if (bytesReturned == 0) {
-						_win32_priv::print_error_string(); 
+						win32_priv_::print_error_string();
 					}
 					do {
 						auto action = notification->Action; 
 
-						auto fpath = _win32_priv::ws2s(notification->FileName);
+						auto fpath = win32_priv_::ws2s(notification->FileName);
 						
 						switch (action) {
 							case FILE_ACTION_ADDED: 
 							case FILE_ACTION_REMOVED:
 							case FILE_ACTION_MODIFIED:
 							{
-								call_back({ fpath, "", action }); 
+								call_back({ fpath, "", (FILE_ACTION)action }); 
 								break; 
 							}
 							case FILE_ACTION_RENAMED_OLD_NAME: {
@@ -170,7 +166,7 @@ namespace SKC::file_api {
 								break; 
 							}
 							case FILE_ACTION_RENAMED_NEW_NAME: {
-								call_back({ fpath, old_path, action });
+								call_back({ fpath, old_path, (FILE_ACTION)action });
 								old_path.clear(); 
 								break; 
 							}
