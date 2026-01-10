@@ -37,7 +37,10 @@ namespace SKC::GE {
 		};
 
 		bool operator ==(const SDL_image_texture_wrapper& other) const { return path == other.path; }
-		bool operator ==(const fs::path& other) const { return path == other; }
+		bool operator ==(const fs::path& other) const { 
+			if (path.empty()) return false;
+			return path == other;
+		}
 		bool operator== (size_t other) const { return tid == other; }
 
 	};

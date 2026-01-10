@@ -10,13 +10,15 @@
 #include <SDL3/SDL_rect.h>
 #include <print>
 #include <cstdio>
+#include <SDL3/SDL_video.h>
+#include <SDL3/SDL_render.h>
 
 #include "../math/Vector.hpp"
 #include "Color.hpp"
 #include "font_options.hpp"
 #include "texture.hpp"
 
-#define PRIV_GET_TEX_(name, ret) auto name = get_tex_from_tid(tid);\
+#define PRIV_GET_TEX_(tid, name, ret) auto name = get_tex_from_tid(tid);\
                       if (!name) return ret;
 namespace SKC::GE {
 
@@ -72,11 +74,16 @@ namespace SKC::GE {
 		}
 	public: 
 		window(std::string title, int  width, int height, SDL_WindowFlags flags) noexcept  : m_width { width }, m_height{ height } {
-			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer);
-			m_image_textures.reserve(128); 
 			m_is_fullscreen = (flags & SDL_WINDOW_FULLSCREEN) != 0;
 			m_is_bordered = (flags & SDL_WINDOW_BORDERLESS) == 0;
 			m_is_visible = (flags & SDL_WINDOW_HIDDEN) == 0;
+			m_image_textures.reserve(128);
+			
+			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer);
+			if (not m_window || not m_renderer) {
+				std::println(stderr, "[FATAL ERROR] could not create SDL_Window or SDL_Renderer: {}", SDL_GetError());
+				std::exit(EXIT_FAILURE);
+			}
 		}
 		~window() {
 			SDL_DestroyRenderer(m_renderer);
@@ -109,7 +116,7 @@ namespace SKC::GE {
 			if (is_fullscreen == m_is_fullscreen) return false;
 			m_is_fullscreen = is_fullscreen;
 			return SDL_SetWindowFullscreen(m_window, is_fullscreen);
-		}
+ 		}
 		bool set_window_border(bool is_bordered) {
 			if (is_bordered == m_is_bordered) return false;
 			m_is_bordered = is_bordered;
@@ -125,7 +132,20 @@ namespace SKC::GE {
 			m_is_screen_saver_enabled = false;
 
 		}
+		[[nodiscard]] auto create_modifible_texture(int width, int height) {
+			auto t = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA8888,
+				SDL_TEXTUREACCESS_TARGET,
+				width, height);
+			if (not t ) return 0llu;
+			SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND);
+			m_image_textures.emplace_back(t);
+			return m_image_textures.back().tid;
+		}
 
+		[[nodiscard]] auto create_modifible_texture() {
+			update_window_size();
+			return create_modifible_texture(m_width, m_height);
+		}
 
 		[[nodiscard]] auto create_texture_from_path(fs::path pth) {
 			if (!fs::exists(pth) || fs::is_directory(pth)) {
@@ -168,7 +188,7 @@ namespace SKC::GE {
 			SDL_GetWindowSize(m_window, &w, &h);
 			return { w,h }; 
 		}
-		
+
 		void set_render_scale(float new_scale) {
 			//if the user is not actually changing the scale there's no work to be done.
 			if (new_scale == m_scale_x && new_scale == m_scale_y) return;
@@ -200,7 +220,7 @@ namespace SKC::GE {
 		void set_draw_color(color color) { SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, 255); }
 		void set_frame_rate(float nfps) { m_frame_rate = nfps; }
 		void set_title(std::string title) { SDL_SetWindowTitle(m_window, title.c_str()); }
-		
+
 		color get_draw_color()  const {
 			color color = {}; 
 			SDL_GetRenderDrawColor(m_renderer, &color.r, &color.g, &color.b, &color.a); 
@@ -284,30 +304,30 @@ namespace SKC::GE {
 		*that involves rendering textures goes 
 		*/
 		
-
+		
 #pragma region --ID based Texture API--
 		void set_texture_alpha_mod(size_t tid, uint8_t mod) {
-			PRIV_GET_TEX_(texture)
+			PRIV_GET_TEX_(tid,texture,)
 			SDL_SetTextureAlphaMod(texture, mod);
 		}
 		void set_texture_blend_mode(size_t tid, SDL_BlendMode blend_mode) {
-			PRIV_GET_TEX_(texture)
+			PRIV_GET_TEX_(tid, texture)
 			SDL_SetTextureBlendMode(texture, blend_mode);
 		}
 		auto set_texture_color_mod(size_t tid, c_t r, c_t g, c_t b) {
-			PRIV_GET_TEX_(texture,false)
+			PRIV_GET_TEX_(tid, texture,false)
 			return SDL_SetTextureColorMod(texture, r, g, b);
 		}
 		bool set_texture_scale_mode(size_t tid, SDL_ScaleMode scale_mode) {
-			PRIV_GET_TEX_(texture, false)
+			PRIV_GET_TEX_(tid, texture, false)
 			return SDL_SetTextureScaleMode(texture, scale_mode);
 		}
 		auto get_texture_width(size_t tid) {
-			PRIV_GET_TEX_(txt, 0)
+			PRIV_GET_TEX_(tid, txt, 0)
 			return txt->w; 
 		}
 		auto get_texture_height(size_t tid) {
-			PRIV_GET_TEX_(txt, 0)
+			PRIV_GET_TEX_(tid, txt, 0)
 			return txt->h;
 		}
 		void draw_texture(size_t tid) {
@@ -316,37 +336,46 @@ namespace SKC::GE {
 			SDL_RenderTexture(m_renderer, txt, NULL, NULL);
 		}
 		void draw_texture(size_t tid, Frect pos) {
-			PRIV_GET_TEX_(txt)
+			PRIV_GET_TEX_(tid, txt)
 			SDL_RenderTexture(m_renderer, txt, NULL, &pos);
 		}
 		void draw_texture(size_t tid, Frect pos, Frect atlas_pos) {
-			PRIV_GET_TEX_(txt)
+			PRIV_GET_TEX_(tid, txt)
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos);
 		}
 		void draw_texture_with_afine_transform(size_t tid, Fpoint tl, Fpoint tr, Fpoint bl) {
-			PRIV_GET_TEX_(txt)
+			PRIV_GET_TEX_(tid, txt)
 			SDL_RenderTextureAffine(m_renderer, txt, NULL, &tl, &tr, &bl);
 		}
 		void draw_texture_rotated(size_t tid, Frect atlas_pos, Frect pos, double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
-			PRIV_GET_TEX_(txt)
+			PRIV_GET_TEX_(tid, txt)
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, NULL, flip);
 		}
 		void draw_texture_rotated(size_t tid, const Frect pos, const double angle, const SDL_FlipMode flip = SDL_FLIP_NONE) {
-			PRIV_GET_TEX_(txt)
+			PRIV_GET_TEX_(tid, txt)
 			SDL_RenderTextureRotated(m_renderer, txt, NULL, &pos, angle, NULL, flip);
 		}
 		void draw_texture_rotated(size_t tid, const Frect atlas_pos, const Frect pos, const Fpoint center, const double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
-			PRIV_GET_TEX_(txt)
+			PRIV_GET_TEX_(tid, txt)
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
 
 		}
+		bool set_render_target(size_t tid) {
+				//FIXME(skc): this should destinguish between the texture not
+				//existing and the texture not being a render target
+
+			if (tid == 0)  return SDL_SetRenderTarget(m_renderer, 0);
+			PRIV_GET_TEX_(tid, txt, false)
+			if ((SDL_GetTextureProperties(txt) | SDL_TEXTUREACCESS_TARGET) == 0) return false;
+			return SDL_SetRenderTarget(m_renderer, txt);
+		}
 		Math::Vect2i get_size_of_uniform_atlas(size_t tid, int size) {
-			PRIV_GET_TEX_(txt, (Math::Vect2i{ 0,0 }))
+			PRIV_GET_TEX_(tid, txt, (Math::Vect2i{ 0,0 }))
 			return get_size_of_uniform_atlas(txt, size);
 		}
 		//TODO(skc) : should make a class that stores Texture atlases 
 		void draw_from_uniform_atlas(size_t tid, Frect pos, int size, size_t atlas_x, size_t atlas_y) {
-			PRIV_GET_TEX_(txt)
+			PRIV_GET_TEX_(tid, txt)
 			auto atlas_size = get_size_of_uniform_atlas(txt, size); 
 			size_t ax = atlas_x % atlas_size.x;
 			size_t ay = atlas_y % atlas_size.y;
@@ -412,10 +441,10 @@ namespace SKC::GE {
 
 			if (TTF_GetFontSize(font) <= 0) return false; 
 			if (text.empty())return false;
-
+			
 
 			//if we are told to not seperate any lines then we just render the text as a single line
-			if(options.line_separator == font_options::LINE_SEPERATOR_NONE) {
+			if(options.line_seperator == font_options::LINE_SEPERATOR_NONE) {
 				//if the line separator is none then we just render the text as a single line
 				if (options.text_alignment == options.TEXT_ALIGNMENT_CENTER) {
 					return render_text_centered_simple(
@@ -428,12 +457,12 @@ namespace SKC::GE {
 					options.color
 				);
 			} 
-			
-			if (options.line_separator == font_options::LINE_SEPARATOR_NEWLINE) {
+			//otherwise we split on the requested new line seq. 
+			if (options.line_seperator == font_options::LINE_SEPARATOR_NEWLINE) {
 				lines = rng::to<std::vector<std::string>>(rng::views::split(text, '\n')
 					| views::transform([](auto&& str) { return std::string(str.begin(), str.end()); }));
 			}
-			if (options.line_separator == font_options::LINE_SEPARATOR_CRLF) {
+			if (options.line_seperator == font_options::LINE_SEPARATOR_CRLF) {
 				lines = rng::to<std::vector<std::string>>(rng::views::split(text, "\r\n")
 					| views::transform([](auto&& str) { return std::string(str.begin(), str.end()); }));
 			}
@@ -505,7 +534,7 @@ namespace SKC::GE {
 			SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_BLEND);
 			//NOTE(skc) : SDL_TTF ingores the alpha channel so we have to set it manually?
 			//(IDK why but alpha doesn't work unless we do this)
-			SDL_SetTextureAlphaMod(text_texture, options.color.a);
+			SDL_SetTextureAlphaMod(text_texture, options.color.a); 
 			auto rt = SDL_RenderTexture(m_renderer, text_texture, NULL, &pos);
 			SDL_DestroyTexture(text_texture);
 			return rt; 
