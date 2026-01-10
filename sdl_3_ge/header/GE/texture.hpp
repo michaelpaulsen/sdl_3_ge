@@ -10,7 +10,10 @@ namespace SKC::GE {
 		SDL_Texture* tex;
 		fs::path path;
 		size_t tid;
-		SDL_image_texture_wrapper(SDL_Texture* _t, fs::path pth = fs::path()) : tid(++next_tid), tex(_t), path(pth) {}
+		SDL_image_texture_wrapper(SDL_Texture* _t, fs::path pth = fs::path()) noexcept : tid(++next_tid), tex(_t), path(pth) {
+			//take ownership of the texture 
+			_t = nullptr; 
+		}
 		~SDL_image_texture_wrapper() {
 			SDL_DestroyTexture(tex);
 		}

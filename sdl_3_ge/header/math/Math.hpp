@@ -1,5 +1,7 @@
 #pragma once
 #include <numbers>
+#include <cstdint>
+
 #include "./perlin.hpp"
 #define U32 static_cast<uint32_t>
 namespace SKC::Math {

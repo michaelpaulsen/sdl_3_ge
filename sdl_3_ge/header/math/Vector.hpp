@@ -4,8 +4,8 @@
 #include <format>
 #include <typeinfo>
 namespace SKC::Math {
-template <typename T> concept numeber = std::is_integral_v<T> || std::is_floating_point_v<T>; 
-	template<numeber T>
+template <typename T> concept number = std::is_integral_v<T> || std::is_floating_point_v<T>; 
+	template<number T>
 	struct Vect2 {
 		T x{}, y{};
 		
@@ -41,8 +41,16 @@ template <typename T> concept numeber = std::is_integral_v<T> || std::is_floatin
 		Vect2<T> operator - (Vect2<T> other) {
 			return { x - other.x, y - other.y }; 
 		}
-		Vect2<T> operator * (numeber auto scalar) {
+		Vect2<T> operator * (number auto scalar) {
 			return { x * scalar, y * scalar }; 
+		}
+		Vect2<T> operator / (number auto scalar) {
+			return { x / scalar, y / scalar };
+		}
+
+		template<number U>
+		explicit operator Vect2<U>() const {
+			return { static_cast<U>(x), static_cast<U>(y) };
 		}
 	};
 	using Vect2d = SKC::Math::Vect2<double>;
@@ -55,15 +63,15 @@ using skc_Vect2i = SKC::Math::Vect2<int>;
 
 
 //TODO(SKC): move to own file.
-// this should be in own file because there is no other reason that format is included in this file.
-//TODO(SKC) : make this so that it only outputs in dbg mode... 
+// this should be in own file because there is no other reason that format is included in this file
+// make this so that it only outputs in dbg mode... 
 template <typename T>
 struct std::formatter<SKC::Math::Vect2<T>> {
 	bool show_type = false;
 	constexpr auto parse(std::format_parse_context& ctx) {
 		auto pos = ctx.begin();
 		while (pos != ctx.end() && *pos != '}') {
-			show_type = (*pos == '#');
+			show_type = (*pos == '#') || show_type;
 			++pos;
 		}
 		return pos;
