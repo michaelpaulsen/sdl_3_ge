@@ -20,6 +20,15 @@
 
 #define PRIV_GET_TEX_(tid, name, ret) auto name = get_tex_from_tid(tid);\
                       if (!name) return ret;
+
+#define PRIV_PUSH_RENDER_BLEND_MODE_()  SDL_BlendMode prev_mode{};\
+					  SDL_GetRenderDrawBlendMode(m_renderer, &prev_mode)
+#define PRIV_POP_RENDER_BLEND_MODE_() SDL_SetRenderDrawBlendMode(m_renderer, prev_mode)
+#define PRIV_SET_RENDER_BLEND_MODE_()\
+SDL_BlendMode tp ={};\
+SDL_GetTextureBlendMode(SDL_GetRenderTarget(m_renderer), &tp);\
+SDL_SetRenderDrawBlendMode(m_renderer, tp);
+
 namespace SKC::GE {
 
 	
@@ -260,28 +269,85 @@ namespace SKC::GE {
 		*/
 #pragma region --Intrinsics API--
 		void draw_rectangle(Frect rect) {
-			SDL_RenderRect(m_renderer, &rect);
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_(); 
+				SDL_RenderRect(m_renderer, &rect);
+			PRIV_POP_RENDER_BLEND_MODE_();
+
 		}
 		void draw_rectangle(float x, float y, float w, float h) const {
-			Frect rect = { x,y,w,h }; 
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
+			Frect rect = { x,y,w,h };
 			SDL_RenderRect(m_renderer, &rect);
+			PRIV_POP_RENDER_BLEND_MODE_();
 		}
 		
 		void fill_rectangle(Frect rect)  const{
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
 			SDL_RenderFillRect(m_renderer, &rect);
+			PRIV_POP_RENDER_BLEND_MODE_();
+
 		}
 		void fill_rectangle(float x, float y, float w, float h) const {
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
 			Frect rect = { x,y,w,h };
 			SDL_RenderFillRect(m_renderer, &rect);
+			PRIV_POP_RENDER_BLEND_MODE_();
+
+		}
+		using fpt = float; 
+
+		void draw_line(Frect rect) const { 
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
+			SDL_RenderLine(m_renderer, rect.x, rect.y, rect.w, rect.h);
+			PRIV_POP_RENDER_BLEND_MODE_();
+		}
+
+		void draw_line(Fpoint p1, Fpoint p2) const {
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
+			SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y);
+			PRIV_POP_RENDER_BLEND_MODE_();
+		}
+
+		void draw_line(Fpoint p1, float x2, float y2) const {
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
+			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
+			PRIV_POP_RENDER_BLEND_MODE_();
+		}
+
+		void draw_line(float x1, float y1 , float x2, float y2 ) const {
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
+			SDL_RenderLine(m_renderer, x1, y1, x2, y2);
+			PRIV_POP_RENDER_BLEND_MODE_();
+		}
+
+		void draw_line(float x2, float y2, Fpoint p1) const {
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
+			SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2);
+			PRIV_POP_RENDER_BLEND_MODE_();
 		}
 		
-		void draw_line(Frect rect) const { SDL_RenderLine(m_renderer, rect.x, rect.y, rect.w, rect.h); }
-		void draw_line(Fpoint p1, Fpoint p2) const { SDL_RenderLine(m_renderer, p1.x, p1.y, p2.x, p2.y); }
-		void draw_line(Fpoint p1, float x2, float y2) const  { SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2); }
-		void draw_line(float x1, float y1 , float x2, float y2) const { SDL_RenderLine(m_renderer, x1, y1, x2, y2); }
-		void draw_line( float x2, float y2, Fpoint p1) const { SDL_RenderLine(m_renderer, p1.x, p1.y, x2, y2); }
-		void draw_pixel(Fpoint p) { SDL_RenderPoint(m_renderer, p.x, p.y); }
-		void draw_pixel(float x, float y) { SDL_RenderPoint(m_renderer, x, y); }
+		
+		void draw_pixel(Fpoint p)     { 
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
+			SDL_RenderPoint(m_renderer, p.x, p.y);
+			PRIV_POP_RENDER_BLEND_MODE_();
+		}
+		void draw_pixel(float x, float y) {
+			PRIV_PUSH_RENDER_BLEND_MODE_();
+			PRIV_SET_RENDER_BLEND_MODE_();
+			SDL_RenderPoint(m_renderer, x, y);
+			PRIV_POP_RENDER_BLEND_MODE_();
+		}
 		void present() { SDL_RenderPresent(m_renderer); }
 		void clear() {
 			Uint8 r, g, b, a;
@@ -306,12 +372,31 @@ namespace SKC::GE {
 		
 		
 #pragma region --ID based Texture API--
+		float get_texture_width(size_t tid) {
+			PRIV_GET_TEX_(tid, txt, 0)
+			float w{0};
+			SDL_GetTextureSize(txt, &w, NULL); 
+			return w; 
+		}
+		float get_texture_height(size_t tid) {
+			PRIV_GET_TEX_(tid, txt, 0)
+			float h{ 0 };
+			SDL_GetTextureSize(txt, NULL, &h);
+			return h;
+		}
+		
+		skc_Vect2f get_texture_size(size_t tid) {
+			PRIV_GET_TEX_(tid, txt, skc_Vect2f(0, 0));
+			skc_Vect2f ret{0,0};
+			SDL_GetTextureSize(txt, &ret.x, &ret.y);
+			return ret; 
+		}
 		void set_texture_alpha_mod(size_t tid, uint8_t mod) {
 			PRIV_GET_TEX_(tid,texture,)
 			SDL_SetTextureAlphaMod(texture, mod);
 		}
 		void set_texture_blend_mode(size_t tid, SDL_BlendMode blend_mode) {
-			PRIV_GET_TEX_(tid, texture)
+			PRIV_GET_TEX_(tid, texture,)
 			SDL_SetTextureBlendMode(texture, blend_mode);
 		}
 		auto set_texture_color_mod(size_t tid, c_t r, c_t g, c_t b) {
@@ -322,41 +407,33 @@ namespace SKC::GE {
 			PRIV_GET_TEX_(tid, texture, false)
 			return SDL_SetTextureScaleMode(texture, scale_mode);
 		}
-		auto get_texture_width(size_t tid) {
-			PRIV_GET_TEX_(tid, txt, 0)
-			return txt->w; 
-		}
-		auto get_texture_height(size_t tid) {
-			PRIV_GET_TEX_(tid, txt, 0)
-			return txt->h;
-		}
 		void draw_texture(size_t tid) {
 			auto txt = get_tex_from_tid(tid); 
 			if (!txt) return; 
 			SDL_RenderTexture(m_renderer, txt, NULL, NULL);
 		}
 		void draw_texture(size_t tid, Frect pos) {
-			PRIV_GET_TEX_(tid, txt)
+			PRIV_GET_TEX_(tid, txt,)
 			SDL_RenderTexture(m_renderer, txt, NULL, &pos);
 		}
 		void draw_texture(size_t tid, Frect pos, Frect atlas_pos) {
-			PRIV_GET_TEX_(tid, txt)
+			PRIV_GET_TEX_(tid, txt,)
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos);
 		}
 		void draw_texture_with_afine_transform(size_t tid, Fpoint tl, Fpoint tr, Fpoint bl) {
-			PRIV_GET_TEX_(tid, txt)
+			PRIV_GET_TEX_(tid, txt,)
 			SDL_RenderTextureAffine(m_renderer, txt, NULL, &tl, &tr, &bl);
 		}
 		void draw_texture_rotated(size_t tid, Frect atlas_pos, Frect pos, double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
-			PRIV_GET_TEX_(tid, txt)
+			PRIV_GET_TEX_(tid, txt,)
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, NULL, flip);
 		}
 		void draw_texture_rotated(size_t tid, const Frect pos, const double angle, const SDL_FlipMode flip = SDL_FLIP_NONE) {
-			PRIV_GET_TEX_(tid, txt)
+			PRIV_GET_TEX_(tid, txt,)
 			SDL_RenderTextureRotated(m_renderer, txt, NULL, &pos, angle, NULL, flip);
 		}
 		void draw_texture_rotated(size_t tid, const Frect atlas_pos, const Frect pos, const Fpoint center, const double angle, SDL_FlipMode flip = SDL_FLIP_NONE) {
-			PRIV_GET_TEX_(tid, txt)
+			PRIV_GET_TEX_(tid, txt,)
 			SDL_RenderTextureRotated(m_renderer, txt, &atlas_pos, &pos, angle, &center, flip);
 
 		}
@@ -375,7 +452,7 @@ namespace SKC::GE {
 		}
 		//TODO(skc) : should make a class that stores Texture atlases 
 		void draw_from_uniform_atlas(size_t tid, Frect pos, int size, size_t atlas_x, size_t atlas_y) {
-			PRIV_GET_TEX_(tid, txt)
+			PRIV_GET_TEX_(tid, txt,)
 			auto atlas_size = get_size_of_uniform_atlas(txt, size); 
 			size_t ax = atlas_x % atlas_size.x;
 			size_t ay = atlas_y % atlas_size.y;
@@ -544,3 +621,6 @@ namespace SKC::GE {
 }
 //NOTE(skc): this is heere to scope this macro because it should not be used outside of this file.
 #undef PRIV_GET_TEX_
+#undef PRIV_PUSH_RENDER_BLEND_MODE_
+#undef PRIV_POP_RENDER_BLEND_MODE_
+#undef PRIV_SET_RENDER_BLEND_MODE_
