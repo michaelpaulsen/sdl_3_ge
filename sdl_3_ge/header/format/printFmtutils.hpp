@@ -1,11 +1,6 @@
 #pragma once
 #include <format>
 
-#pragma warning( push ) // Save the current warning state
-#pragma warning( disable : 4100 ) // Disable warning C4996 (e.g., for deprecated functions like `scanf`)
-
-// Your code that generates warning C4996
-
 namespace SKC::fmt {
 		//NOTE(skc): 
 		// SA https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
@@ -36,7 +31,10 @@ namespace SKC::fmt {
 		struct fmt_set_palleted_color {
 			int mode{}, fg_color{}, bg_color{};
 		};
-
+		struct fmt_24bit_color {
+			bool fg = false; 
+			int r, g, b; 
+		};
 		struct fmt_save_loc {}; 
 		struct fmt_restore_loc {};
 		//NOTE(skc) : ANSI specifies that 1,1 is the top left of the screen.. not 0,0
@@ -215,4 +213,18 @@ template<> struct std::formatter<SKC::fmt::fmt_set_palleted_color> {
 		return std::format_to(ctx.out(), "{}{};{};{}m", SKC::fmt::es, obj.mode,   fg_color, bg_color);
 	}
 };
-#pragma warning( pop ) // Restore the previous warning state
+
+template<> struct std::formatter<SKC::fmt::fmt_24bit_color> {
+
+	using type = SKC::fmt::fmt_24bit_color;
+	constexpr auto parse(std::format_parse_context& ctx) {
+		auto pos = ctx.begin();
+		return pos;
+	}
+	auto format(const type& obj, std::format_context& ctx) const {
+		std::format_to(ctx.out(), "{}", SKC::fmt::es);
+		auto mode = 38; 
+		if (obj.fg) mode = 48;
+		return std::format_to(ctx.out(), "{};{};{}m", obj.r, obj.g, obj.b);
+	}
+};
