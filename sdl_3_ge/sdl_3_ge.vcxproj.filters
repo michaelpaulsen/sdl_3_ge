@@ -104,6 +104,18 @@
     <ClInclude Include="header\fileio.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="header\filesys\file_change_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\GE\private\blit_surface_with_resize.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\GE\private\position_from_anchor_point.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\GE\Action.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

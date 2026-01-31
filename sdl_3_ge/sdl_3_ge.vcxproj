@@ -186,7 +186,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\fileio.hpp" />
+    <ClInclude Include="header\filesys\file_change_info.hpp" />
     <ClInclude Include="header\fmt\printFmtutils.hpp" />
+    <ClInclude Include="header\GE\Action.hpp" />
     <ClInclude Include="header\GE\Color.hpp" />
     <ClInclude Include="header\GE\controller\game_pad.hpp" />
     <ClInclude Include="header\GE\cvars\CVar.hpp" />
@@ -197,6 +199,8 @@
     <ClInclude Include="header\GE\Imgui_window.hpp" />
     <ClInclude Include="header\GE\key_util.hpp" />
     <ClInclude Include="header\GE\level\level.hpp" />
+    <ClInclude Include="header\GE\private\blit_surface_with_resize.hpp" />
+    <ClInclude Include="header\GE\private\position_from_anchor_point.hpp" />
     <ClInclude Include="header\GE\texture.hpp" />
     <ClInclude Include="header\GE\timer.hpp" />
     <ClInclude Include="header\GE\Window.hpp" />

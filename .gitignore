@@ -22,3 +22,4 @@ sdl_3_ge/img
 *.png
 *.bmp
 
+/sdl_3_ge/imgui.ini
