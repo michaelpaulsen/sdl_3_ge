@@ -5,8 +5,10 @@
 #include <array> 
 
 //3rd party deps
-#include <SDL3/SDL.h>
-#include "imgui_impl_sdl3.h"
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_keycode.h>
+#include <SDL3/SDL_stdinc.h>
+#include <imgui_impl_sdl3.h>
 
 //first party deps
 #include "../math/Vector.hpp"
@@ -14,6 +16,7 @@
 
 //TODO(skc) : move to own file?
 #ifndef U32
+#include <cstdint>
 #define U32 static_cast<uint32_t>
 #endif // !U32
 #ifndef UZ
@@ -22,9 +25,6 @@
 
 namespace SKC::GE {
 
-
-
-	
 	enum struct full_screen_state_change_t : unsigned char {
 			NO_CHANGE,
 			EXITED_FULLSCREEN,
@@ -44,7 +44,6 @@ namespace SKC::GE {
 		DOWN,
 		MAX
 	};
-	
 	
 	template<bool _use_IMGUI = false>
 	class event_handler {
@@ -70,7 +69,7 @@ namespace SKC::GE {
 		bool m_mouse_focus{ false }; 
 		bool m_is_dragging{ false };
 		bool m_has_started_dragging{ false };
-
+		
 		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA };
 
 		key_mod m_keymod_state{}; 
@@ -78,8 +77,8 @@ namespace SKC::GE {
 		std::string m_last_dropped_data{}; 
 		std::array<mouse_button_state_t, 256> m_mouse_keys{0};
 
-		//NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS 
-		//where as m_mouse_position is the raw mouse position.
+//NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS 
+//where as m_mouse_position is the raw mouse position.
 		SKC::Math::Vect2d m_mouse_position{ 0,0 };
 		SKC::Math::Vect2d m_cursor_position{ 0,0 };
 		SKC::Math::Vect2d m_last_joy_relitive_pos{ 0,0 };
@@ -87,7 +86,7 @@ namespace SKC::GE {
 		SKC::Math::Vect2d m_last_mouse_rel_pos{ 0,0 };
 		SKC::Math::Vect2d m_drag_vector{ 0,0 };		
 		SKC::Math::Vect2d m_scroll_wheel_pos{ 0,0 };
-		
+	
 		key_state_array_t<256> m_key_states{};
 		key_state_array_t<UZ(arrow_direction_t::MAX)> m_arrow_state{};
 		key_state_array_t<24> m_function_key_states{};
@@ -101,34 +100,33 @@ namespace SKC::GE {
 		
 		event_handler() = default; 
 		~event_handler() = default;
-
-		//want to not be able to move or copy this as it doesn't make sense... 
-		//if you can make sense of what it would mean to copy and / or move a event handler 
-		//feel free to implement these your self.. (I may or may not accept your PR) 
+//NOTE(skc): 
+//want to not be able to move or copy this as it doesn't make sense... 
+//if you can make sense of what it would mean to copy and / or move a event handler 
+//feel free to implement these your self.. (I may or may not accept your PR) 
 		event_handler(event_handler&) = delete;
 		event_handler(event_handler&&) = delete;
 		event_handler operator=(event_handler&&) = delete;
 
-		//instead of making getter and setter for this I am just goint to make it public
+		//instead of making getter and setter for these I am just goint to make it public
 		bool arrow_keys_alias_WASD = false;
-		//bool m_up, m_down, m_left, m_right;
-
-		//== The Getters for the State. 
+//== The Getters for the State. 
 		//maybe shouldn't be const... (so that I can reset the flag when called)
-		bool theme_changed() const noexcept { return m_system_theme_changed; }
-		bool is_minimized() const noexcept { return m_window_is_minimized; }
-		bool quit() const noexcept { return m_quit; }
-		bool has_dropped_data() const noexcept { return m_dropped_data_type != drop_event_data_type_t::NO_DROPPED_DATA; }
-		bool has_key_event() const noexcept { return m_has_key_event; }
-		bool window_resized() const noexcept { return m_window_resized; }
-		bool mouse_focus() const noexcept { return m_mouse_focus; }
-		bool is_dragging() const noexcept { return m_is_dragging; }
+		bool theme_changed()        const noexcept { return m_system_theme_changed; }
+		bool is_minimized()         const noexcept { return m_window_is_minimized; }
+		bool quit()                 const noexcept { return m_quit; }
+		bool has_dropped_data()     const noexcept { return m_dropped_data_type != drop_event_data_type_t::NO_DROPPED_DATA; }
+		bool has_key_event()        const noexcept { return m_has_key_event; }
+		bool window_resized()       const noexcept { return m_window_resized; }
+		bool mouse_focus()          const noexcept { return m_mouse_focus; }
+		bool is_dragging()          const noexcept { return m_is_dragging; }
 		bool has_started_dragging() const noexcept { return m_has_started_dragging; }
 
-		//NOTE(skc) : this is not const because it is kinda important to not ignore the user when they
-		// drop something into the aplication so the flag is only cleared when the consumer calls this function.	
-		//NOTE(skc) :IF YOU'RE TRYING TO ACCEPT DATA FROM "DROP" EVENTS CALL THIS EVERY FRAME DO NOT
-		//MAKE YOUR USERS WAIT FOR THEIR INPUT TO BE PROCESSED! 
+//NOTE(skc) : 
+// this is not const because it is kinda important
+// to not ignore the user when they drop something into the
+// aplication so the flag is only cleared when the consumer
+// calls this function.	
 		auto dropped_data_type() { 
 			auto ret = m_dropped_data_type;
 			m_dropped_data_type = drop_event_data_type_t::NO_DROPPED_DATA; 
@@ -154,8 +152,8 @@ namespace SKC::GE {
 		auto drag_vector() const noexcept { return m_drag_vector; }
 		auto scroll_wheel_pos() const noexcept { return m_scroll_wheel_pos; }
 		auto get_key_state(unsigned char key) const noexcept {
-			//NOTE(skc) : this is impossible to happen 
-			//but its better to be safe than sorry!
+//NOTE(skc) : this is impossible to happen 
+//but its better to be safe than sorry!
 			if (key >= 256) {
 				return keyevent_state_t{ false,false };
 			}
@@ -180,6 +178,18 @@ namespace SKC::GE {
 					ImGui_ImplSDL3_ProcessEvent(&evnt);
 				}
 				auto type = evnt.type; 
+
+//NOTE(skc): I quite frankly have no idea why this is a thing. 
+// or what you would do with it... for now I am just going to ignore it ..
+				if (type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) continue;
+				
+//NOTE(skc) this event seems to be for apps that 
+// use a defered rendering model we don't need this since we 
+//use immediate rendering.. 
+				if (type == SDL_EVENT_WINDOW_EXPOSED) continue;
+				
+				
+				
 				switch (evnt.type) {
 #pragma region ==MISC EVENTS==
 				case SDL_EVENT_QUIT: 
@@ -232,6 +242,7 @@ namespace SKC::GE {
 #pragma endregion
 #pragma region ==MOUSE EVENTS ==
 //===MOUSE EVENTS ===//
+
 				case SDL_EVENT_MOUSE_MOTION: {
 					auto x = evnt.motion.x, y = evnt.motion.y; 
 					auto xrel = evnt.motion.xrel, yrel = evnt.motion.yrel;
@@ -274,11 +285,11 @@ namespace SKC::GE {
 				}
 #pragma endregion
 #pragma region ===KEYBOARD EVENTS===
-				//===KEYBOARD EVENTS===//
+//===KEYBOARD EVENTS===//
 				case SDL_EVENT_KEY_DOWN:
 				case SDL_EVENT_KEY_UP : {
 					m_has_key_event = true; 
-					auto keyevnt = evnt.key; 
+					auto keyevnt = evnt.key;
 					auto key = keyevnt.key;
 					auto down = keyevnt.down;
 					auto repeat = keyevnt.repeat;
@@ -311,9 +322,9 @@ namespace SKC::GE {
 						break; 
 					}
 
-					//NOTE(skc) : I set the m_arrow_state even if arrow_keys_alias_WASD is true because 
-					//the consumer may still have contextual reasons to treat the arrow keys differently 
-					//while still wanting them to alias their respective keys. 
+//NOTE(skc) : I set the m_arrow_state even if arrow_keys_alias_WASD is true because 
+//the consumer may still have contextual reasons to treat the arrow keys differently 
+//while still wanting them to alias their respective keys. 
 					if (key == SDLK_LEFT) {
 						if (arrow_keys_alias_WASD) m_key_states.at(U32('a')) = { keyevnt.down,keyevnt.repeat }; 
 						m_arrow_state.at(UZ(arrow_direction_t::LEFT)) = { down, repeat };
@@ -335,10 +346,11 @@ namespace SKC::GE {
 						break;
 					}
 					
-					//NOTE(skc) : for some reason the char codes for the KP are 
-					//1234567890 not the ASCII layout of 0123456789 ... 
-					//this takes the key code and sets the respective bit
-					//TODO(skc) : distinguish between the KP and main layout numbers. 
+//NOTE(skc) : for some reason the char codes for the KP are 
+//1234567890 not the ASCII layout of 0123456789 ... 
+//this takes the key code and sets the respective bit
+					
+//TODO(skc) : distinguish between the KP and main layout numbers. 
 					if (key == SDLK_KP_0) {
 						m_key_states.at(U32('0')) = { down,repeat };
 						break;
@@ -358,7 +370,7 @@ namespace SKC::GE {
 						m_function_key_states.at(UZ(fkey_index)) = { down,repeat };
 						break;
 					}
-					std::print("UNKNOWN EXSTENDED KEY CODE 0x{:>0x}\r", key);
+					std::print("UNKNOWN EXSTENDED KEY CODE 0x{:>04x}\r", key);
 					break;
 				}
 #pragma endregion
@@ -371,8 +383,17 @@ namespace SKC::GE {
 					break;
 				}
 #pragma endregion
+#pragma region === AUDIO DEVICE EVENTS 
+				// TODO(skc) : implement audio device events 
+				case SDL_EVENT_AUDIO_DEVICE_ADDED: 
+				case SDL_EVENT_AUDIO_DEVICE_REMOVED:
+				case SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED: {
+					std::println("audio device events are not implemented");
+					break;
+				}
+#pragma endregion 
 				default: {
-					std::print(" unhandled event type 0x{:>04X}\r", type);
+					std::print(" unhandled event type 0x{:>04x}\r", type);
 					break;
 				}
 				}

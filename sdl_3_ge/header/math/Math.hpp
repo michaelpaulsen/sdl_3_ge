@@ -79,3 +79,6 @@ namespace SKC::Math {
 			return ret;
 		}
 }
+namespace SKC {
+	namespace mth = Math;
+}

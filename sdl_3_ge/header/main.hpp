@@ -3,7 +3,6 @@
 #include <SDL3_ttf/SDL_ttf.h>
 
 #include "GE/cvars/parse_cvars.hpp"
-#include "GE/Events.hpp"
 
 
 using arg_list_t = SKC::GE::C_var_list;
