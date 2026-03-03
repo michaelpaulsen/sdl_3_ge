@@ -1,53 +1,60 @@
 #pragma once 
-#include <SDL3/SDL.h>
+#include <SDL3/SDL_render.h>
 #include <filesystem>
 #include <utility>
+#include <exception>
 
 namespace SKC::GE {
 	namespace fs = std::filesystem;
-
-	struct SDL_image_texture_wrapper {
+	
+	class texture_wrapper {
 		inline static size_t next_tid = 0;
-		SDL_Texture* tex;
-		fs::path path;
-		size_t tid;
-		SDL_image_texture_wrapper(SDL_Texture* _t, fs::path pth = fs::path()) noexcept : 
-			tid(++next_tid), tex(_t), path(pth)
+		SDL_Texture* m_tex;
+		fs::path     m_path;
+		size_t       m_tid;
+	public: 
+		texture_wrapper(SDL_Texture* _t, fs::path pth = fs::path()) noexcept : 
+			m_tid(++next_tid), m_tex(_t), m_path(pth)
 		{
 			//take ownership of the texture 
 			_t = nullptr; 
 		}
-		~SDL_image_texture_wrapper() {
-			SDL_DestroyTexture(tex);
+		~texture_wrapper() {
+			SDL_DestroyTexture(m_tex);
+			this->m_tex = nullptr; 
 		}
-		SDL_image_texture_wrapper(SDL_image_texture_wrapper&& other) noexcept {
-			tid = other.tid;
-			tex = other.tex;
-			other.tex = nullptr;
-			other.tid = 0;
+		texture_wrapper(texture_wrapper&& other) noexcept {
+			m_tid = other.m_tid;
+			m_tex = other.m_tex;
+			other.m_tex = nullptr;
+			other.m_tid = 0;
 
 		}
+		[[nodiscard]] auto tid() const { return m_tid;}
+		SDL_Texture* get() const noexcept{
+			return m_tex; 
+		}
 		//NOTE(skc) we may have to implement these; 
-		SDL_image_texture_wrapper(const SDL_image_texture_wrapper& other) = delete;
-		SDL_image_texture_wrapper operator=(const SDL_image_texture_wrapper&) = delete;
-		SDL_image_texture_wrapper operator=(SDL_image_texture_wrapper&& other) noexcept
-		{
+		texture_wrapper          (const texture_wrapper&       ) = delete;
+		texture_wrapper operator=(const texture_wrapper&       ) = delete;
+		texture_wrapper operator=(      texture_wrapper&& other) noexcept{
 			if (this == &other) return std::move(*this); //self assignment check
-			this->~SDL_image_texture_wrapper(); //destroy the current object
-			tid = other.tid;
-			this->path = other.path; //copy the path
-			this->tex = other.tex; //move the texture pointer
-			other.tex = nullptr; //nullify the other texture pointer
-			tex = other.tex;
+			this->~texture_wrapper(); //destroy the current object
+			m_tid = other.m_tid;
+			m_path = other.m_path; //copy the path
+			m_tex  = other.m_tex; //move the texture pointer
+			other.m_tex = nullptr; //nullify the other texture pointer
 			return std::move(*this);
 		};
 
-		bool operator ==(const SDL_image_texture_wrapper& other) const { return path == other.path; }
+		bool operator ==(const texture_wrapper& other) const { return m_path == other.m_path; }
 		bool operator ==(const fs::path& other) const { 
-			if (path.empty()) return false;
-			return path == other;
+			if (m_path.empty()) return false;
+			return m_path == other;
 		}
-		bool operator== (size_t other) const { return tid == other; }
-
+		bool operator== (size_t other) const { return m_tid == other; }
+		operator bool() {
+			return m_tex; 
+		}
 	};
 }

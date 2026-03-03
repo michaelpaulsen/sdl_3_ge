@@ -4,14 +4,15 @@
 #include <vector>
 #include <ranges>
 
-#include <SDL3/SDL.h>
+#include <cstdio>
+#include <print>
+#include <SDL3/SDL_pixels.h>
+#include <SDL3/SDL_rect.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <SDL3/SDL_rect.h>
-#include <print>
-#include <cstdio>
-#include <SDL3/SDL_video.h>
-#include <SDL3/SDL_render.h>
 
 #include "../math/Vector.hpp"
 #include "Color.hpp"
@@ -44,7 +45,7 @@ namespace SKC::GE {
 		
 		using c_t = Uint8;
 		using tick_t = Uint64; 
-		std::vector< SDL_image_texture_wrapper> m_image_textures{};
+		std::vector<texture_wrapper> m_textures{};
 		int m_x{}, m_y{}, m_width, m_height;
 		std::string m_title;
 		float m_scale_x{ 1 }, m_scale_y{ 1 };
@@ -74,9 +75,9 @@ namespace SKC::GE {
 			};
 		}
 		auto get_tex_from_tid(size_t tid) {
-			for (const auto& texture : m_image_textures) {
+			for (const auto& texture : m_textures) {
 				if (texture == tid) {
-					return texture.tex;
+					return texture.get();
 				}
 			}
 			return (SDL_Texture*)nullptr; //return nullptr if not found
@@ -86,10 +87,11 @@ namespace SKC::GE {
 			m_is_fullscreen = (flags & SDL_WINDOW_FULLSCREEN) != 0;
 			m_is_bordered = (flags & SDL_WINDOW_BORDERLESS) == 0;
 			m_is_visible = (flags & SDL_WINDOW_HIDDEN) == 0;
-			m_image_textures.reserve(128);
+			m_textures.reserve(128);
 			
 			SDL_CreateWindowAndRenderer(title.c_str(), width, height, flags, &m_window, &m_renderer);
 			if (not m_window || not m_renderer) {
+				//NOTE(skc) : maybe this should not be here? 
 				std::println(stderr, "[FATAL ERROR] could not create SDL_Window or SDL_Renderer: {}", SDL_GetError());
 				std::exit(EXIT_FAILURE);
 			}
@@ -141,14 +143,14 @@ namespace SKC::GE {
 			m_is_screen_saver_enabled = false;
 
 		}
-		[[nodiscard]] auto create_modifible_texture(int width, int height) {
+		[[nodiscard]] size_t create_modifible_texture(int width, int height) {
 			auto t = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA8888,
 				SDL_TEXTUREACCESS_TARGET,
 				width, height);
-			if (not t ) return 0llu;
+			if (not t) return 0;
 			SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND);
-			m_image_textures.emplace_back(t);
-			return m_image_textures.back().tid;
+			m_textures.emplace_back(t);
+			return m_textures.back().tid();
 		}
 
 		[[nodiscard]] auto create_modifible_texture() {
@@ -177,8 +179,8 @@ namespace SKC::GE {
 			//because this is the expected default behavior.
 			//and if you don't want blending you can always change it later.
 			SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-			m_image_textures.emplace_back(tex, pth);
-			return m_image_textures.back().tid; 
+			m_textures.emplace_back(tex, pth);
+			return m_textures.back().tid(); 
 		}
 		void update_window_size() {
 			rect ret{};
@@ -586,10 +588,10 @@ namespace SKC::GE {
 				}
 				
 				if(options.line_height_mode == font_options::LINE_HEIGHT_MODE_ADDITIVE) {
-					line_y += TTF_GetFontSize(font) + options.line_hight; //add the line height to the y position
+					line_y += TTF_GetFontSize(font) + options.line_hight;
 				}
 				else if (options.line_height_mode == font_options::LINE_HEIGHT_MODE_MULTIPLICATIVE) {
-					line_y += TTF_GetFontSize(font) * options.line_hight; //add the line height to the y position
+					line_y += TTF_GetFontSize(font) * options.line_hight;
 				}
 				SDL_DestroySurface(text_line_surface);
 			} //for(const auto& line : lines)
