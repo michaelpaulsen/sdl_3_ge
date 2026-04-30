@@ -116,6 +116,9 @@
     <ClInclude Include="header\GE\Action.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="header\math\interpolate.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

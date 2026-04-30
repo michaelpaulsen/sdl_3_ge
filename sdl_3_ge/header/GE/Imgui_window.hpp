@@ -10,8 +10,11 @@
 
 namespace SKC::GE {
 	class imgui_window : public window {
-		static inline size_t imgui_count = false;
+		static inline size_t imgui_count = 0;
+		
+		bool overlay_state = false, requested_overlay_state = false;
 		ImGuiIO m_io;
+		
 	public: 
 		imgui_window(std::string title, int  width, int height, SDL_WindowFlags flags) :
 			window(title, width, height, flags), m_io{}
@@ -60,15 +63,22 @@ namespace SKC::GE {
 		void render() {
 			if (ImGui::GetCurrentContext() &&
 				m_io.DisplaySize.x > 0.0f && m_io.DisplaySize.y > 0.0f) {
-
-				//ImGui::End();
 				ImGui::Render();
 				ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), m_renderer);
 
 			}
+			if (requested_overlay_state != overlay_state) {
+				overlay_state = requested_overlay_state; 
+			}
 		}
 		auto& imgui_io() {
 			return m_io; 
+		}
+		bool is_imgui_enabled() const {
+			return this->overlay_state;
+		}
+		void toggle_imgui() {
+			requested_overlay_state = !requested_overlay_state; 
 		}
 	};
 

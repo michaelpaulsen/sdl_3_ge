@@ -1,7 +1,5 @@
-
 #define NOMINMAX
 #include <chrono>
-#include <cmath>
 #include <filesystem>
 #include <format>
 #include <print>
@@ -9,33 +7,26 @@
 #include <thread>
 #include <vector>
 
+#include <imgui.h>
+
 #include <SDL3/SDL_error.h>
-#include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_video.h>
-#include <imgui.h>
-#include <cstdint>
-#include <cstdlib>
-#include <ctime>
 
 #include "header/filesys/windows/folder_listener.hpp"
-
 #include "header/format/printFmtutils.hpp"
-
 #include "header/GE/Color.hpp"
 #include "header/GE/Events.hpp"
 #include "header/GE/font.hpp"
 #include "header/GE/font_options.hpp"
-#include "header/GE/window.hpp"
 #include "header/GE/imgui_window.hpp"
-
+#include "header/GE/window.hpp"
 #include "header/ini/settings.hpp"
-
-#include "header/main.hpp"
-#include "header/math/Math.hpp"
 #include "header/math/rand.hpp"
 #include "header/math/Vector.hpp"
+#include "header/math/interpolate.hpp"
 
+#include "header/main.hpp"
 
 auto now_as_lt() {
 	namespace chr = std::chrono;
@@ -48,6 +39,7 @@ auto get_current_day() {
 	return chr::floor<chr::days>(now_as_lt());
 }
 
+static bool should_restart = false;
 
 int main([[maybe_unused]] main_info_t info) {
 	//SKC::GE::RNG<size_t> t{}; 
@@ -153,6 +145,8 @@ int main([[maybe_unused]] main_info_t info) {
 		true
 	);
 #pragma endregion
+	
+#pragma region splash screen / loading stuff
 	{
 
 		auto sc_font = SKC::GE::font("./fonts/FiraCode-Regular.ttf", 48);
@@ -177,7 +171,7 @@ int main([[maybe_unused]] main_info_t info) {
 		splash_screen.present();
 
 #pragma region background stuff
-
+		//TODO(skc) : this should be a function 
 		try {
 			bool is_first_file = true;
 
@@ -198,7 +192,8 @@ int main([[maybe_unused]] main_info_t info) {
 		
 
 	}
-	auto main_drawing = *SKC::GE::choose_from(background_image_ids);
+#pragma endregion 
+	auto main_drawing = SKC::GE::choose_from(background_image_ids);
 	window.draw_texture(main_drawing);
 	window.show();
 
@@ -241,10 +236,7 @@ int main([[maybe_unused]] main_info_t info) {
 		}
 		if (not f2_key.down) resize_window = true;
 		if (not f3_key.down) set_borderless = true;
-		if (event_handler.get_key_state('w').down)  dir = 0;
-		if (event_handler.get_key_state('d').down)  dir = 1;
-		if (event_handler.get_key_state('s').down) dir = 2;
-		if (event_handler.get_key_state('a').down) dir = 3;
+		if (event_handler.get_key_state('r').down) should_restart = true;
 		if (event_handler.get_function_key_state(1).down) {
 			if (not f1_key_down) {
 				real_imgui_satus = not show_imgui;
@@ -256,7 +248,6 @@ int main([[maybe_unused]] main_info_t info) {
 		}
 #pragma endregion
 
-		//window.set_background_color(SKC::GE::color(0, 0, 0, bg_alpha));
 		window.clear();
 		window.set_render_target(0);
 		window.set_render_scale(1);
@@ -269,102 +260,32 @@ int main([[maybe_unused]] main_info_t info) {
 			ImGui::Text(std::format("loaded background images {}", background_image_ids.size()).c_str());
 			ImGui::Text(std::format("current background {}", main_drawing).c_str());
 		}
-		
-		
-
-		//if(frame% int(window.get_frame_rate()/4))
-		{
-			
-			window.set_render_target(mtxt_test);
-			window.draw_texture(main_drawing);
-
-			srand((uint32_t)(time(NULL)));
-			static float xdx = 0;
-			static float xoffset = (float)rand(), yoffset = (float)rand();
-			static int y_stepie = 10;
-			static float scale = 0.097f;//1.f / 50.f;
-			if (show_imgui) {
-				ImGui::DragFloat("scale", &scale, 0.0001f, 0.0001f, 0.1f);
-				ImGui::DragInt("pixel size", &y_stepie, .5, 1,10);
-			}
-			skc_Vect2d txt_scale_factor =
-				skc_Vect2d(window.get_texture_size(mtxt_test) / sqsizeie);
-			skc_Vect2d mp_scale =
-				skc_Vect2d(window.get_window_dimentions()) / window.get_texture_size(mtxt_test);
-
-			auto mposs = event_handler.mouse_position()/ mp_scale / txt_scale_factor;
-			static int cr = 5; 
-			static int wr = 64;
-			static bool do_mouse_UDF = false; 
-			if (show_imgui) {
-				ImGui::SliderInt("inner radius", &cr, 0, 100);
-				ImGui::SameLine();  
-				ImGui::SliderInt("outer radius", &wr, 0, 100);
-				ImGui::Checkbox("mouse signed distance feild", &do_mouse_UDF); 
-			}
-			static auto color = SKC::GE::color(255);//SKC::GE::color(rand()%255, rand() % 255, rand() % 255);
-			//if(frame % 200 != 0) color = SKC::GE::color(rand() % 255, rand() % 255, rand() % 255);
-			auto cr2 = cr * cr, wr2 = wr* wr;
-			//if (cr > wr) cr = wr; 
-			for (float x = 0; x < sqsizeie.x; x += y_stepie) {
-				for (float y = 0; y < sqsizeie.y; y += y_stepie) {
-					auto a = 1.;
-					auto real_x = x + xoffset; 
-					auto real_y = y + yoffset; 
-					real_x *= scale; 
-					real_y *= scale; 
-					if (do_mouse_UDF) {
-						a = (skc_Vect2d{ x,y } - mposs).len2();
-						a = SKC::Math::clamped_map(a, cr2, wr2, 0, 1); 
-						a *= SKC::Math::perlin(real_x, real_y);
-						a = SKC::Math::map(a, 0, 1, 0, 255);
-					}
-					else {
-						a = SKC::Math::perlin(real_x, real_y);
-						a = SKC::Math::map(a, 0, 1, 0, 255); 
-					}
-					window.set_draw_color(color.r, color.g, color.b,(uint8_t)a);
-					auto r = 255*SKC::Math::perlin((x + xoffset) * scale, (y + yoffset) * scale);
-					//window.set_draw_color(SKC::GE::color(a));
-					
-					
-					window.fill_rectangle(
-						(float)       x * (float)txt_scale_factor.x,
-						(float)       y * (float)txt_scale_factor.y,
-						(float)y_stepie * (float)txt_scale_factor.x,
-						(float)y_stepie * (float)txt_scale_factor.y
-					);
-				}
-				
-			}
-			
-
-			static float spe2 = 1;
-			xoffset += spe2;
-			yoffset += spe2 / 16;
-			xdx++;
-			if (show_imgui) {
-
-				ImGui::SliderFloat("noise scroll speed", &spe2, 0.001f, 10);
-			}
-		}
+#pragma region noise stuff
+		window.set_render_target(mtxt_test);
+		window.draw_texture(main_drawing);
 		
 		window.set_render_target(0);
 		window.set_texture_alpha_mod(mtxt_test, bg_alpha);
 		window.draw_texture(mtxt_test);
+#pragma endregion 
+		static constexpr float DOT_SIZE = 20;
+		static auto dot_postion_x = 0.; 
+		auto window_size = window.get_window_dimentions(); 
+		auto t = window.to_normilzed_width(dot_postion_x); 
 
-		
-		
-
-		/*auto s = std::fabs(std::sin(double(frame) / 20)), l = std::fabs(std::sin(double(frame) / 300));
-		auto tclr = SKC::GE::color_hsl(std::fmod(float(frame), 360), 1., .5 );
-		if (show_imgui) {
-			ImGui::SeparatorText("test settings");
-			ImGui::Text("tclr h %f s %f l %f", tclr.h, tclr.s, tclr.l); 
+		dot_postion_x += .5; 
+		if ((dot_postion_x + DOT_SIZE) >= window_size.x) {
+			dot_postion_x = 0; 
 		}
-		window.set_background_color(tclr);
-		window.clear();
-		*/
+		auto dot_postion_y = SKC::Math::interpolate <double, double> (
+			window_size.y+DOT_SIZE, DOT_SIZE, t,
+			SKC::Math::interp_functors::squared
+		);
+		window.set_draw_color(0xff, 0x00, 0x00); 
+		window.fill_rectangle(dot_postion_x - (DOT_SIZE/2),
+			(float)dot_postion_y - (DOT_SIZE / 2),
+			DOT_SIZE, DOT_SIZE
+		);
 		{
 		static float secs_per_bg_change = 10.f;
 		if (show_imgui) {
@@ -375,11 +296,9 @@ int main([[maybe_unused]] main_info_t info) {
 		
 			int frame_interval = (int)(window.get_frame_rate() * secs_per_bg_change);
 			if (frame % frame_interval == 0) {
-				main_drawing = *SKC::GE::choose_from(background_image_ids);
+				main_drawing = SKC::GE::choose_from(background_image_ids);
 			}
 		}
-		
-		
 		static bool do_fade_override = false; 
 		static bool do_fade_when_overriden = false; 
 		if (show_imgui) {
@@ -392,7 +311,6 @@ int main([[maybe_unused]] main_info_t info) {
 				}
 			}
 		}
-		static bool should_restart = false;
 		if (show_imgui) {
 
 			ImGui::Checkbox("should restart", &should_restart);
@@ -422,11 +340,11 @@ int main([[maybe_unused]] main_info_t info) {
 
 
 				if (should_restart) {
+					       do_fade = false;
 					    start_hour = settings.or_else("time", "hour", 9);
 					  start_minute = settings.or_else("time", "minute", 0);
 				      start_second = settings.or_else("time", "second", 0);
 					  start_second += 5;
-
 					should_restart = false;
 				}
 				if(not do_fade)
@@ -479,26 +397,8 @@ int main([[maybe_unused]] main_info_t info) {
 		if (not do_fade and bg_alpha < 255 and not (frame %4)) {
 			++bg_alpha;
 		}
-		window.set_draw_color(0, 255, 0,0);
-		auto posx = (float)window.from_normilzed_width(.5f), height = 0.5f;
-		if (show_game_play) {
-			window.set_draw_color(0, 0, 0, 0);
-			
-			window.fill_rectangle(
-				SDL_FRect{ posx ,0, (float) window.from_normilzed_width(1.f) -posx, (float)window.from_normilzed_height(height) });
-		}
-		if (text_alpha > 0) {
 
-	
-			/*
-			auto min_color = 0; 
-			auto c = SKC::GE::color(
-				(SKC::GE::c_t)SKC::Math::map(sin((double)frame / 100.), -1, 1, min_color, 255),
-				(SKC::GE::c_t)SKC::Math::map(sin((double)frame / 250.), -1, 1, min_color, 255),
-				(SKC::GE::c_t)SKC::Math::map(sin((double)frame / 121.), -1, 1, min_color, 255),
-				text_alpha
-			);
-			*/
+		if (text_alpha > 0) {
 			auto c = SKC::GE::color_hsl((double)frame/1.,1,.5, text_alpha);
 			if (show_imgui) {
 				ImGui::Text("h %f s %f l %f ", c.h, c.s, c.l);

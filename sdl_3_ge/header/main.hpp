@@ -36,7 +36,6 @@ int main(int argc, char** argv) {
     //the goal of this is to abstract away the important (and dirty) stuff like dealing with the CLI
     //arguments
 
-    //this is the lua state
     arg_list_t args = SKC::GE::parse_c_vars(argc,argv);
     
    
@@ -44,9 +43,11 @@ int main(int argc, char** argv) {
         //SDL_Init may fail if it does then we exit...
         exit(sENO_SDL);
     }
-    //call the user's entry point and save the return value so that we can return it later
-
+    //initilize font stuff. 
+    //NOTE(skc): we assume that the user wants to use fonts because 
+    //that is kinda important and is little (if any) overhead if it is not used.
     TTF_Init();
+    //call the user's entry point and save the return value so that we can return it later
     auto ret = MAIN_NAME({args});
 
     SDL_Quit(); //by the time that we get here we are done so we tell sdl to quit.

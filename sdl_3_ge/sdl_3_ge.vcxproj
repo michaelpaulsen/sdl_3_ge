@@ -205,6 +205,7 @@
     <ClInclude Include="header\GE\timer.hpp" />
     <ClInclude Include="header\GE\Window.hpp" />
     <ClInclude Include="header\lua\lua_cxx.hpp" />
+    <ClInclude Include="header\math\interpolate.hpp" />
     <ClInclude Include="header\math\Math.hpp" />
     <ClInclude Include="header\math\perlin.hpp" />
     <ClInclude Include="header\math\rand.hpp" />
