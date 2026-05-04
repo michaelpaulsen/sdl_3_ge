@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <print>
+
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_render.h>
@@ -13,11 +14,14 @@
 #include <SDL3/SDL_video.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3/SDL_stdinc.h>
 
 #include "../math/Vector.hpp"
 #include "Color.hpp"
 #include "font_options.hpp"
 #include "texture.hpp"
+#include "3d/GpuDevice.hpp"
+#include <SDL3/SDL_gpu.h>
 
 #define PRIV_GET_TEX_(tid, name, ret) auto name = get_tex_from_tid(tid);\
                       if (!name) return ret;
@@ -42,22 +46,27 @@ namespace SKC::GE {
 	namespace fs = std::filesystem; 
 	class window {
 	protected:
-		
+
 		using c_t = Uint8;
 		using tick_t = Uint64; 
+		
 		std::vector<texture_wrapper> m_textures{};
 		int m_x{}, m_y{}, m_width, m_height;
+		
 		std::string m_title;
+		
 		float m_scale_x{ 1 }, m_scale_y{ 1 };
+		
 		SDL_Window* m_window;
 		SDL_Renderer* m_renderer; 
+		s3d::gpu_device m_device;
 		
 		color m_background_color{}; 
 		bool m_is_screen_saver_enabled{ true },
 			 m_limit_frame_rate{ true }, 
-			m_is_fullscreen{ false },
-			m_is_bordered{ true },
-			m_is_visible{ true };
+			 m_is_fullscreen{ false },
+			 m_is_bordered{ true },
+			 m_is_visible{ true };
 		
 		tick_t last_frame_start{}, m_last_frame_time{};
 
@@ -619,6 +628,61 @@ namespace SKC::GE {
 			return rt; 
 		}
 #pragma endregion
+#pragma region --- GPU API --- 
+		auto bind_gpu_device() {
+			 return m_device.bind_to_window(m_window);
+		}
+		void unbind_from_window() {
+			m_device.unbind_from_window(m_window);
+
+		}
+		auto create_vetex_shader(
+			std::filesystem::path src_path, 
+			Uint32 format,
+			Uint32 num_storage_buffers = 0,
+			Uint32 num_samplers = 0,
+			Uint32 num_storage_textures = 0,
+			Uint32 num_uniform_buffers = 0,
+			SDL_PropertiesID props = 0
+		
+		) {
+			return m_device.make_shader(
+				src_path,
+				SDL_GPU_SHADERSTAGE_VERTEX,
+				format, 
+				num_storage_buffers,
+				num_samplers,
+				num_storage_textures,
+				num_uniform_buffers,
+				props
+			); 
+
+		}
+
+		auto create_fragment_shader(
+			std::filesystem::path src_path,
+			Uint32 format, 
+			Uint32 num_storage_buffers = 0,
+			Uint32 num_samplers = 0,
+			Uint32 num_storage_textures = 0,
+			Uint32 num_uniform_buffers = 0,
+			SDL_PropertiesID props = 0
+
+		) {
+			return m_device.make_shader(
+				src_path,
+				SDL_GPU_SHADERSTAGE_FRAGMENT,
+				format, 
+				num_storage_buffers,
+				num_samplers,
+				num_storage_textures,
+				num_uniform_buffers,
+				props
+			);
+
+		}
+#pragma endregion 
+
 	};
 }
 //NOTE(skc): this is heere to scope this macro because it should not be used outside of this file.

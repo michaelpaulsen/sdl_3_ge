@@ -119,6 +119,12 @@
     <ClInclude Include="header\math\interpolate.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="header\GE\3d\GpuDevice.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\GE\3d\GpuShader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

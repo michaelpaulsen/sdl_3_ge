@@ -5,6 +5,10 @@
 namespace SKC::Math {
 	template <typename T> concept number = std::is_integral_v<T> || std::is_floating_point_v<T>;
 	template<number T>
+	struct Vect3 {
+		T x{}, y{}, z{}; 
+	}; 
+	template<number T>
 	struct Vect2 {
 		T x{}, y{};
 
