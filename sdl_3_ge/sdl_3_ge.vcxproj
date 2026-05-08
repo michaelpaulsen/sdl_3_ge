@@ -212,6 +212,7 @@
     <ClInclude Include="header\math\Vector.hpp" />
     <ClInclude Include="header\strmanip.hpp" />
     <ClInclude Include="header\thread\smart_lock.hpp" />
+    <ClInclude Include="header\time.hpp" />
     <ClInclude Include="header\timer.hpp" />
     <ClInclude Include="header\concepts.hpp" />
     <ClInclude Include="header\DBG_functions.h" />
