@@ -165,7 +165,6 @@ namespace SKC::GE {
 		}
 		
 		void pollevents() noexcept {
-			m_has_started_dragging = false;
 			m_has_key_event = false; 
 			m_window_resized = false;
 			m_system_theme_changed = false;
@@ -244,6 +243,9 @@ namespace SKC::GE {
 //===MOUSE EVENTS ===//
 
 				case SDL_EVENT_MOUSE_MOTION: {
+					if (m_has_started_dragging) {
+						m_is_dragging = true;
+					}
 					auto x = evnt.motion.x, y = evnt.motion.y; 
 					auto xrel = evnt.motion.xrel, yrel = evnt.motion.yrel;
 					m_mouse_position = { x, y };
@@ -258,7 +260,6 @@ namespace SKC::GE {
 					m_mouse_keys.at(UZ(button.button)) = state;
 					if (button.button == 1) {
 						m_has_started_dragging = true;
-						m_is_dragging = true;
 						m_last_mouse_pos = { static_cast<double>(button.x), static_cast<double>(button.y) };
 					}
 					break;
@@ -268,6 +269,7 @@ namespace SKC::GE {
 					mouse_button_state_t state = { button.clicks, button.down, static_cast<float>(button.x), static_cast<float>(button.y) };
 					m_mouse_keys.at(UZ(button.button)) = state;
 					m_is_dragging = false;
+					m_has_started_dragging = false; 
 					break;
 				}
 				case SDL_EVENT_MOUSE_WHEEL: {
