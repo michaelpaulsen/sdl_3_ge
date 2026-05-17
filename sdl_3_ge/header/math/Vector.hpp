@@ -62,7 +62,16 @@ namespace SKC::Math {
 		Vect2<T> operator/ (Vect2<Y> divisor) {
 			return { x / divisor.x, y / divisor.y };
 		}
-
+		template <number Y> 
+		void operator /= (Vect2<Y> divisor) {
+			x /= divisor.x; 
+			y /= divisor.y; 
+		}
+		template<number T> 
+		void operator /=(T divisor) {
+			x /= divisor;
+			y /= divisor;
+		}
 		template<number U>
 		explicit operator Vect2<U>() const {
 			return { static_cast<U>(x), static_cast<U>(y) };
