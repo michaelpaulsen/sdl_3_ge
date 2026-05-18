@@ -202,6 +202,7 @@
     <ClInclude Include="header\GE\private\blit_surface_with_resize.hpp" />
     <ClInclude Include="header\GE\private\position_from_anchor_point.hpp" />
     <ClInclude Include="header\GE\texture.hpp" />
+    <ClInclude Include="header\GE\tile_map.hpp" />
     <ClInclude Include="header\GE\timer.hpp" />
     <ClInclude Include="header\GE\Window.hpp" />
     <ClInclude Include="header\lua\lua_cxx.hpp" />

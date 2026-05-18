@@ -1,145 +1,173 @@
-scaning project sdl_3_ge
-for todos notes and fixmes
-
-==  TODOS ==
-folder_listener.hpp:060       TODO(skc): make it so that this can be abstracted to other platforms...
-
-printFmtutils.hpp:015         TODO(skc): find better names for these..
-
-printFmtutils.hpp:033         TODO(skc): 
-                              ESC[#E	moves cursor to beginning of next line, # lines down
-                              ESC[#F	moves cursor to beginning of previous line, # lines up
-
-printFmtutils.hpp:046         TODO(skc)
-                               https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#256-colors
-
-Color.hpp:014                 TODO (skc) : implement a CSS color name constructor...
-                              there's like a lot of them though so that might have to be itsown file...
-
-game_pad.hpp:020              TODO(skc): exstend this to return the names of the hat and axises
-
-parse_cvars.hpp:010           TODO(skc): This still needs work! 
-                              should make this better
-
-Events.hpp:015                TODO(skc) : move to own file?
-
- Events.hpp:341               TODO(skc) : distinguish between the KP and main layout numbers.
-
-key_mod.hpp:101               TODO(skc) : implement -> SDL_KMOD_LEVEL5
-
-key_mod.hpp:108               TODO(SKC) : make this so that it only outputs in dbg mode...
-
-Window.hpp:023                TODO (skc) : move all of this filesystem 
-                              stuff to own file.
-
-Window.hpp:078                TODO(skc) : make this fail some way...
-
-Window.hpp:125                TODO(skc): add getter and settere for window 
-                              fullscreen display mode.
-
-Window.hpp:159                TODO (skc) : create a resource class.
-
-Window.hpp:546                TODO(skc) : handle error
-
-ini_map_t.hpp:186             TODO(skc): implement saving the settings back to the ini file
-
-settings.hpp:067              TODO(skc) : this should warn if not empty...
-
-settings.hpp:189              TODO(skc): implement saving the settings back to the ini file
-
-Vector.hpp:057                TODO(SKC): move to own file.
-                               this should be in own file because there is no other reason that format is included in this file.
-                              TODO(SKC) : make this so that it only outputs in dbg mode...
-
-strmanip.hpp:013              TODO(skc): make this return expected.
-
-sdl_3_ge.cpp:126              TODO(skc) : handle window settings in main.hpp
-
-sdl_3_ge.cpp:260              TODO(skc): make this message customizable via the ini file
-
-
-== FIXMEs ==
-key_mod.hpp:129               FIXME(skc): this should throw if *pos != '}' 
-                              because this should error when it is not. 
-                              however this is not an huge issue...
-
-ini_map_t.hpp:277             FIXME(skc): 
-                              This is a workaround for the fact that intellisense doesn't support C++26's 
-                              multidimensional subscript operator for some reason. I promise this can compile with CL the AI seems to
-                              think that it works in GCC too, but I haven't tested it yet.
-
-read_settings.hpp:051         FIXME(skc) this should return an unexpected
-
-
-==  NOTES ==
-printFmtutils.hpp:010         NOTE(skc): 
-                               SA https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
-
-printFmtutils.hpp:042         NOTE(skc) : ANSI specifies that 1,1 is the top left of the screen.. not 0,0
-
-CVar.hpp:024                  NOTE(skc) : I don't think I am going to like this syntax but 
-                              I don't know a better way of doing this. 
-                              as<T>() just seems gross...  would much prefer as(T)..  
-                              the reason that I am making it so it returns an empty optional instead of 
-                              throwing to keep the logic code more clean.
-                               it also helps to abstract away the difference between the C_var being set or not.
-
-parse_cvars.hpp:019           NOTE(skc): have to do this here to get the first arg
-
-parse_cvars.hpp:043           NOTE(skc): and this here to get the last.
-
-Events.hpp:081                NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS 
-                              where as m_mouse_position is the raw mouse position.
-
-Events.hpp:128                NOTE(skc) : this is not const because it is kinda important to not ignore the user when they
-                               drop something into the aplication so the flag is only cleared when the consumer calls this function.	
-                              NOTE(skc) :IF YOU'RE TRYING TO ACCEPT DATA FROM "DROP" EVENTS CALL THIS EVERY FRAME DO NOT
-                              MAKE YOUR USERS WAIT FOR THEIR INPUT TO BE PROCESSED!
-
-Events.hpp:157                NOTE(skc) : this is impossible to happen 
-                              but its better to be safe than sorry!
-
-Events.hpp:314                NOTE(skc) : I set the m_arrow_state even if arrow_keys_alias_WASD is true because 
-                              the consumer may still have contextual reasons to treat the arrow keys differently 
-                              while still wanting them to alias their respective keys.
-
-Events.hpp:338                NOTE(skc) : for some reason the char codes for the KP are 
-                              1234567890 not the ASCII layout of 0123456789 ... 
-                              this takes the key code and sets the respective bit
-
-key_mod.hpp:110               NOTE(SKC): FORMAT_STRING_GET is assumed to be undefed at the end of this function  
-                               things may break if you remove the #undef FORMAT_STRING_GET.
-
-texture.hpp:024               NOTE(skc) we may have to implement these;
-
-Window.hpp:359                NOTE(skc): YOU REALLY SHOULD NOT USE THIS MEMBER FUNCTION (AS IT RETURNS A RAW POINTER!!!).
-                              it is only public for the SDL functions that are not wrapped in the ID based API yet. 
-                              once I am sure that all of the SDL functions are wrapped in the ID based API I will make this private.
-                              I make no guarantees that this will not cause a use after free error.
-                              Though it should not be possible based off of how classes work in C++.
-
-Window.hpp:400                NOTE(skc): this is the API that you should be using by default. the only reason 
-                              you would use the SDL_Texture* API is if you are using a texture that is generated progrimatically.
-
-Window.hpp:591                NOTE(skc) : doing this here so that the surface gets freed
-                              no matter what
-
-Window.hpp:596                NOTE(skc) :
-                                 anchor point | translation
-                              ---------------------------
-                                  AP_FLOATING | (w*ox, h*oy)
-                               AP_TOP_LEFT    | ( 0  ,  0  )  
-                               AP_CENTER_LEFT | ( 0  , -h/2)
-                               AP_BOTTOM_LEFT | ( 0  , -h  ) 
-                                 AP_TOP_RIGHT | (-w  ,  0  )
-                              AP_CENTER_RIGHT | (-w  , -h/2)
-                              AP_BOTTOM_RIGHT | (-w  , -h  )
-                                    AP_CENTER | (-w/2, -h/2)
-
-ini_map_t.hpp:215             NOTE This should always be called with Template argument deduction...
-                              the reson this has an auto return type is because I want a string when the type is char const*.
-
-read_settings.hpp:040         NOTE(skc) : the pre increment here is intentional as I want to remove the brakets
-
-sdl_3_ge.cpp:177              NOTE(skc): I know that this is bad practice get off my back.
-
+FIX MEs
+=========
+                           header\GE\key_mod.hpp:0129 //FIXME(skc): this should throw if *pos != '}'
+                                                      //because this should error when it is not.
+                                                      //however this is not an huge issue...
+                                                      
+                            header\GE\Window.hpp:0443 //FIXME(skc): this should destinguish between the texture not
+                                                      //existing and the texture not being a render target
+                                                                                                  
+                 header\format\printFmtutils.hpp:0010 //TODO(skc): find better names for these..
+                                                      
+                 header\format\printFmtutils.hpp:0028 //TODO(skc):
+                                                      //ESC[#E	moves cursor to beginning of next line, # lines down
+                                                      //ESC[#F	moves cursor to beginning of previous line, # lines up
+                                                      
+                 header\format\printFmtutils.hpp:0044 //TODO(skc)
+                                                      // https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#256-colors
+                                                      
+                             header\GE\Color.hpp:0019 // TODO (skc) : implement a CSS color name constructor...
+                                                      //there's like a lot of them though so that might have to be itsown file...
+                                                      
+               header\GE\controller\game_pad.hpp:0020 //TODO(skc): exstend this to return the names of the hat and axises
+                                                      
+                 header\GE\cvars\parse_cvars.hpp:0010 //TODO(skc): This still needs work!
+                                                      //should make this better
+                                                      
+                            header\GE\Events.hpp:0017 //TODO(skc) : move to own file?
+                                                      
+                            header\GE\Events.hpp:0355 //TODO(skc) : distinguish between the KP and main layout numbers.
+                                                      
+                            header\GE\Events.hpp:0389 // TODO(skc) : implement audio device events
+                                                      
+                           header\GE\key_mod.hpp:0101 //TODO(skc) : implement -> SDL_KMOD_LEVEL5
+                                                      
+  header\GE\private\blit_surface_with_resize.hpp:0031 //TODO(skc) : make this fail some way...
+                                                      
+                            header\GE\Window.hpp:0040 //TODO (skc) : move all of this filesystem
+                                                      //stuff to own file.
+                                                      
+                            header\GE\Window.hpp:0124 //TODO(skc): add getter and setters for window
+                                                      //fullscreen display mode.
+                                                      
+                            header\GE\Window.hpp:0455 //TODO(skc) : should make a class that stores Texture atlases
+                                                      
+                            header\GE\Window.hpp:0480 //TODO(skc) : should rewrite these using dynamic textures! that should make this much more simple.
+                                                      
+                            header\GE\Window.hpp:0533 //TODO(skc) : handle error
+                                                      
+                            header\GE\Window.hpp:0589 //TODO(skc) : make this a settings option
+                                                      
+                    header\ini\old\ini_map_t.hpp:0184 //TODO(skc): implement saving the settings back to the ini file
+                                                      
+                         header\ini\settings.hpp:0067 //TODO(skc) : this should warn if not empty...
+                                                      
+                         header\ini\settings.hpp:0189 //TODO(skc): implement saving the settings back to the ini file
+                                                      
+                            header\math\rand.hpp:0041 //TODO(skc) implement error printing.
+                                                      
+                          header\math\Vector.hpp:0060 //TODO(skc) : name this template paramiter something better
+                                                      
+                          header\math\Vector.hpp:0088 //TODO(SKC): move to own file.
+                                                      // this should be in own file because there is no other reason that format is included in this file
+                                                      // make this so that it only outputs in dbg mode...
+                                                      
+                             header\strmanip.hpp:0013 //TODO(skc): make this return expected.
+                                                      
+                                    sdl_3_ge.cpp:0066 //TODO(skc) : handle window settings in main.hpp
+                                                      
+      header\filesys\windows\folder_listener.hpp:0003 //NOTE(skc): this seems to be the best (and most portable) way of checking for platform
+                                                      //headers (as __has_include was included in the standard to do just that)
+                                                      //in the Uinix versions of this we may need to do more work to decide what flavor of unix like
+                                                      //kernel we have (because BSD and Linux do some things differenetly)
+                                                      // but I do not have a way of testing this on Linux/BSD so that is TBD ...
+                                                      
+      header\filesys\windows\folder_listener.hpp:0025 //NOTE(skc) : this is meant to be used in if constexpr statements to take into account the differences between
+                                                      // the UNIX and windows file system APIs.
+                                                      
+      header\filesys\windows\folder_listener.hpp:0033 //NOTE(skc) : this is here to abstract away the fact that the values for these
+                                                      //are not the same on every platform.
+                                                      //this should be defined in every implementation of this libary.
+                                                      
+                 header\format\printFmtutils.hpp:0005 //NOTE(skc):
+                                                      //SA https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
+                                                      
+                 header\format\printFmtutils.hpp:0040 //NOTE(skc) : ANSI specifies that 1,1 is the top left of the screen.. not 0,0
+                                                      
+                        header\GE\cvars\CVar.hpp:0024 //NOTE(skc) : I don't think I am going to like this syntax but
+                                                      //I don't know a better way of doing this.
+                                                      //as<T>() just seems gross...  would much prefer as(T)..
+                                                      //the reason that I am making it so it returns an empty optional instead of
+                                                      //throwing to keep the logic code more clean.
+                                                      // it also helps to abstract away the difference between the C_var being set or not.
+                                                      
+                 header\GE\cvars\parse_cvars.hpp:0019 //NOTE(skc): have to do this here to get the first arg
+                                                      
+                 header\GE\cvars\parse_cvars.hpp:0043 //NOTE(skc): and this here to get the last.
+                                                      
+                            header\GE\Events.hpp:0080 //NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS
+                                                      //where as m_mouse_position is the raw mouse position.
+                                                      
+                            header\GE\Events.hpp:0103 //NOTE(skc):
+                                                      //want to not be able to move or copy this as it doesn't make sense...
+                                                      //if you can make sense of what it would mean to copy and / or move a event handler
+                                                      //feel free to implement these your self.. (I may or may not accept your PR)
+                                                      
+                            header\GE\Events.hpp:0125 //NOTE(skc) :
+                                                      // this is not const because it is kinda important
+                                                      // to not ignore the user when they drop something into the
+                                                      // aplication so the flag is only cleared when the consumer
+                                                      // calls this function.
+                                                      
+                            header\GE\Events.hpp:0155 //NOTE(skc) : this is impossible to happen
+                                                      //but its better to be safe than sorry!
+                                                      
+                            header\GE\Events.hpp:0181 //NOTE(skc): I quite frankly have no idea why this is a thing.
+                                                      // or what you would do with it... for now I am just going to ignore it ..
+                                                      
+                            header\GE\Events.hpp:0185 //NOTE(skc) this event seems to be for apps that
+                                                      // use a defered rendering model we don't need this since we
+                                                      //use immediate rendering..
+                                                      
+                            header\GE\Events.hpp:0327 //NOTE(skc) : I set the m_arrow_state even if arrow_keys_alias_WASD is true because
+                                                      //the consumer may still have contextual reasons to treat the arrow keys differently
+                                                      //while still wanting them to alias their respective keys.
+                                                      
+                           header\GE\key_mod.hpp:0110 //NOTE(SKC): FORMAT_STRING_GET is assumed to be undefed at the end of this function
+                                                      // things may break if you remove the #undef FORMAT_STRING_GET.
+                                                      
+header\GE\private\position_from_anchor_point.hpp:0002 //NOTE(skc) :
+                                                      //   anchor point translation
+                                                      //---------------------------
+                                                      //    AP_FLOATING (w*ox, h*oy)
+                                                      //	  AP_TOP_LEFT ( 0  ,  0  )
+                                                      // AP_CENTER_LEFT ( 0  , -h/2)
+                                                      // AP_BOTTOM_LEFT ( 0  , -h  )
+                                                      //   AP_TOP_RIGHT (-w  ,  0  )
+                                                      //AP_CENTER_RIGHT (-w  , -h/2)
+                                                      //AP_BOTTOM_RIGHT (-w  , -h  )
+                                                      //      AP_CENTER (-w/2, -h/2)
+                                                      
+                           header\GE\texture.hpp:0037 //NOTE(skc) we may have to implement these;
+                                                      
+                            header\GE\Window.hpp:0065 //NOTE(skc): I know that this is a code smell but this file is getting too big
+                                                      //also this function can be used outside of this class so it makes sense to
+                                                      //have it in its own file.
+                                                      
+                            header\GE\Window.hpp:0094 //NOTE(skc) : maybe this should not be here?
+                                                      
+                            header\GE\Window.hpp:0170 //NOTE(skc) doing this here so that the surface gets freed
+                                                      //even if the texture creation fails.
+                                                      
+                            header\GE\Window.hpp:0177 //NOTE(skc):
+                                                      //default to blending mode for images with transparency
+                                                      //because this is the expected default behavior.
+                                                      //and if you don't want blending you can always change it later.
+                                                      
+                            header\GE\Window.hpp:0547 //NOTE(skc) :
+                                                      // if this is the first line then we just set the text surface to the line surface
+                                                      //otherwise we align the line surface to the text surface based on the alignment option
+                                                      
+                            header\GE\Window.hpp:0581 //NOTE(skc) : doing this here so that the surface gets freed
+                                                      //no matter what
+                                                      
+                            header\GE\Window.hpp:0587 //NOTE(skc) : I know that this is a code smell but this file is getting too big
+                                                      
+                            header\GE\Window.hpp:0591 //NOTE(skc) : SDL_TTF ingores the alpha channel so we have to set it manually?
+                                                      //(IDK why but alpha doesn't work unless we do this)
+                                                      
+                            header\GE\Window.hpp:0601 //NOTE(skc): this is heere to scope this macro because it should not be used outside of this file.                                   
+                                                      
+                                 header\main.hpp:0047 //NOTE(skc): we assume that the user wants to use fonts because
+                                                      //that is kinda important and is little (if any) overhead if it is not used.
+                                                                                                            
