@@ -5,8 +5,6 @@
 #include "./perlin.hpp"
 #define U32 static_cast<uint32_t>
 namespace SKC::Math {
-	static constexpr inline double DEG_TO_RAD = (std::numbers::pi / 180.);
-	static constexpr inline double RAD_TO_DEG = (180./ std::numbers::pi);
 	double  wrap(double val, double min, double max) {
 		double ret = val; 
 		while (ret < min) { 
@@ -31,7 +29,7 @@ namespace SKC::Math {
 		return val; 
 		
 	}
-	double map(double t, double min, double max, double to_min, double to_max) {
+	inline double map(double t, double min, double max, double to_min, double to_max) {
 		return (t - min) / (max - min) * (to_max - to_min) + to_min;
 	}
 	double clamped_map(double t, double min, double max, double to_min, double to_max) {
