@@ -372,7 +372,7 @@ namespace SKC::GE {
 						m_function_key_states.at(UZ(fkey_index)) = { down,repeat };
 						break;
 					}
-					std::print("UNKNOWN EXSTENDED KEY CODE 0x{:>04x}\r", key);
+					std::print("UNKNOWN EXSTENDED KEY CODE {:#06x}\r", key);
 					break;
 				}
 #pragma endregion
@@ -381,7 +381,7 @@ namespace SKC::GE {
 				case SDL_EVENT_TEXT_EDITING:
 				case SDL_EVENT_TEXT_INPUT:               /**< Keyboard text input */
 				case SDL_EVENT_KEYMAP_CHANGED: {
-					std::print("KB event not handled 0x{:>04x}\r", type);
+					std::print("KB event not handled 0x{:#06x}\r", type);
 					break;
 				}
 #pragma endregion
@@ -395,7 +395,7 @@ namespace SKC::GE {
 				}
 #pragma endregion 
 				default: {
-					std::print(" unhandled event type 0x{:>04x}\r", type);
+					std::println(" unhandled event type {:#06x}", type);
 					break;
 				}
 				}
