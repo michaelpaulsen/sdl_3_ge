@@ -70,7 +70,7 @@ namespace SKC::file_api {
 
 
 			HANDLE hDir = CreateFileW(
-				directory_path.c_str(), // Replace with your directory
+				directory_path.c_str(),
 				FILE_LIST_DIRECTORY,
 				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 				NULL,
@@ -116,11 +116,11 @@ namespace SKC::file_api {
 			CloseHandle(hDir);
 			exit(-1);
 		}
-		std::vector<BYTE> buffer;
-		buffer.resize(1024 * 8);
 
 		while (!st.stop_requested()) {
 			
+			std::vector<BYTE> buffer;
+			buffer.resize(1024 * 8);
 			BOOL result = ReadDirectoryChangesW(
 				hDir,
 				buffer.data(),
