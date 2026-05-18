@@ -472,45 +472,22 @@ namespace SKC::GE {
 		* this is where all of the code for Text rendering goes
 		*/
 #pragma region --Text API--
+		
+		
+		//FIXME(skc): these stopped working at some point!
+		//Need to fix them. 
+		
+		//TODO(skc) : should rewrite these using dynamic textures! that should make this much more simple. 
 		bool render_text_simple(std::string text,
 			TTF_Font* font, float x, float y, color font_color
 		) {
-			auto text_surface = TTF_RenderText_Blended(
-				font, text.c_str(), text.size(), font_color
-			);
-			if (!text_surface) return false;
-			auto texture_w = text_surface->w;
-			auto texture_h = text_surface->h;
-			auto text_texture = SDL_CreateTextureFromSurface( m_renderer, text_surface);
-			//doing this here so that the surface gets freed 
-			//no matter what
-			SDL_DestroySurface(text_surface);
-			if (!text_texture) return false;
-			auto rect = Frect(x, y, (float)texture_w, (float)texture_h);
-			SDL_RenderTexture(m_renderer, text_texture, &rect, NULL);
-			SDL_DestroyTexture(text_texture);
-			return true;
+			return false; 
 		}
 		bool render_text_centered_simple(
 			std::string text, TTF_Font* font, float x, float y, color font_color
 		) {
-			auto text_surface = TTF_RenderText_Blended(
-				font, text.c_str(), text.size(),font_color
-			);
-			if (!text_surface) return false;
-			auto texture_w = text_surface->w;
-			auto texture_h = text_surface->h;
-			auto text_texture = SDL_CreateTextureFromSurface(
-				m_renderer, text_surface);
-			//doing this here so that the surface gets freed 
-			//no matter what
-			SDL_DestroySurface(text_surface);
-			if (!text_texture) return false;
-			auto rect = Frect(x - (texture_w / 2.0f), y - (texture_h / 2.0f), (float)texture_w, (float)texture_h); 
-			SDL_RenderTexture(m_renderer, text_texture, &rect, NULL);
 
-			SDL_DestroyTexture(text_texture);
-			return true;
+			return false; 
 		}
 		bool render_text(std::string text, TTF_Font* font, font_options options) {
 			namespace rng = std::ranges;
@@ -524,17 +501,7 @@ namespace SKC::GE {
 
 			//if we are told to not seperate any lines then we just render the text as a single line
 			if(options.line_seperator == font_options::LINE_SEPERATOR_NONE) {
-				//if the line separator is none then we just render the text as a single line
-				if (options.text_alignment == options.TEXT_ALIGNMENT_CENTER) {
-					return render_text_centered_simple(
-						text, font, options.x, options.y, options.color
-						
-					);
-				}
-				return render_text_simple(
-					text, font, options.x, options.y,
-					options.color
-				);
+				return false; 
 			} 
 			//otherwise we split on the requested new line seq. 
 			if (options.line_seperator == font_options::LINE_SEPARATOR_NEWLINE) {
