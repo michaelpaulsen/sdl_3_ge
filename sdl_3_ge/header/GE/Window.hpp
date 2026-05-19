@@ -19,6 +19,8 @@
 #include "font_options.hpp"
 #include "texture.hpp"
 
+#include "./private/position_from_anchor_point.hpp"
+#include "./private/blit_surface_with_resize.hpp"
 #define PRIV_GET_TEX_(tid, name, ret) auto name = get_tex_from_tid(tid);\
                       if (!name) return ret;
 
@@ -62,10 +64,6 @@ namespace SKC::GE {
 		tick_t last_frame_start{}, m_last_frame_time{};
 
 		float m_frame_rate{ 30 };
-		//NOTE(skc): I know that this is a code smell but this file is getting too big
-		//also this function can be used outside of this class so it makes sense to 
-		//have it in its own file.
-		#include "./private/blit_surface_with_resize.hpp"
 
 		Math::Vect2i get_size_of_uniform_atlas(SDL_Texture* txt, int size) {
 			if (!txt) return { 0,0 };
@@ -473,22 +471,6 @@ namespace SKC::GE {
 		*/
 #pragma region --Text API--
 		
-		
-		//FIXME(skc): these stopped working at some point!
-		//Need to fix them. 
-		
-		//TODO(skc) : should rewrite these using dynamic textures! that should make this much more simple. 
-		bool render_text_simple(std::string text,
-			TTF_Font* font, float x, float y, color font_color
-		) {
-			return false; 
-		}
-		bool render_text_centered_simple(
-			std::string text, TTF_Font* font, float x, float y, color font_color
-		) {
-
-			return false; 
-		}
 		bool render_text(std::string text, TTF_Font* font, font_options options) {
 			namespace rng = std::ranges;
 			namespace views = std::ranges::views;
@@ -551,7 +533,7 @@ namespace SKC::GE {
 							x = (tw1 - tw2)/2; //center the text
 						}
 					}
-					text_surface = blit_surface_with_resize(text_surface, text_line_surface, x, (int)line_y);
+					text_surface = PRIVATE::blit_surface_with_resize(text_surface, text_line_surface, x, (int)line_y);
 				}
 				
 				if(options.line_height_mode == font_options::LINE_HEIGHT_MODE_ADDITIVE) {
@@ -572,11 +554,7 @@ namespace SKC::GE {
 			//no matter what
 			SDL_DestroySurface(text_surface);
 			if (!text_texture) return false;
-			Frect pos = {options.x, options.y, (float)texture_w, (float)texture_h };
-			auto ap = options.anchor_point;
-			//NOTE(skc) : I know that this is a code smell but this file is getting too big
-#include "./private/position_from_anchor_point.hpp"
-			//TODO(skc) : make this a settings option 
+			auto pos = PRIVATE::offset_anchor(options, texture_w, texture_h); 
 			SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_BLEND);
 			//NOTE(skc) : SDL_TTF ingores the alpha channel so we have to set it manually?
 			//(IDK why but alpha doesn't work unless we do this)
