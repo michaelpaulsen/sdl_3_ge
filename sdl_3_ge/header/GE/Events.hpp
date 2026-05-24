@@ -178,10 +178,6 @@ namespace SKC::GE {
 				}
 				auto type = evnt.type; 
 
-//NOTE(skc): I quite frankly have no idea why this is a thing. 
-// or what you would do with it... for now I am just going to ignore it ..
-				if (type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) continue;
-				
 //NOTE(skc) this event seems to be for apps that 
 // use a defered rendering model we don't need this since we 
 //use immediate rendering.. 
@@ -191,6 +187,9 @@ namespace SKC::GE {
 				
 				switch (evnt.type) {
 #pragma region ==MISC EVENTS==
+//NOTE(SKC): this kinda assumes that the app only has one window.
+//Maybe we should not assume that?
+				case SDL_EVENT_WINDOW_CLOSE_REQUESTED: 
 				case SDL_EVENT_QUIT: 
 				case SDL_EVENT_RENDER_DEVICE_LOST: {
 					m_quit = true; 
