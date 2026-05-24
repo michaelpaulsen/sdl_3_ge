@@ -125,6 +125,12 @@
     <ClInclude Include="header\GE\tile_map.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="header\math\ray.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\math\numbers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
