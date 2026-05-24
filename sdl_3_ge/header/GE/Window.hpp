@@ -18,6 +18,7 @@
 #include "Color.hpp"
 #include "font_options.hpp"
 #include "texture.hpp"
+#include "../concepts.hpp"
 
 #include "./private/position_from_anchor_point.hpp"
 #include "./private/blit_surface_with_resize.hpp"
@@ -64,7 +65,7 @@ namespace SKC::GE {
 		tick_t last_frame_start{}, m_last_frame_time{};
 
 		float m_frame_rate{ 30 };
-
+	
 		Math::Vect2i get_size_of_uniform_atlas(SDL_Texture* txt, int size) {
 			if (!txt) return { 0,0 };
 			return Math::Vect2i{
@@ -243,8 +244,8 @@ namespace SKC::GE {
 		}
 
 		void wait_for_frame() {
-			if (!m_limit_frame_rate) return; 
 			end_frame(); 
+			if (!m_limit_frame_rate) return; 
 			auto frame_time = static_cast<Uint64>(1000.f / m_frame_rate);
 			if (m_last_frame_time < frame_time) {
 				SDL_Delay((Uint32)(frame_time - m_last_frame_time));
@@ -464,6 +465,74 @@ namespace SKC::GE {
 			};
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos); 
 		}
+		template<SKC::concepts::number T>
+		void render_polygon(std::vector<Math::Vect2<T>> points, std::vector<int> indices) {
+			std::vector < SDL_Vertex> vetecies{};
+			unsigned char r{}, g{}, b{}, a{};
+			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
+			SDL_Vertex vert{};
+			for (const auto& point : points) {
+				vert.color = { (float)r / 255.f, (float)g / 255.f, (float)b / 255.f, (float)a / 255.f };
+				vert.position = point;
+				vetecies.push_back(vert);
+			}
+			SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), (int)indices.size());
+
+		}
+		template<SKC::concepts::number T>
+
+		void render_polygon(std::vector<Math::Vect2<T>> points) {
+			std::vector < SDL_Vertex> vetecies{};
+			unsigned char r{ 0 }, g{}, b{ 0 }, a{ 0 };
+			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
+
+			std::vector<int> indices;
+
+
+			for (int x = 1; x < points.size() - 1; ++x) {
+				indices.push_back(x);
+				indices.push_back(x + 1);
+				indices.push_back(0);
+
+			}
+			render_polygon(points, indices);
+			//SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), indices.size());
+
+		}
+		
+		void render_polygon(std::vector<SDL_FPoint> points, std::vector<int> indices) {
+			std::vector < SDL_Vertex> vetecies{};
+			unsigned char r{}, g{}, b{}, a{};
+			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
+			SDL_Vertex vert{};
+			for (const auto& point : points) {
+			
+				vert.color = { (float)r / 255.f, (float)g / 255.f, (float)b / 255.f, (float)a / 255.f };
+				vert.position = point; 
+				vetecies.push_back( vert ); 
+			}
+			SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), (int)indices.size());
+
+		}
+		void render_polygon(std::vector<SDL_FPoint> points ) {
+			std::vector < SDL_Vertex> vetecies{};
+			unsigned char r{0}, g{}, b{0}, a{0};
+			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
+			
+			std::vector<int> indices; 
+
+
+			for (int x = 1; x < points.size() - 1; ++x) {
+				indices.push_back(x);
+				indices.push_back(x + 1);
+				indices.push_back(0);
+
+			}
+			render_polygon(points, indices); 
+			//SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), indices.size());
+		
+		}
+			
 #pragma endregion
 		/*
 		*--TEXT API--
@@ -481,11 +550,9 @@ namespace SKC::GE {
 			if (text.empty())return false;
 			
 
-			//if we are told to not seperate any lines then we just render the text as a single line
 			if(options.line_seperator == font_options::LINE_SEPERATOR_NONE) {
 				return false; 
 			} 
-			//otherwise we split on the requested new line seq. 
 			if (options.line_seperator == font_options::LINE_SEPARATOR_NEWLINE) {
 				lines = rng::to<std::vector<std::string>>(rng::views::split(text, '\n')
 					| views::transform([](auto&& str) { return std::string(str.begin(), str.end()); }));
