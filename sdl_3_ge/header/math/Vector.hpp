@@ -2,6 +2,7 @@
 #include <cmath> 
 #include <format>
 #include <typeinfo>
+#include <SDL3/SDL_rect.h>
 namespace SKC::Math {
 	template <typename T> concept number = std::is_integral_v<T> || std::is_floating_point_v<T>;
 	template<number T>
@@ -75,6 +76,9 @@ namespace SKC::Math {
 		template<number U>
 		explicit operator Vect2<U>() const {
 			return { static_cast<U>(x), static_cast<U>(y) };
+		}
+		operator SDL_FPoint() const {
+			return { (float)x, (float)y }; 
 		}
 	};
 	using Vect2d = SKC::Math::Vect2<double>;
