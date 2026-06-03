@@ -20,6 +20,7 @@
 #include "texture.hpp"
 #include "../concepts.hpp"
 
+#include "./geo.hpp"
 #include "./private/position_from_anchor_point.hpp"
 #include "./private/blit_surface_with_resize.hpp"
 #define PRIV_GET_TEX_(tid, name, ret) auto name = get_tex_from_tid(tid);\
@@ -465,38 +466,16 @@ namespace SKC::GE {
 			};
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos); 
 		}
-		template<SKC::concepts::number T>
-		void render_polygon(std::vector<Math::Vect2<T>> points, std::vector<int> indices) {
-			std::vector < SDL_Vertex> vetecies{};
-			unsigned char r{}, g{}, b{}, a{};
-			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
-			SDL_Vertex vert{};
-			for (const auto& point : points) {
-				vert.color = { (float)r / 255.f, (float)g / 255.f, (float)b / 255.f, (float)a / 255.f };
-				vert.position = point;
-				vetecies.push_back(vert);
-			}
+		void fill_polygon(std::vector<skc_Vect2d> points, std::vector<int> indices) {
+			auto vetecies = create_vertex_list(points, get_draw_color());
 			SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), (int)indices.size());
 
 		}
 		template<SKC::concepts::number T>
 
-		void render_polygon(std::vector<Math::Vect2<T>> points) {
-			std::vector < SDL_Vertex> vetecies{};
-			unsigned char r{ 0 }, g{}, b{ 0 }, a{ 0 };
-			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
-
-			std::vector<int> indices;
-
-
-			for (int x = 1; x < points.size() - 1; ++x) {
-				indices.push_back(x);
-				indices.push_back(x + 1);
-				indices.push_back(0);
-
-			}
-			render_polygon(points, indices);
-			//SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), indices.size());
+		void fill_polygon(std::vector<skc_Vect2d> points) {
+			auto indices = build_index_list(points.size()+1);
+			fill_polygon(points, indices);
 
 		}
 		
