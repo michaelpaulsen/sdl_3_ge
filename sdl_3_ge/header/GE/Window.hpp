@@ -241,6 +241,7 @@ namespace SKC::GE {
 		void end_frame() {
 			auto now = SDL_GetTicks();
 			m_last_frame_time = (now - last_frame_start);
+			last_frame_start = now; 
 
 		}
 
@@ -445,7 +446,7 @@ namespace SKC::GE {
 
 			if (tid == 0)  return SDL_SetRenderTarget(m_renderer, 0);
 			PRIV_GET_TEX_(tid, txt, false)
-			if ((SDL_GetTextureProperties(txt) | SDL_TEXTUREACCESS_TARGET) == 0) return false;
+			if ((SDL_GetTextureProperties(txt) & SDL_TEXTUREACCESS_TARGET) == 0) return false;
 			return SDL_SetRenderTarget(m_renderer, txt);
 		}
 		Math::Vect2i get_size_of_uniform_atlas(size_t tid, int size) {
@@ -471,8 +472,7 @@ namespace SKC::GE {
 			SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), (int)indices.size());
 
 		}
-		template<SKC::concepts::number T>
-
+		
 		void fill_polygon(std::vector<skc_Vect2d> points) {
 			auto indices = build_index_list(points.size()+1);
 			fill_polygon(points, indices);
