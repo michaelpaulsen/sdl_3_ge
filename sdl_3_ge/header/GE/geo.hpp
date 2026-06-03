@@ -25,7 +25,7 @@ namespace SKC::GE {
 		float r = (float)vertcolor.r / 255, g = (float)vertcolor.g / 255, b = (float)vertcolor.b / 255; 
 		float u = (float)SKC::Math::map(center_of_mass.x, bounding_box_min.x, bounding_box_max.x, 0, 1);
 		float v = (float)SKC::Math::map(center_of_mass.y, bounding_box_min.y, bounding_box_max.y, 0, 1);
-		SDL_Vertex vert = { .position = {(float)center_of_mass.x, (float)center_of_mass.y}, .color = {r,g,b}, .tex_coord{u, v} }; 
+		SDL_Vertex vert = { .position = {(float)center_of_mass.x, (float)center_of_mass.y}, .color = {r,g,b,1}, .tex_coord{u, v} }; 
 		//NOTE(skc) : I am sure that this copy won't be a perf bottle neck its only 32 bytes... ... 
 		verts.push_back(vert);
 		//we have to sort these because it is requred for triagulation.  
@@ -45,7 +45,7 @@ namespace SKC::GE {
 			verts.push_back(
 				SDL_Vertex{
 					.position = point,
-					.color = {r,g,b},
+					.color = {r,g,b,1},
 					.tex_coord = {u,v}
 				}
 			);

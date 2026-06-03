@@ -446,7 +446,7 @@ namespace SKC::GE {
 
 			if (tid == 0)  return SDL_SetRenderTarget(m_renderer, 0);
 			PRIV_GET_TEX_(tid, txt, false)
-			if ((SDL_GetTextureProperties(txt) & SDL_TEXTUREACCESS_TARGET) == 0) return false;
+			//if ((SDL_GetTextureProperties(txt) & SDL_TEXTUREACCESS_TARGET) == 0) return false;
 			return SDL_SetRenderTarget(m_renderer, txt);
 		}
 		Math::Vect2i get_size_of_uniform_atlas(size_t tid, int size) {

@@ -25,7 +25,7 @@ namespace SKC::GE {
 			LINE_SEPERATOR_NONE = 0,  //any separator
 			LINE_SEPARATOR_NEWLINE,  //newline separator
 			LINE_SEPARATOR_CRLF,     //space separator
-		} line_seperator{ LINE_SEPERATOR_NONE };
+		} line_seperator{ LINE_SEPARATOR_NEWLINE };
 		enum anchor_point : uint8_t {
 			AP_FLOAT = 0, 
 			AP_TOP_LEFT,
