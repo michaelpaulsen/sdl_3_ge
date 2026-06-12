@@ -55,7 +55,8 @@ namespace SKC::GE {
 		
 	}
 	std::vector<int> build_index_list(size_t count) {
-		//assert(center_idx <= count && "center_idx must be a valid index");
+		//TODO(skc) : replace this with 
+		//a better algorithim ... 
 		auto idx = std::vector<int>(); 
 		for (int x = 0; x < count - 1 ; ++x) {
 			idx.push_back(x);
@@ -63,7 +64,8 @@ namespace SKC::GE {
 			idx.push_back(x+ 1);
 
 		}
-		idx.push_back(count-1);
+		//todo(skc): make this actually safe! 
+		idx.push_back((int)count-1);
 		idx.push_back(0);
 		idx.push_back(1);
 		return idx; 

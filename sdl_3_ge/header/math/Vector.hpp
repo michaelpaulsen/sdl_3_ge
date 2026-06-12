@@ -33,6 +33,11 @@ namespace SKC::Math {
 			x += other;
 			y += other;
 		}
+		void operator *= (number auto scalar) {
+			x *= scalar;
+			y *= scalar;
+		}
+
 		Vect2<T> operator * (number auto scalar) {
 			return { x * scalar, y * scalar };
 		}
@@ -42,13 +47,13 @@ namespace SKC::Math {
 	
 		template<typename Y> 
 		void operator+=(Vect2<Y> other) {
-			x += other.x;
-			y += other.y;
+			x += (T)other.x;
+			y += (T)other.y;
 		}
 
 		template<typename Y>
 		Vect2<T> operator + (Vect2<Y> other) {
-			return { x + other.x, y + other.y };
+			return { x + (T)other.x, y + (T)other.y };
 		}
 		template<typename Y>
 		Vect2<T> operator - (Vect2<Y> other) {

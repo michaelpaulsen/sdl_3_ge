@@ -19,8 +19,9 @@
 #include "font_options.hpp"
 #include "texture.hpp"
 #include "../concepts.hpp"
-
 #include "./geo.hpp"
+#include "../math/Vector.hpp"
+
 #include "./private/position_from_anchor_point.hpp"
 #include "./private/blit_surface_with_resize.hpp"
 #define PRIV_GET_TEX_(tid, name, ret) auto name = get_tex_from_tid(tid);\
@@ -350,6 +351,9 @@ namespace SKC::GE {
 			PRIV_SET_RENDER_BLEND_MODE_();
 			SDL_RenderPoint(m_renderer, x, y);
 			PRIV_POP_RENDER_BLEND_MODE_();
+		}
+		void draw_points(std::vector<skc_Vect2f> points) {
+			SDL_RenderPoints(m_renderer, (Fpoint*)points.data(), (int)points.size()); 
 		}
 		void present() { SDL_RenderPresent(m_renderer); }
 		void clear() {

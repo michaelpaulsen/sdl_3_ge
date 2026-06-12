@@ -17,18 +17,43 @@ namespace SKC::Math {
 		double angle_steps,  
 		std::function<bool (Vect2d, Vect2d, double)> pred 
 	) {
+		auto d2r = SKC::Numbers::DEG_TO_RAD; 
 		std::vector<Vect2d> points = {}; 
-		auto rfov = (fov * Numbers::DEG_TO_RAD); 
-		for (double theta = -rfov / 2; theta <= (rfov / 2) + 1; theta += rfov/angle_steps) {
-			double r = 0;
-			Vect2d ray = cast_ray(theta + angle, r, start_pos);
-			while (pred(ray, start_pos, r) && r < 10'000) {
+		auto rangle = (angle * Numbers::DEG_TO_RAD); 
+		auto r = 0;
+		auto cray = cast_ray(angle * d2r, r, start_pos); 
+
+		while (pred(cray, start_pos, r)) {
+			r += radius_step;
+			cray = cast_ray((angle) * d2r, r, start_pos);
+
+		}
+		if (r > 0) points.push_back(cray);
+
+		
+		
+		for (
+			double theta = fov / (angle_steps / 2);
+			theta < fov / 2;
+			theta += fov / (angle_steps/2)
+		) {
+			r = 0; 
+			auto lray = cast_ray(((-theta) + angle) * d2r, r, start_pos);
+			while (pred(lray, start_pos, r)) {
 				r += radius_step; 
-				ray = cast_ray(theta + angle, r, start_pos);
+				lray = cast_ray(((-theta) + angle) * d2r, r, start_pos);
+
 			}
-			if (r > 0) {
-				points.push_back(ray); 
+			if (r > 0) points.push_back(lray); 
+			r = 0; 
+			auto rray = cast_ray(((theta) + angle) * d2r, r, start_pos);
+			while (pred(rray, start_pos, r)) {
+				r += radius_step;
+				rray = cast_ray(((theta) + angle) * d2r, r, start_pos);
+
 			}
+			if (r > 0) points.push_back(rray);
+
 		}
 		return points;
 	}

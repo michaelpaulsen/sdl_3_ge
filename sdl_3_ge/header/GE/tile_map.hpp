@@ -44,19 +44,27 @@ namespace SKC::GE {
 			}
 
 		}
-		SKC::Math::Vect2i to_tile_map_pos(float x, float y) {
-			auto realx = x - m_offset.x;
-			auto realy = y - m_offset.y;
-			return { (int)(realx/ m_tile_size), (int)(realy / m_tile_size) };
+
+		SKC::Math::Vect2i to_tile_space(SKC::Math::Vect2i pos) const {
+			auto ppos = pos / m_tile_size; 
+			return ppos + m_offset; 
 		}
-		SKC::Math::Vect2i to_tile_map_pos(SKC::Math::Vect2f m_pos) {
-			return to_tile_map_pos(m_pos.x, m_pos.y); 
+
+
+		SKC::Math::Vect2i to_tile_space(int x, int y) const {
+			return to_tile_space({ x,y }); 
 		}
 		
+		skc_Vect2f to_screen_space(int x, int y) const {
+			skc_Vect2f pos = skc_Vect2f((float)x, (float)y);
+			pos *= m_tile_size; 
+			pos += m_offset; 
+			return pos; 
+		}
 		auto tile_size() const noexcept {
 			return m_tile_size;
 		}
-
+		 
 		
 		void tile_size_from_window_size(SKC::Math::Vect2i window_size) noexcept {
 			auto min_size = std::min(window_size.x, window_size.y); 
@@ -75,7 +83,7 @@ namespace SKC::GE {
 			m_offset += offset; 
 		}
 		
-		SKC::Math::Vect2i size_px() const noexcept {
+		SKC::Math::Vect2<size_t> size_px() const noexcept {
 			return {
 				m_tiles_x_count * m_tile_size, m_tiles_y_count * m_tile_size
 			};
@@ -83,8 +91,7 @@ namespace SKC::GE {
 		SKC::Math::Vect2d get_offset() const noexcept {
 			return m_offset; 
 		}
-
-		tiles& at(size_t x, size_t y) {
+		tiles& at(size_t x, size_t y){
 			return m_tiles.at(y * m_tiles_x_count + x);
 		}
 
