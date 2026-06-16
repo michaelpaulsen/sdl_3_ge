@@ -131,6 +131,9 @@
     <ClInclude Include="header\math\numbers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="header\GE\geo.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

@@ -477,8 +477,16 @@ namespace SKC::GE {
 
 		}
 		
+		void fill_polygon_ex(std::vector<SDL_Vertex> verts, std::vector<int> indicies, size_t tid = 0 ) {
+			SDL_Texture* txt = NULL; 
+			if (tid) txt = get_tex_from_tid(tid); 
+			SDL_RenderGeometry(m_renderer,txt,  verts.data(), (int)verts.size(), indicies.data(), (int)indicies.size());
+
+
+		}
+
 		void fill_polygon(std::vector<skc_Vect2d> points) {
-			auto indices = build_index_list(points.size()+1);
+			auto indices = create_index_list(points.size()+1);
 			fill_polygon(points, indices);
 
 		}

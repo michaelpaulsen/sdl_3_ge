@@ -196,6 +196,7 @@
     <ClInclude Include="header\GE\Events.hpp" />
     <ClInclude Include="header\GE\font.hpp" />
     <ClInclude Include="header\GE\font_options.hpp" />
+    <ClInclude Include="header\GE\geo.hpp" />
     <ClInclude Include="header\GE\Imgui_window.hpp" />
     <ClInclude Include="header\GE\key_util.hpp" />
     <ClInclude Include="header\GE\level\level.hpp" />

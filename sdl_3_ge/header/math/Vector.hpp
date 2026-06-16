@@ -8,15 +8,18 @@ namespace SKC::Math {
 	template<number T>
 	struct Vect2 {
 		T x{}, y{};
-
+		Vect2() = default; 
 		Vect2(T _x, T _y) : x(_x), y(_y) {};
+		Vect2(SDL_FPoint o) {
+			x = o.x; y = o.y;
+		};
 		static Vect2<T>  from_polar(double angle, double length = 1) {
 			return{ static_cast<T>(std::sin(angle) * length), static_cast<T>(-std::cos(angle) * length) };
 		}
-		double len() {
+		double len() const {
 			return std::sqrt((x * x) + (y * y));
 		}
-		T len2() {
+		T len2() const {
 			return (x * x) + (y * y);
 		}
 		void normalize() {
@@ -24,10 +27,18 @@ namespace SKC::Math {
 			x /= l;
 			y /= l;
 		}
-		T dot(Vect2<T> other) {
+		Vect2<T> normalize() const {
+			return (*this) / len();
+		}
+		Vect2<T> normalized() const {
+			return (*this) / len(); 
+		}
+		T dot(Vect2<T> other)  const {
 			return (x * other.x) + (y * other.y);
 		}
-
+		T slope() {
+			return x / y; 
+		}
 		//scalar operations
 		void operator+=(number auto other) {
 			x += other;
@@ -38,10 +49,10 @@ namespace SKC::Math {
 			y *= scalar;
 		}
 
-		Vect2<T> operator * (number auto scalar) {
+		Vect2<T> operator * (number auto scalar) const {
 			return { x * scalar, y * scalar };
 		}
-		Vect2<T> operator / (number auto scalar) {
+		Vect2<T> operator / (number auto scalar) const {
 			return { x / scalar, y / scalar };
 		}
 	
@@ -52,11 +63,11 @@ namespace SKC::Math {
 		}
 
 		template<typename Y>
-		Vect2<T> operator + (Vect2<Y> other) {
+		Vect2<T> operator + (Vect2<Y> other) const {
 			return { x + (T)other.x, y + (T)other.y };
 		}
 		template<typename Y>
-		Vect2<T> operator - (Vect2<Y> other) {
+		Vect2<T> operator - (Vect2<Y> other) const {
 			return { x - other.x, y - other.y };
 		}
 		
@@ -65,7 +76,7 @@ namespace SKC::Math {
 
 		//TODO(skc) : name this template paramiter something better
 		template<number Y>
-		Vect2<T> operator/ (Vect2<Y> divisor) {
+		Vect2<T> operator/ (Vect2<Y> divisor) const {
 			return { x / divisor.x, y / divisor.y };
 		}
 		template <number Y> 
@@ -73,8 +84,8 @@ namespace SKC::Math {
 			x /= divisor.x; 
 			y /= divisor.y; 
 		}
-		template<number T> 
-		void operator /=(T divisor) {
+		template<number Y> 
+		void operator /=(Y divisor) {
 			x /= divisor;
 			y /= divisor;
 		}
@@ -82,8 +93,12 @@ namespace SKC::Math {
 		explicit operator Vect2<U>() const {
 			return { static_cast<U>(x), static_cast<U>(y) };
 		}
-		operator SDL_FPoint() const {
+		explicit operator SDL_FPoint() const {
 			return { (float)x, (float)y }; 
+		}
+		template <typename U >
+		bool operator==(Vect2<U> other) const {
+			return other.x == x && other.y == y; 
 		}
 	};
 	using Vect2d = SKC::Math::Vect2<double>;
