@@ -6,10 +6,9 @@
 #include "../../math/Math.hpp"
 #include "../../math/numbers.hpp"
 #include "../Color.hpp"
+#include "common.hpp" 
 #define PIE 3.1415
 namespace SKC::GE::Geo {
-	using vertex_list_t = std::vector<SDL_Vertex>;
-	using vect_list = std::vector<Math::Vect2d>;
 
 	[[nodiscard]] vertex_list_t create_vertex_list(vect_list points, color vertcolor) {
 		vertex_list_t verts = {}; 
