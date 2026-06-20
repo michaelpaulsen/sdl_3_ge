@@ -19,7 +19,7 @@
 #include "font_options.hpp"
 #include "texture.hpp"
 #include "../concepts.hpp"
-#include "./geo.hpp"
+#include "./geo/geo.hpp"
 #include "../math/Vector.hpp"
 
 #include "./private/position_from_anchor_point.hpp"
@@ -472,7 +472,7 @@ namespace SKC::GE {
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos); 
 		}
 		void fill_polygon(std::vector<skc_Vect2d> points, std::vector<int> indices) {
-			auto vetecies = create_vertex_list(points, get_draw_color());
+			auto vetecies = Geo::create_vertex_list(points, get_draw_color());
 			SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), (int)indices.size());
 
 		}
@@ -486,7 +486,7 @@ namespace SKC::GE {
 		}
 
 		void fill_polygon(std::vector<skc_Vect2d> points) {
-			auto indices = create_index_list(points.size()+1);
+			auto indices = Geo::create_index_list(points.size()+1);
 			fill_polygon(points, indices);
 
 		}
