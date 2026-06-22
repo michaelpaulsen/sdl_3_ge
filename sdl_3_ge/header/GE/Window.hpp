@@ -557,7 +557,7 @@ namespace SKC::GE {
 			SDL_Surface* text_surface = nullptr;
 			for(const auto& line : lines) {
 				auto text_line_surface = TTF_RenderText_Blended(
-					font, line.c_str(), line.size(), options.color
+					font, line.c_str(), line.size(), (SDL_Color)options.color
 				);
 				if(!text_line_surface) {
 					//TODO(skc) : handle error

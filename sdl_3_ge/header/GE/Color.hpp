@@ -22,8 +22,11 @@ namespace SKC::GE {
 			return color(r + other.r, g + other.g, b + other.b );
 		}
 		operator color_hsl();
-		operator SDL_Color() const {
+		explicit operator SDL_Color() const {
 			return SDL_Color{ r,g,b,a };
+		}
+		explicit operator SDL_FColor() const {
+			return SDL_FColor{ (float)r / 255, (float)g / 255,(float)b / 255,(float)a / 255 };
 		}
 	};
 
