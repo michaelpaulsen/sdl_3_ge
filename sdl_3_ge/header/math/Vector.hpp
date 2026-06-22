@@ -36,6 +36,9 @@ namespace SKC::Math {
 		T dot(Vect2<T> other)  const {
 			return (x * other.x) + (y * other.y);
 		}
+		T cross(Vect2<T> other) {
+			return x * other.y - y * other.x; 
+		}
 		T slope() {
 			return x / y; 
 		}
