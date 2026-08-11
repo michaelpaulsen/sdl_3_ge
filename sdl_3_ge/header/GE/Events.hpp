@@ -12,6 +12,7 @@
 
 //first party deps
 #include "../math/Vector.hpp"
+#include "./private/should_skip_event.hpp"
 #include "key_mod.hpp"
 
 //TODO(skc) : move to own file?
@@ -152,12 +153,8 @@ namespace SKC::GE {
 		auto drag_vector() const noexcept { return m_drag_vector; }
 		auto scroll_wheel_pos() const noexcept { return m_scroll_wheel_pos; }
 		auto get_key_state(unsigned char key) const noexcept {
-//NOTE(skc) : this is impossible to happen 
-//but its better to be safe than sorry!
-			if (key >= 256) {
-				return keyevent_state_t{ false,false };
-			}
-			return m_key_states.at(UZ(key));
+			char k = tolower(key);
+			return m_key_states.at(UZ(k));
 		}
 
 		char get_last_key() const noexcept {
@@ -178,13 +175,8 @@ namespace SKC::GE {
 				}
 				auto type = evnt.type; 
 
-//NOTE(skc) this event seems to be for apps that 
-// use a defered rendering model we don't need this since we 
-//use immediate rendering.. 
-				if (type == SDL_EVENT_WINDOW_EXPOSED) continue;
-				
-				
-				
+				//NOTE(skc): if the event is one that we don't whant to process then there's no reason to process it.
+				if (PRIVATE::should_sikp_event(type)) continue;
 				switch (evnt.type) {
 #pragma region ==MISC EVENTS==
 //NOTE(SKC): this kinda assumes that the app only has one window.
