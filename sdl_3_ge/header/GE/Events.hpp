@@ -3,8 +3,11 @@
 #include <print>
 #include <string> 
 #include <array> 
+#include <vector>
 
+#include <cmath>
 //3rd party deps
+#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keycode.h>
 #include <SDL3/SDL_stdinc.h>
@@ -23,21 +26,21 @@
 #ifndef UZ
 #define UZ static_cast<size_t>
 #endif // !U32
-
+constexpr double NS_TO_SECONDS = 1e6; 
 namespace SKC::GE {
 
 	enum struct full_screen_state_change_t : unsigned char {
-			NO_CHANGE,
-			EXITED_FULLSCREEN,
-			ENTERED_FULL_SCREEN
+		NO_CHANGE,
+		EXITED_FULLSCREEN,
+		ENTERED_FULL_SCREEN
 
-		};
+	};
 	enum struct drop_event_data_type_t: unsigned char {
-			NO_DROPPED_DATA,
-			FILE_DATA,
-			TEXT_DATA
+		NO_DROPPED_DATA,
+		FILE_DATA,
+		TEXT_DATA
 
-		};
+	};
 	enum struct arrow_direction_t : unsigned char {
 		LEFT,
 		UP,
@@ -45,13 +48,14 @@ namespace SKC::GE {
 		DOWN,
 		MAX
 	};
-	
+
 	template<bool _use_IMGUI = false>
 	class event_handler {
 	private:
 		struct keyevent_state_t {
-			bool down;              
+			bool down;
 			bool repeat;
+			Uint64 last, delta; 
 		};
 		struct mouse_button_state_t {
 			Uint8 clicks;
@@ -62,57 +66,109 @@ namespace SKC::GE {
 		using key_state_array_t = std::array<keyevent_state_t, size>;
 
 		char m_last_key =0; 
-		bool m_window_resized{ false }; 
-		bool m_quit{ false }; 
-		bool m_system_theme_changed{ false }; 
-		bool m_window_is_minimized{ false }; 
-		bool m_has_key_event{ false }; 
-		bool m_mouse_focus{ false }; 
+		bool m_window_resized{ false };
+		bool m_quit{ false };
+		bool m_system_theme_changed{ false };
+		bool m_window_is_minimized{ false };
+		bool m_has_key_event{ false };
+		bool m_mouse_focus{ false };
 		bool m_is_dragging{ false };
 		bool m_has_started_dragging{ false };
-		
+
+		bool* m_last_key_state = NULL; 
 		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA };
 
-		key_mod m_keymod_state{}; 
-		full_screen_state_change_t m_fullscreen_status{ 0 };
-		std::string m_last_dropped_data{}; 
+		key_mod m_keymod_state{};
+		full_screen_state_change_t m_fullscreen_status{ 0 };		
+		std::string m_last_dropped_data{};
 		std::array<mouse_button_state_t, 256> m_mouse_keys{0};
 
-//NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS 
-//where as m_mouse_position is the raw mouse position.
+		//NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS 
+		//where as m_mouse_position is the raw mouse position.
 		SKC::Math::Vect2d m_mouse_position{ 0,0 };
 		SKC::Math::Vect2d m_cursor_position{ 0,0 };
 		SKC::Math::Vect2d m_last_joy_relitive_pos{ 0,0 };
 		SKC::Math::Vect2d m_last_mouse_pos{ 0,0 };
 		SKC::Math::Vect2d m_last_mouse_rel_pos{ 0,0 };
-		SKC::Math::Vect2d m_drag_vector{ 0,0 };		
+		SKC::Math::Vect2d m_drag_vector{ 0,0 };
 		SKC::Math::Vect2d m_scroll_wheel_pos{ 0,0 };
-	
-		key_state_array_t<256> m_key_states{};
-		key_state_array_t<UZ(arrow_direction_t::MAX)> m_arrow_state{};
-		key_state_array_t<24> m_function_key_states{};
 
-	public : 
+		key_state_array_t<256> m_key_states{};
+		static const int INVALID_NUMBER_PAD_KEY_CODE = 0xffff; 
+		int get_number_pad_idx(int key) {
+			//TODO(skc) : distinguish between the KP and main layout numbers. 
+			
+			switch (key) {
+				case SDLK_KP_DIVIDE:   return '/';
+				case SDLK_KP_MULTIPLY: return '*';
+				case SDLK_KP_MINUS:    return '-';
+				case SDLK_KP_PLUS:     return '+'; 
+				case SDLK_KP_0:        return '0';
+				case SDLK_KP_1:        return '1';
+				case SDLK_KP_2:        return '2';
+				case SDLK_KP_3:        return '3';
+				case SDLK_KP_4:        return '4';
+				case SDLK_KP_5:        return '5';
+				case SDLK_KP_6:        return '6';
+				case SDLK_KP_7:        return '7';
+				case SDLK_KP_8:        return '8';
+				case SDLK_KP_9:        return '9';
+				case SDLK_KP_PERIOD:   return '.';
+				default:               return INVALID_NUMBER_PAD_KEY_CODE;
+
+			}
+			
+			
+			return false; 
+		}
+		
+		bool is_mod_key(int key) {
+			return (key == SDLK_LALT || key == SDLK_RALT
+				|| key == SDLK_MENU || key == SDLK_CAPSLOCK
+				|| key == SDLK_LCTRL || key == SDLK_RCTRL); 
+		}
+		void process_keboard_state(int key, SDL_Scancode scan_code, const bool* key_states ) {
+			auto& ks = m_key_states.at(key);
+			bool cs = key_states[scan_code];
+			bool ps = m_last_key_state[scan_code];
+			ks.down = cs;
+			ks.repeat = ps;
+			if (key_states[scan_code]) {
+				if (not ps) {
+					ks.last = SDL_GetTicksNS();
+				}
+				else {
+					ks.delta = SDL_GetTicksNS() - ks.last;
+				}
+			}
+		}
+	public:
 		enum {
 			RIGHT_MOUSE_BUTTON = 1,
 			LEFT_MOUSE_BUTTON,
 			MIDDLE_MOUSE_BUTTON
 		};
-		
-		event_handler() = default; 
-		~event_handler() = default;
-//NOTE(skc): 
-//want to not be able to move or copy this as it doesn't make sense... 
-//if you can make sense of what it would mean to copy and / or move a event handler 
-//feel free to implement these your self.. (I may or may not accept your PR) 
+
+		event_handler() {
+			int count;
+			SDL_GetKeyboardState(&count);
+			m_last_key_state = new bool[count]; 
+		};
+		~event_handler() {
+			delete[] m_last_key_state;
+		}
+		//NOTE(skc): 
+		//want to not be able to move or copy this as it doesn't make sense... 
+		//if you can make sense of what it would mean to copy and / or move a event handler 
+		//feel free to implement these your self.. (I may or may not accept your PR) 
 		event_handler(event_handler&) = delete;
 		event_handler(event_handler&&) = delete;
 		event_handler operator=(event_handler&&) = delete;
 
-		//instead of making getter and setter for these I am just goint to make it public
+		//NOTE(SKC): instead of making getter and setter for this I am just goint to make it public
 		bool arrow_keys_alias_WASD = false;
-//== The Getters for the State. 
-		//maybe shouldn't be const... (so that I can reset the flag when called)
+		//== The Getters for the State. 
+				//maybe shouldn't be const... (so that I can reset the flag when called)
 		bool theme_changed()        const noexcept { return m_system_theme_changed; }
 		bool is_minimized()         const noexcept { return m_window_is_minimized; }
 		bool quit()                 const noexcept { return m_quit; }
@@ -123,26 +179,18 @@ namespace SKC::GE {
 		bool is_dragging()          const noexcept { return m_is_dragging; }
 		bool has_started_dragging() const noexcept { return m_has_started_dragging; }
 
-//NOTE(skc) : 
-// this is not const because it is kinda important
-// to not ignore the user when they drop something into the
-// aplication so the flag is only cleared when the consumer
-// calls this function.	
-		auto dropped_data_type() { 
+		//NOTE(skc) : 
+		// this is not const because it is kinda important
+		// to not ignore the user when they drop something into the
+		// aplication so the flag is only cleared when the consumer
+		// calls this function.	
+		auto dropped_data_type() {
 			auto ret = m_dropped_data_type;
-			m_dropped_data_type = drop_event_data_type_t::NO_DROPPED_DATA; 
+			m_dropped_data_type = drop_event_data_type_t::NO_DROPPED_DATA;
 			return ret ; 
 		}
 		auto get_mouse_button_state(unsigned char button) const {
 			return m_mouse_keys.at(UZ(button));
-		}
-		auto get_arrow_key_state(arrow_direction_t arrow) const {
-			if (arrow == arrow_direction_t::MAX) return keyevent_state_t{ false,false };
-			return m_arrow_state.at(UZ(arrow));
-		}
-		auto get_function_key_state(unsigned char fkey) const {
-			if (fkey < 1 || fkey > 24) return keyevent_state_t{ false,false };
-			return m_function_key_states.at(UZ(fkey - 1));
 		}
 		auto& get_key_mods() const noexcept { return m_keymod_state; }
 		auto entered_full_screen() const noexcept { return m_fullscreen_status; }
@@ -156,68 +204,70 @@ namespace SKC::GE {
 			char k = tolower(key);
 			return m_key_states.at(UZ(k));
 		}
-
 		char get_last_key() const noexcept {
-			return m_last_key; 
+			return m_last_key;
 		}
 		
 		void pollevents() noexcept {
-			m_has_key_event = false; 
+			int count;
+			SDL_GetKeyboardState(&count);
+			memcpy(m_last_key_state, SDL_GetKeyboardState(NULL), count); 
+
+			m_has_key_event = false;
 			m_window_resized = false;
 			m_system_theme_changed = false;
 			m_fullscreen_status = full_screen_state_change_t::NO_CHANGE;
 			m_scroll_wheel_pos = { 0,0 };
-			m_last_mouse_rel_pos = { 0,0 }; 
-			SDL_Event evnt{}; 
+			m_last_mouse_rel_pos = { 0,0 };
+			SDL_Event evnt{};
 			while (SDL_PollEvent(&evnt)) {
 				if constexpr (_use_IMGUI) {
 					ImGui_ImplSDL3_ProcessEvent(&evnt);
 				}
-				auto type = evnt.type; 
-
+				auto type = evnt.type;
 				//NOTE(skc): if the event is one that we don't whant to process then there's no reason to process it.
 				if (PRIVATE::should_sikp_event(type)) continue;
 				switch (evnt.type) {
 #pragma region ==MISC EVENTS==
-//NOTE(SKC): this kinda assumes that the app only has one window.
-//Maybe we should not assume that?
-				case SDL_EVENT_WINDOW_CLOSE_REQUESTED: 
-				case SDL_EVENT_QUIT: 
+					//NOTE(SKC): this kinda assumes that the app only has one window.
+					//Maybe we should not assume that?
+				case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+				case SDL_EVENT_QUIT:
 				case SDL_EVENT_RENDER_DEVICE_LOST: {
-					m_quit = true; 
-					break; 
+					m_quit = true;
+					break;
 				}
 				case SDL_EVENT_SYSTEM_THEME_CHANGED: {
-					m_system_theme_changed = true; 
-					break; 
+					m_system_theme_changed = true;
+					break;
 				}
 #pragma endregion
 #pragma region ==SDL_WINDOW_EVENTS==
-												 
+
 				case SDL_EVENT_WINDOW_FOCUS_LOST: {
-					break; 
+					break;
 				}
 				case SDL_EVENT_WINDOW_MINIMIZED:
 				case SDL_EVENT_WINDOW_HIDDEN: {
 					m_window_is_minimized = true;
-					break; 
+					break;
 				}
 				case SDL_EVENT_DROP_FILE: {
-					m_dropped_data_type = drop_event_data_type_t::FILE_DATA; 
-					m_last_dropped_data = evnt.drop.data; 
+					m_dropped_data_type = drop_event_data_type_t::FILE_DATA;
+					m_last_dropped_data = evnt.drop.data;
 					std::print("file dropped with data {}", evnt.drop.data);
-					break; 
+					break;
 				}
 				case SDL_EVENT_WINDOW_MAXIMIZED:
 				case SDL_EVENT_WINDOW_RESTORED:
 				case SDL_EVENT_WINDOW_SHOWN: {
 					m_window_is_minimized = false;
 					m_window_resized = true;
-					break; 
+					break;
 				}
 				case SDL_EVENT_WINDOW_ENTER_FULLSCREEN: {
 					m_fullscreen_status = full_screen_state_change_t::ENTERED_FULL_SCREEN;
-					break; 
+					break;
 
 				}
 				case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN: {
@@ -226,25 +276,25 @@ namespace SKC::GE {
 
 				}
 				case SDL_EVENT_WINDOW_RESIZED: {
-					m_window_resized = true; 
-					break; 
+					m_window_resized = true;
+					break;
 				}
 #pragma endregion
 #pragma region ==MOUSE EVENTS ==
-//===MOUSE EVENTS ===//
+											 //===MOUSE EVENTS ===//
 
 				case SDL_EVENT_MOUSE_MOTION: {
 					if (m_has_started_dragging) {
 						m_is_dragging = true;
 					}
-					auto x = evnt.motion.x, y = evnt.motion.y; 
+					auto x = evnt.motion.x, y = evnt.motion.y;
 					auto xrel = evnt.motion.xrel, yrel = evnt.motion.yrel;
 					m_mouse_position = { x, y };
 					m_cursor_position = { x, y };
 					m_last_mouse_rel_pos = { xrel,yrel };
-					break; 
+					break;
 				}
-				case SDL_EVENT_MOUSE_BUTTON_DOWN: 
+				case SDL_EVENT_MOUSE_BUTTON_DOWN:
 				{
 					auto button = evnt.button;
 					mouse_button_state_t state = { button.clicks, button.down, button.x, button.y };
@@ -260,7 +310,7 @@ namespace SKC::GE {
 					mouse_button_state_t state = { button.clicks, button.down, static_cast<float>(button.x), static_cast<float>(button.y) };
 					m_mouse_keys.at(UZ(button.button)) = state;
 					m_is_dragging = false;
-					m_has_started_dragging = false; 
+					m_has_started_dragging = false;
 					break;
 				}
 				case SDL_EVENT_MOUSE_WHEEL: {
@@ -274,111 +324,23 @@ namespace SKC::GE {
 				case SDL_EVENT_WINDOW_MOUSE_LEAVE:
 				{
 					m_mouse_focus = false;
-					break; 
+					break;
 				}
 #pragma endregion
 #pragma region ===KEYBOARD EVENTS===
-//===KEYBOARD EVENTS===//
-				case SDL_EVENT_KEY_DOWN:
-				case SDL_EVENT_KEY_UP : {
-					m_has_key_event = true; 
-					auto keyevnt = evnt.key;
-					auto key = keyevnt.key;
-					auto down = keyevnt.down;
-					auto repeat = keyevnt.repeat;
-					m_keymod_state = key_mod(keyevnt.mod);
-					
-					if (key == SDLK_LALT || key == SDLK_RALT
-						|| key == SDLK_MENU || key == SDLK_CAPSLOCK
-						|| key == SDLK_LCTRL || key == SDLK_RCTRL) {
+				//===KEYBOARD EVENTS===//
+				case SDL_EVENT_KEY_DOWN: 
+				case SDL_EVENT_KEY_UP:
+				{		
+					auto e = evnt.key; 
+					m_keymod_state = key_mod(e.mod); 
 						break;
-					}
-					if (key == SDLK_EQUALS) {
-						m_key_states.at(U32('+')) = { down,repeat };
-						m_key_states.at(U32('=')) = { down,repeat };
-						break; 
-					}
-					if (key == SDLK_ASTERISK || key == SDLK_KP_MULTIPLY) {
-						m_key_states.at(U32('*')) = { down, repeat };
-						break;
-					}
-					
-					
-					if (key < 256) {
-						m_key_states.at(key) = { down,repeat };
-						if (evnt.type == SDL_EVENT_KEY_DOWN && !repeat) {
-							m_last_key = (char)key; 
-						}
-						else {
-							m_last_key = 0; 
-						}
-						break; 
 					}
 
-//NOTE(skc) : I set the m_arrow_state even if arrow_keys_alias_WASD is true because 
-//the consumer may still have contextual reasons to treat the arrow keys differently 
-//while still wanting them to alias their respective keys. 
-					if (key == SDLK_LEFT) {
-						if (arrow_keys_alias_WASD) m_key_states.at(U32('a')) = { keyevnt.down,keyevnt.repeat }; 
-						m_arrow_state.at(UZ(arrow_direction_t::LEFT)) = { down, repeat };
-						break; 
-					}
-					if (key == SDLK_RIGHT) {
-						if (arrow_keys_alias_WASD) m_key_states.at(U32('d')) = { down,repeat };
-						m_arrow_state.at(UZ(arrow_direction_t::RIGHT)) = { down, repeat };
-						break;
-					}
-					if (key == SDLK_UP) {
-						if (arrow_keys_alias_WASD) m_key_states.at(U32('w')) = { down,repeat };
-						m_arrow_state.at(UZ(arrow_direction_t::UP)) = { down, repeat };
-						break;
-					}
-					if (key == SDLK_DOWN) {
-						if (arrow_keys_alias_WASD) m_key_states.at(U32('s')) = { down,repeat };
-						m_arrow_state.at(UZ(arrow_direction_t::DOWN)) = { down, repeat };
-						break;
-					}
-					
-//NOTE(skc) : for some reason the char codes for the KP are 
-//1234567890 not the ASCII layout of 0123456789 ... 
-//this takes the key code and sets the respective bit
-					
-//TODO(skc) : distinguish between the KP and main layout numbers. 
-					if (key == SDLK_KP_0) {
-						m_key_states.at(U32('0')) = { down,repeat };
-						break;
-					}
-					if (key >= SDLK_KP_1 && key < SDLK_KP_0) {
-						key = '1' + ( key - SDLK_KP_1);
-						m_key_states.at(key) = { down,repeat };
-						break; 
-					}
-					if (key >= SDLK_F1 && key <= SDLK_F12) {
-						auto fkey_index = key - SDLK_F1;
-						m_function_key_states.at(UZ(fkey_index)) = { down,repeat };
-						break;
-					}
-					if (key >= SDLK_F13 && key <= SDLK_F24) {
-						auto fkey_index = (key - SDLK_F13) + 12;
-						m_function_key_states.at(UZ(fkey_index)) = { down,repeat };
-						break;
-					}
-					std::print("UNKNOWN EXSTENDED KEY CODE {:#06x}\r", key);
-					break;
-				}
-#pragma endregion
-#pragma region ===TEXT INPUT EVENTS===	
-				//===TEXT INPUT EVENTS===	
-				case SDL_EVENT_TEXT_EDITING:
-				case SDL_EVENT_TEXT_INPUT:               /**< Keyboard text input */
-				case SDL_EVENT_KEYMAP_CHANGED: {
-					std::print("KB event not handled 0x{:#06x}\r", type);
-					break;
-				}
 #pragma endregion
 #pragma region === AUDIO DEVICE EVENTS 
-				// TODO(skc) : implement audio device events 
-				case SDL_EVENT_AUDIO_DEVICE_ADDED: 
+// TODO(skc) : implement audio device events 
+				case SDL_EVENT_AUDIO_DEVICE_ADDED:
 				case SDL_EVENT_AUDIO_DEVICE_REMOVED:
 				case SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED: {
 					std::println("audio device events are not implemented");
@@ -391,13 +353,30 @@ namespace SKC::GE {
 				}
 				}
 			}
+			//Note(skc) :  this is a view into the keyboard state! 
+			// It is not copied it doesn't need to be freed!
+			auto key_states = SDL_GetKeyboardState(NULL); 
+			for(int x = SDLK_SPACE; x <= SDLK_TILDE; ++x){
+				//todo make this take modifier keys into account; 
+				auto scan_code = SDL_GetScancodeFromKey(x, NULL);
+				process_keboard_state(x, scan_code, key_states);
+
+			}
+			for (int x = SDLK_KP_DIVIDE; x <= SDLK_KP_PERIOD; ++x) {
+				auto scan_code = SDL_GetScancodeFromKey(x, NULL);
+				auto rkc = get_number_pad_idx(x); 
+				if (rkc == INVALID_NUMBER_PAD_KEY_CODE) {
+					continue; 
+				}
+				process_keboard_state(rkc, scan_code, key_states); 
+			}
 			if (m_is_dragging) {
 				m_drag_vector = m_mouse_position - m_last_mouse_pos;
-				m_last_mouse_pos = m_mouse_position; 
-				}
+				m_last_mouse_pos = m_mouse_position;
+			}
 			else {
 				m_drag_vector = { 0,0 };
 			}
 		}
-	}; 
+	};
 }
