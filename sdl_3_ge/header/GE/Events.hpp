@@ -26,7 +26,6 @@
 #ifndef UZ
 #define UZ static_cast<size_t>
 #endif // !U32
-constexpr double NS_TO_SECONDS = 1e6; 
 namespace SKC::GE {
 
 	enum struct full_screen_state_change_t : unsigned char {
@@ -40,13 +39,6 @@ namespace SKC::GE {
 		FILE_DATA,
 		TEXT_DATA
 
-	};
-	enum struct arrow_direction_t : unsigned char {
-		LEFT,
-		UP,
-		RIGHT,
-		DOWN,
-		MAX
 	};
 
 	template<bool _use_IMGUI = false>
@@ -82,7 +74,6 @@ namespace SKC::GE {
 		full_screen_state_change_t m_fullscreen_status{ 0 };		
 		std::string m_last_dropped_data{};
 		std::array<mouse_button_state_t, 256> m_mouse_keys{0};
-
 		//NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS 
 		//where as m_mouse_position is the raw mouse position.
 		SKC::Math::Vect2d m_mouse_position{ 0,0 };
@@ -127,8 +118,7 @@ namespace SKC::GE {
 				|| key == SDLK_MENU || key == SDLK_CAPSLOCK
 				|| key == SDLK_LCTRL || key == SDLK_RCTRL); 
 		}
-		void process_keboard_state(int key, SDL_Scancode scan_code, const bool* key_states ) {
-			auto& ks = m_key_states.at(key);
+		void process_keboard_state(keyevent_state_t& ks, SDL_Scancode scan_code, const bool* key_states ) {
 			bool cs = key_states[scan_code];
 			bool ps = m_last_key_state[scan_code];
 			ks.down = cs;
@@ -192,7 +182,7 @@ namespace SKC::GE {
 		auto get_mouse_button_state(unsigned char button) const {
 			return m_mouse_keys.at(UZ(button));
 		}
-		auto& get_key_mods() const noexcept { return m_keymod_state; }
+		auto get_key_mods() const noexcept { return m_keymod_state; }
 		auto entered_full_screen() const noexcept { return m_fullscreen_status; }
 		auto last_joy_pos_r() const noexcept { return m_last_joy_relitive_pos; }
 		auto mouse_position() const noexcept { return m_mouse_position; }
@@ -356,19 +346,20 @@ namespace SKC::GE {
 			//Note(skc) :  this is a view into the keyboard state! 
 			// It is not copied it doesn't need to be freed!
 			auto key_states = SDL_GetKeyboardState(NULL); 
-			for(int x = SDLK_SPACE; x <= SDLK_TILDE; ++x){
+			for(int key = SDLK_SPACE; key <= SDLK_TILDE; ++key){
 				//todo make this take modifier keys into account; 
-				auto scan_code = SDL_GetScancodeFromKey(x, NULL);
-				process_keboard_state(x, scan_code, key_states);
+				auto& ks = m_key_states.at(key);
+				auto scan_code = SDL_GetScancodeFromKey(key, NULL);
+				process_keboard_state(ks, scan_code, key_states);
 
 			}
 			for (int x = SDLK_KP_DIVIDE; x <= SDLK_KP_PERIOD; ++x) {
 				auto scan_code = SDL_GetScancodeFromKey(x, NULL);
-				auto rkc = get_number_pad_idx(x); 
-				if (rkc == INVALID_NUMBER_PAD_KEY_CODE) {
-					continue; 
+				if (auto key = get_number_pad_idx(x);
+					key != INVALID_NUMBER_PAD_KEY_CODE) {
+					auto& ks = m_key_states.at(key);
+					process_keboard_state(ks, scan_code, key_states);
 				}
-				process_keboard_state(rkc, scan_code, key_states); 
 			}
 			if (m_is_dragging) {
 				m_drag_vector = m_mouse_position - m_last_mouse_pos;
