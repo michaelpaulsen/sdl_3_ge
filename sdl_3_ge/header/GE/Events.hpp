@@ -17,7 +17,15 @@
 #include "../math/Vector.hpp"
 #include "./private/should_skip_event.hpp"
 #include "key_mod.hpp"
-
+#ifndef ALWAYS_INLINE 
+#ifdef _WIN32
+#define ALWAYS_INLINE [[msvc::forceinline]]
+#elifdef __CLANG__
+#define ALWAYS_INLINE [[clang::always_inline]]]
+#elseifdef __GNUC__ 
+#define ALWAYS_INLINE [[gnu::always_inline]]
+#endif
+#endif
 //TODO(skc) : move to own file?
 #ifndef U32
 #include <cstdint>
@@ -40,7 +48,33 @@ namespace SKC::GE {
 		TEXT_DATA
 
 	};
-
+	enum class special_keys : unsigned char {
+		BACKSPACE,
+		RETURN,
+		INSERT,
+		HOME,
+		END,
+		PAGEDOWN,
+		PAGEUP,
+		UP,
+		DOWN,
+		LEFT,
+		RIGHT,
+		DEL = SDLK_DELETE,
+		F1,
+		F2,
+		F3,
+		F4,
+		F5,
+		F6,
+		F7,
+		F8,
+		F9,
+		F10,
+		F11,
+		F12,
+		LAST
+	};
 	template<bool _use_IMGUI = false>
 	class event_handler {
 	private:
@@ -57,7 +91,6 @@ namespace SKC::GE {
 		template<size_t size>
 		using key_state_array_t = std::array<keyevent_state_t, size>;
 
-		char m_last_key =0; 
 		bool m_window_resized{ false };
 		bool m_quit{ false };
 		bool m_system_theme_changed{ false };
@@ -118,18 +151,28 @@ namespace SKC::GE {
 				|| key == SDLK_MENU || key == SDLK_CAPSLOCK
 				|| key == SDLK_LCTRL || key == SDLK_RCTRL); 
 		}
-		void process_keboard_state(keyevent_state_t& ks, SDL_Scancode scan_code, const bool* key_states ) {
-			bool cs = key_states[scan_code];
-			bool ps = m_last_key_state[scan_code];
-			ks.down = cs;
-			ks.repeat = ps;
-			if (key_states[scan_code]) {
-				if (not ps) {
+		ALWAYS_INLINE void process_keboard_state(keyevent_state_t& ks, SDL_Scancode scan_code, const bool* key_states ) {
+			if (not key_states[scan_code]) {
+				ks.down = false; 
+				ks.repeat = false; 
+				ks.last = 0; 
+				ks.delta = 0; 
+				return; 
+			}
+			ks.down = true;
+			if (not m_last_key_state[scan_code]) {
 					ks.last = SDL_GetTicksNS();
+				ks.delta = 0;
+				ks.repeat = false;
+				return; 
 				}
-				else {
+			ks.repeat = true; 
 					ks.delta = SDL_GetTicksNS() - ks.last;
+			
 				}
+		void process_keboard_state(special_keys key, SDL_Scancode scan_code, const bool* key_states) {
+			process_keboard_state(m_key_states.at(UZ(key)), scan_code, key_states);
+
 			}
 		}
 	public:
@@ -190,13 +233,8 @@ namespace SKC::GE {
 		auto cursor_position() const noexcept { return m_cursor_position; }
 		auto drag_vector() const noexcept { return m_drag_vector; }
 		auto scroll_wheel_pos() const noexcept { return m_scroll_wheel_pos; }
-		auto get_key_state(unsigned char key) const noexcept {
-			char k = tolower(key);
-			return m_key_states.at(UZ(k));
-		}
-		char get_last_key() const noexcept {
-			return m_last_key;
-		}
+		auto get_key_state(unsigned char key) const noexcept { return m_key_states.at(UZ(tolower(int(key)))); }
+		auto get_key_state(special_keys key) const noexcept { return m_key_states.at(UZ(tolower(int(key)))); }
 		
 		void pollevents() noexcept {
 			int count;
@@ -361,6 +399,34 @@ namespace SKC::GE {
 					process_keboard_state(ks, scan_code, key_states);
 				}
 			}
+			//NOTE(skc): 
+			// Since SDLK_SPACE is the first key code that we 
+			// actually iterate through we can use the first 0x1f (31) 
+			// positions in the array for what ever scan codes that we want.  
+			process_keboard_state(special_keys::BACKSPACE, SDL_SCANCODE_BACKSPACE, key_states);
+			process_keboard_state(special_keys::RETURN,    SDL_SCANCODE_RETURN,    key_states);
+			process_keboard_state(special_keys::INSERT,    SDL_SCANCODE_INSERT,    key_states);
+			process_keboard_state(special_keys::DEL,       SDL_SCANCODE_DELETE,    key_states);
+			process_keboard_state(special_keys::HOME,      SDL_SCANCODE_HOME,      key_states);
+			process_keboard_state(special_keys::END,       SDL_SCANCODE_END,       key_states);
+			process_keboard_state(special_keys::PAGEUP,    SDL_SCANCODE_PAGEUP,    key_states);
+			process_keboard_state(special_keys::PAGEDOWN,  SDL_SCANCODE_PAGEDOWN,  key_states);
+			process_keboard_state(special_keys::UP,        SDL_SCANCODE_UP,        key_states);
+			process_keboard_state(special_keys::DOWN,      SDL_SCANCODE_DOWN,      key_states);
+			process_keboard_state(special_keys::LEFT,      SDL_SCANCODE_LEFT,      key_states);
+			process_keboard_state(special_keys::RIGHT,     SDL_SCANCODE_RIGHT,     key_states);
+			process_keboard_state(special_keys::F1,        SDL_SCANCODE_F1,        key_states);
+			process_keboard_state(special_keys::F2,        SDL_SCANCODE_F2,        key_states);
+			process_keboard_state(special_keys::F3,        SDL_SCANCODE_F3,        key_states);
+			process_keboard_state(special_keys::F4,        SDL_SCANCODE_F4,        key_states);
+			process_keboard_state(special_keys::F5,        SDL_SCANCODE_F5,        key_states);
+			process_keboard_state(special_keys::F6,        SDL_SCANCODE_F6,        key_states);
+			process_keboard_state(special_keys::F7,        SDL_SCANCODE_F7,        key_states);
+			process_keboard_state(special_keys::F8,        SDL_SCANCODE_F8,        key_states);
+			process_keboard_state(special_keys::F9,        SDL_SCANCODE_F9,        key_states);
+			process_keboard_state(special_keys::F10,       SDL_SCANCODE_F10,       key_states);
+			process_keboard_state(special_keys::F11,       SDL_SCANCODE_F11,       key_states);
+			process_keboard_state(special_keys::F12,       SDL_SCANCODE_F12,       key_states);
 			if (m_is_dragging) {
 				m_drag_vector = m_mouse_position - m_last_mouse_pos;
 				m_last_mouse_pos = m_mouse_position;
