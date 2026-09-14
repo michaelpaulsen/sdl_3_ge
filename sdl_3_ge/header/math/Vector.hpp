@@ -7,12 +7,36 @@ namespace SKC::Math {
 	template <typename T> concept number = std::is_integral_v<T> || std::is_floating_point_v<T>;
 	template<number T>
 	struct Vect2 {
-		T x{}, y{};
+		T x{0}, y{0};
 		Vect2() = default; 
 		Vect2(T _x, T _y) : x(_x), y(_y) {};
 		Vect2(SDL_FPoint o) {
 			x = o.x; y = o.y;
 		};
+		Vect2(const Vect2<T>& o) noexcept {
+			x = o.x;
+			y = o.y;
+		}
+		Vect2(Vect2<T>&& o) noexcept{
+			x = o.x;
+			y = o.y;
+			o.~Vect2(); 
+		}
+
+		Vect2& operator= (const Vect2<T>& o)noexcept {
+			x = o.x; 
+			y = o.y; 
+			return *this; 
+		}
+		Vect2& operator= (Vect2<T>&& o) noexcept {
+			x = o.x;
+			y = o.y;
+			o.~Vect2(); 
+			return *this; 
+		}
+		
+
+		
 		static Vect2<T>  from_polar(double angle, double length = 1) {
 			return{ static_cast<T>(std::sin(angle) * length), static_cast<T>(-std::cos(angle) * length) };
 		}
