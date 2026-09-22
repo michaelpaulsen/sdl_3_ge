@@ -240,18 +240,22 @@ namespace SKC::GE {
 		}
 		void start_of_frame() { last_frame_start = SDL_GetTicks(); }
 		void end_frame() {
+			++m_frame; 
 			auto now = SDL_GetTicks();
-			m_last_frame_time = (now - last_frame_start);
-			last_frame_start = now; 
-
+			m_last_frame_time = (now - m_last_frame_start);
+			m_last_frame_start = now; 
 		}
 
 		void wait_for_frame() {
+			if (!m_last_frame_start or !m_limit_frame_rate) {
 			end_frame(); 
-			if (!m_limit_frame_rate) return; 
+				return; 
+			}
 			auto frame_time = static_cast<Uint64>(1000.f / m_frame_rate);
-			if (m_last_frame_time < frame_time) {
-				SDL_Delay((Uint32)(frame_time - m_last_frame_time));
+			auto render_time = SDL_GetTicks() - m_last_frame_start;
+			
+			if (render_time < frame_time) {
+				SDL_Delay(static_cast<Uint32>(frame_time - render_time));
 			}
 			end_frame();
 		}
@@ -265,6 +269,9 @@ namespace SKC::GE {
 			if (!m_is_visible) return; 
 			SDL_HideWindow(m_window);
 			m_is_visible = false; 
+		}
+		[[nodiscard]] tick_t frame() const {
+			return m_frame; 
 		}
 #pragma endregion
 		/*
