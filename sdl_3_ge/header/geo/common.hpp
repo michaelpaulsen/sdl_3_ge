@@ -6,22 +6,24 @@ namespace SKC::Geo {
 	using point_t = Math::Vect2f; 
 	using vect_list = std::vector<point_t>;
 	
-	// returns (B-A) X (C-B) 
 	//SA https://en.wikipedia.org/wiki/Cross_product
-	double angle_of_corner(point_t A, point_t B, point_t C) {
-		return (B - A).cross(C - B);
+	// returns ∠ABC (the angle formed by the corner ABC) 
+	// when used for sorting this should be called like this 
+	// angle_of_corner(P1, center, P2) 
+	double angle_of_corner(point_t& A, point_t& B, point_t& C) {
+		auto edge1 = (B - A);
+		auto edge2 = (C - B);
+		edge1.normalize();
+		edge2.normalize();
+		return edge1.cross(edge2);
 	}
 	bool point_inside_triangle(point_t p, point_t  a, point_t b, point_t c) {
-		//const double EPSILON = 1e-9;
-		double cross1 = angle_of_corner( a, p, b);
-		double cross2 = angle_of_corner( b, p, c);
-		double cross3 = angle_of_corner( c, p, a);
-		// In Y-down, a visual CW triangle requires all results to be strictly positive
-		auto has_negitive = (cross1 < 0) || (cross2 < 0) || (cross3 < 0);
-		auto has_positive = (cross1 > 0) || (cross2 > 0) || (cross3 > 0);
-
-
-		return !(has_negitive && has_positive);
+		// In Y-down, a visual CW triangle
+		// requires all results to
+		// be strictly negitive
+		return (angle_of_corner(a, p, b) < 0) &&
+			   (angle_of_corner(b, p, c) < 0) &&
+			   (angle_of_corner(c, p, a) < 0);
 	};
 	auto calculate_mean_point(const vect_list& points) {
 		Geo::point_t center{ 0,0 };
