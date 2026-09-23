@@ -23,5 +23,12 @@ namespace SKC::Geo {
 
 		return !(has_negitive && has_positive);
 	};
+	auto calculate_mean_point(const vect_list& points) {
+		Geo::point_t center{ 0,0 };
+		for (const auto& point : points) {
+			center += point;
+		}
+		return center / points.size();
+	}
 
 }
