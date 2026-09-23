@@ -3,8 +3,8 @@
 #include <cstdint>
 
 #include "common.hpp" 
-#include "../../math/Vector.hpp"
-namespace SKC::GE::Geo {
+#include "../math/Vector.hpp"
+namespace SKC::Geo {
 	namespace priv {
 		constexpr size_t find_point_on_bounding_box(vect_list points) noexcept {
 			size_t min_idx = 0; 
@@ -20,7 +20,6 @@ namespace SKC::GE::Geo {
 		}
 	}
 	void sort(vect_list &points )  {
-		if (points.size() < 3) return; 
 		std::swap(points[0], points[priv::find_point_on_bounding_box(points)]);
 		std::sort(points.begin() + 1, points.end(),
 			[anchor = points[0]](auto p1, auto p2) -> bool {

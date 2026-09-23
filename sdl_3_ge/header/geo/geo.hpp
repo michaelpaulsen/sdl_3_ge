@@ -3,13 +3,10 @@
 #include <SDL3/SDL.h> 
 #include <numeric> 
 
-#include "../../math/Vector.hpp" 
-#include "../../math/Math.hpp"
-#include "../../math/numbers.hpp"
-#include "../Color.hpp"
+#include "../math/Vector.hpp" 
 #include "common.hpp" 
 #define PIE 3.1415
-namespace SKC::GE::Geo {
+namespace SKC::Geo {
 	namespace priv {
 		bool is_ear(int idx, const vect_list &points) {
 			auto pi = Math::calc_array_idx(idx, -1, points.size());
@@ -26,20 +23,6 @@ namespace SKC::GE::Geo {
 			}
 			return true; 
 		}
-	}
-	 
-	[[nodiscard]] vertex_list_t create_vertex_list(vect_list points, color vertcolor) {
-		vertex_list_t verts = {}; 
-		float r = (float)vertcolor.r / 255, g = (float)vertcolor.g / 255, b = (float)vertcolor.b / 255;
-		for (const auto& point : points) {
-			verts.push_back(
-				SDL_Vertex{
-					.position = (SDL_FPoint)point,
-					.color = {r,g,b,1},
-				}
-			);
-		}
-		return verts;
 	}
 	std::vector<int> ear_clip(vect_list points) {
 		
