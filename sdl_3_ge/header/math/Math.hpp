@@ -5,11 +5,6 @@
 #include "./perlin.hpp"
 #define U32 static_cast<uint32_t>
 namespace SKC::Math {
-	inline int calc_array_idx(int i, int offset, int max) {
-		auto  nidx = i + offset;
-		if (nidx < 0) nidx += max;
-		return nidx % max;
-	};
 	double  wrap(double val, double min, double max) {
 		double ret = val; 
 		while (ret < min) { 

@@ -5,14 +5,19 @@
 
 #include "../math/Vector.hpp" 
 #include "common.hpp" 
-#define PIE 3.1415
 namespace SKC::Geo {
 	namespace priv {
+		inline size_t prev_index(size_t index, size_t size) {
+			if (index == 0) return size - 1;
+			return index - 1;
+		}
+		inline size_t next_index(size_t index, size_t size) {
+			if (index >= (size - 1))  return 0;
+			return index + 1;
+		}
 		bool is_ear(int idx, const vect_list &points) {
-			auto pi = Math::calc_array_idx(idx, -1, points.size());
-			auto ni = Math::calc_array_idx(idx, 1, points.size());
-			auto prev = points[pi];
-			auto next = points[ni];
+			auto prev = points[prev_index(idx, points.size())];
+			auto next = points[next_index(idx, points.size())];
 			auto curr = points[idx];
 			//NOTE(SKC): we're assuming that the polygon is in clockwise winding order for now.
 			//TODO(SKC): we may want to make winding order a paramiter. 
@@ -35,39 +40,34 @@ namespace SKC::Geo {
 		std::iota(indices.begin(), indices.end(), 0); 
 		int idx = 0; 
 		while (indices.size() > 3) {
-			
+			if (idx >= indices.size()) { return ret; }
 			if (priv::is_ear(idx, points)) {
 				int n_curr = indices.size();
-				auto prev = indices[Math::calc_array_idx(idx, -1, n_curr)];
-				auto next = indices[Math::calc_array_idx(idx, 1, n_curr)];
+				auto prev = indices[priv::prev_index(idx, n_curr)];
+				auto next = indices[priv::next_index(idx, n_curr)];
 				auto curr = indices[idx];
 				ret.push_back(prev);
 				ret.push_back(curr);
 				ret.push_back(next);
 				indices.erase(indices.begin() + idx);
 				idx = 0;
-				continue; 
+				continue;
 
 			}
-			if (idx >= indices.size()) {
-				return {};
-			}
-			++idx; 
-			
+			++idx;
 		}
 		ret.append_range(indices);
-		std::print("{}", ret);
 
-		return ret; 
+		return ret;
 	}
 	std::vector<int> create_index_list(size_t count) {
-		auto idx = std::vector<int>(); 
-		for (int x = 1; x < count - 1 ; ++x) {
+		auto idx = std::vector<int>();
+		for (int x = 1; x < count - 1; ++x) {
 			idx.push_back(x);
 			idx.push_back(0);
-			idx.push_back(x+ 1);
+			idx.push_back(x + 1);
 
 		}
-		return idx; 
+		return idx;
 	}
 }
