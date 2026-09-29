@@ -141,9 +141,7 @@ namespace SKC::GE {
 				default:               return INVALID_NUMBER_PAD_KEY_CODE;
 
 			}
-			
-			
-			return false; 
+			std::unreachable(); 
 		}
 		
 		bool is_mod_key(int key) {
@@ -173,7 +171,6 @@ namespace SKC::GE {
 		void process_keboard_state(special_keys key, SDL_Scancode scan_code, const bool* key_states) {
 			process_keboard_state(m_key_states.at(UZ(key)), scan_code, key_states);
 
-			}
 		}
 	public:
 		enum {
@@ -362,8 +359,8 @@ namespace SKC::GE {
 				{		
 					auto e = evnt.key; 
 					m_keymod_state = key_mod(e.mod); 
-						break;
-					}
+					break;
+				}
 
 #pragma endregion
 #pragma region === AUDIO DEVICE EVENTS 
