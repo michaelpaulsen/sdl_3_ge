@@ -13,7 +13,10 @@ namespace SKC::Geo {
 // in order to properly render those you would have to manually sort them! 
 
 	void sort(vect_list& points) {
-		std::sort(points.begin() + 1, points.end(),
+		if (points.size() < 3) {
+			return; 
+		}
+		std::sort(points.begin(), points.end(),
 			[anchor = calculate_mean_point(points)](auto p1, auto p2) mutable -> bool {
 				auto o = angle_of_corner( p1, anchor, p2);
 				if (o == 0) {
@@ -21,7 +24,7 @@ namespace SKC::Geo {
 					auto length2 = (anchor - p2).len2(); 
 					return (length1 - length2) > 0;
 				}
-				return o < 0;
+				return o > 0;
 			}
 		);
 	}

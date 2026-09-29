@@ -24,6 +24,7 @@
 
 #include "./private/position_from_anchor_point.hpp"
 #include "./private/blit_surface_with_resize.hpp"
+#include "make_uvs.hpp"
 #define PRIV_GET_TEX_(tid, name, ret) auto name = get_tex_from_tid(tid);\
                       if (!name) return ret;
 
@@ -45,6 +46,7 @@ namespace SKC::GE {
 	//TODO (skc) : move all of this filesystem 
 	//stuff to own file. 
 	namespace fs = std::filesystem; 
+	struct geo_sorted_t {}; 
 	class window {
 	protected:
 		
@@ -478,59 +480,53 @@ namespace SKC::GE {
 			};
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos); 
 		}
-		void fill_polygon(std::vector<skc_Vect2d> points, std::vector<int> indices) {
-			auto vetecies = Geo::create_vertex_list(points, get_draw_color());
-			SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), (int)indices.size());
+		/*
+	*--POLYGON API--
+	* this is where the fun stuff happens
+	*/
+#pragma region polygon API 
 
+		void render_polygon(Geo::vect_list points, geo_sorted_t) {
+			auto idxs = Geo::ear_clip(points);
+			auto draw_color = get_draw_color();
+			auto verts = create_vertex_list(points, draw_color);
+			SDL_RenderGeometry(m_renderer, NULL, verts.data(), verts.size(), idxs.data(), idxs.size());
 		}
-		
-		void fill_polygon_ex(std::vector<SDL_Vertex> verts, std::vector<int> indicies, size_t tid = 0 ) {
-			SDL_Texture* txt = NULL; 
-			if (tid) txt = get_tex_from_tid(tid); 
-			SDL_RenderGeometry(m_renderer,txt,  verts.data(), (int)verts.size(), indicies.data(), (int)indicies.size());
 
-
+		void render_polygon(Geo::vect_list points) {
+			Geo::sort(points);
+			render_polygon(points, geo_sorted_t{});
 		}
 
-		void fill_polygon(std::vector<skc_Vect2d> points) {
-			auto indices = Geo::create_index_list(points.size()+1);
-			fill_polygon(points, indices);
+		void render_polygon(Geo::vect_list points,
+			geo_sorted_t,
+			size_t tid,
+			Math::Vect2f offset = { 0,0 },
+			float scale = 1,
+			bool clamp = false
+		) {
+			PRIV_GET_TEX_(tid, txt, );
 
+			float w{ 0 }, h{ 0 };
+			SDL_GetTextureSize(txt, &w, &h);
+			auto idxs = Geo::ear_clip(points);
+			auto bounds = calc_min_position(points);
+			auto verts = create_vertex_list(points, get_draw_color());
+			set_UVs(verts, bounds, { w,h }, offset, scale, clamp);
+			SDL_RenderGeometry(m_renderer, txt, verts.data(), verts.size(), idxs.data(), idxs.size());
 		}
-		
-		void render_polygon(std::vector<SDL_FPoint> points, std::vector<int> indices) {
-			std::vector < SDL_Vertex> vetecies{};
-			unsigned char r{}, g{}, b{}, a{};
-			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
-			SDL_Vertex vert{};
-			for (const auto& point : points) {
-			
-				vert.color = { (float)r / 255.f, (float)g / 255.f, (float)b / 255.f, (float)a / 255.f };
-				vert.position = point; 
-				vetecies.push_back( vert ); 
-			}
-			SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), (int)indices.size());
-
+		void render_polygon(
+			Geo::vect_list points,
+			size_t tid,
+			Math::Vect2f offset = { 0,0 },
+			float scale = 1,
+			bool clamp = false) {
+			Geo::sort(points);
+			render_polygon(points, geo_sorted_t{}, tid, offset, scale, clamp);
 		}
-		void render_polygon(std::vector<SDL_FPoint> points ) {
-			std::vector < SDL_Vertex> vetecies{};
-			unsigned char r{0}, g{}, b{0}, a{0};
-			SDL_GetRenderDrawColor(m_renderer, &r, &g, &b, &a);
-			
-			std::vector<int> indices; 
 
+#pragma endregion 
 
-			for (int x = 1; x < points.size() - 1; ++x) {
-				indices.push_back(x);
-				indices.push_back(x + 1);
-				indices.push_back(0);
-
-			}
-			render_polygon(points, indices); 
-			//SDL_RenderGeometry(m_renderer, NULL, vetecies.data(), (int)vetecies.size(), indices.data(), indices.size());
-		
-		}
-			
 #pragma endregion
 		/*
 		*--TEXT API--
