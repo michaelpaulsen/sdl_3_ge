@@ -3,9 +3,10 @@
 #include <filesystem>
 #include <vector>
 #include <ranges>
-
 #include <cstdio>
 #include <print>
+#include <optional>
+
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_render.h>
@@ -28,6 +29,7 @@
 #define PRIV_GET_TEX_(tid, name, ret) auto name = get_tex_from_tid(tid);\
                       if (!name) return ret;
 
+#define PRIV_OPTIONAL(T,name) std::optional<T> name = std::nullopt
 #define PRIV_PUSH_RENDER_BLEND_MODE_()  SDL_BlendMode prev_mode{};\
 					  SDL_GetRenderDrawBlendMode(m_renderer, &prev_mode)
 #define PRIV_POP_RENDER_BLEND_MODE_() SDL_SetRenderDrawBlendMode(m_renderer, prev_mode)
@@ -407,22 +409,16 @@ namespace SKC::GE {
 			PRIV_GET_TEX_(tid, texture, false)
 			return SDL_SetTextureScaleMode(texture, scale_mode);
 		}
-		void draw_texture(size_t tid) {
-			auto txt = get_tex_from_tid(tid); 
-			if (!txt) return; 
-			SDL_RenderTexture(m_renderer, txt, NULL, NULL);
-		}
-		void draw_texture(size_t tid, Frect pos) {
-			PRIV_GET_TEX_(tid, txt,)
-			SDL_RenderTexture(m_renderer, txt, NULL, &pos);
-		}
-		void draw_texture(size_t tid, Fpoint pos) {
-			auto ts = get_texture_size(tid);
-			draw_texture(tid, { pos.x,pos.y, ts.x, ts.y });
-		}
-		void draw_texture(size_t tid, Frect pos, Frect atlas_pos) {
-			PRIV_GET_TEX_(tid, txt,)
-			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos);
+		void draw_texture(size_t tid, PRIV_OPTIONAL(Frect, pos), PRIV_OPTIONAL(Frect,atlas_pos)) {
+			PRIV_GET_TEX_(tid, txt, );
+			SDL_FRect* src_rect = NULL, *dest_rect = NULL; 
+			if (pos) {
+				dest_rect = &(*pos); 
+			}
+			if (atlas_pos) {
+				src_rect = &(*atlas_pos);
+			}
+			SDL_RenderTexture(m_renderer, txt, src_rect, dest_rect);
 		}
 		void draw_texture_with_afine_transform(size_t tid, Fpoint tl, Fpoint tr, Fpoint bl) {
 			PRIV_GET_TEX_(tid, txt,)
@@ -616,6 +612,7 @@ namespace SKC::GE {
 	};
 }
 //NOTE(skc): this is heere to scope this macro because it should not be used outside of this file.
+#undef PRIV_OPTIONAL
 #undef PRIV_GET_TEX_
 #undef PRIV_PUSH_RENDER_BLEND_MODE_
 #undef PRIV_POP_RENDER_BLEND_MODE_
