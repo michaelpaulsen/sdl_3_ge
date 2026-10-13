@@ -60,6 +60,7 @@ namespace SKC::GE {
 		DOWN,
 		LEFT,
 		RIGHT,
+		ESC = SDLK_ESCAPE, 
 		DEL = SDLK_DELETE,
 		F1,
 		F2,
@@ -80,6 +81,7 @@ namespace SKC::GE {
 	private:
 		struct keyevent_state_t {
 			bool down;
+			bool pressed; 
 			bool repeat;
 			Uint64 last, delta; 
 		};
@@ -149,25 +151,27 @@ namespace SKC::GE {
 				|| key == SDLK_MENU || key == SDLK_CAPSLOCK
 				|| key == SDLK_LCTRL || key == SDLK_RCTRL); 
 		}
-		ALWAYS_INLINE void process_keboard_state(keyevent_state_t& ks, SDL_Scancode scan_code, const bool* key_states ) {
+		ALWAYS_INLINE void process_keboard_state(keyevent_state_t& ks, SDL_Scancode scan_code, const bool* key_states) {
 			if (not key_states[scan_code]) {
-				ks.down = false; 
-				ks.repeat = false; 
-				ks.last = 0; 
-				ks.delta = 0; 
-				return; 
+				ks.down = false;
+				ks.repeat = false;
+				ks.pressed = false;
+				ks.last = 0;
+				ks.delta = 0;
+				return;
 			}
 			ks.down = true;
 			if (not m_last_key_state[scan_code]) {
-					ks.last = SDL_GetTicksNS();
+				ks.last = SDL_GetTicksNS();
 				ks.delta = 0;
+				ks.pressed = true; 
 				ks.repeat = false;
-				return; 
-				}
-			ks.repeat = true; 
-					ks.delta = SDL_GetTicksNS() - ks.last;
-			
-				}
+				return;
+			}
+			ks.pressed = false; 
+			ks.repeat = true;
+			ks.delta = SDL_GetTicksNS() - ks.last;
+		}
 		void process_keboard_state(special_keys key, SDL_Scancode scan_code, const bool* key_states) {
 			process_keboard_state(m_key_states.at(UZ(key)), scan_code, key_states);
 
@@ -198,7 +202,7 @@ namespace SKC::GE {
 		//NOTE(SKC): instead of making getter and setter for this I am just goint to make it public
 		bool arrow_keys_alias_WASD = false;
 		//== The Getters for the State. 
-				//maybe shouldn't be const... (so that I can reset the flag when called)
+		//maybe shouldn't be const... (so that I can reset the flag when called)
 		bool theme_changed()        const noexcept { return m_system_theme_changed; }
 		bool is_minimized()         const noexcept { return m_window_is_minimized; }
 		bool quit()                 const noexcept { return m_quit; }
@@ -403,6 +407,7 @@ namespace SKC::GE {
 			process_keboard_state(special_keys::BACKSPACE, SDL_SCANCODE_BACKSPACE, key_states);
 			process_keboard_state(special_keys::RETURN,    SDL_SCANCODE_RETURN,    key_states);
 			process_keboard_state(special_keys::INSERT,    SDL_SCANCODE_INSERT,    key_states);
+			process_keboard_state(special_keys::ESC,       SDL_SCANCODE_ESCAPE,    key_states);
 			process_keboard_state(special_keys::DEL,       SDL_SCANCODE_DELETE,    key_states);
 			process_keboard_state(special_keys::HOME,      SDL_SCANCODE_HOME,      key_states);
 			process_keboard_state(special_keys::END,       SDL_SCANCODE_END,       key_states);
