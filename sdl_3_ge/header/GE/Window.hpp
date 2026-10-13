@@ -19,8 +19,8 @@
 #include "font_options.hpp"
 #include "texture.hpp"
 #include "../concepts.hpp"
-#include "./geo/geo.hpp"
-#include "../math/Vector.hpp"
+#include "../geo/geo.hpp"
+#include "../geo/sort.hpp"
 
 #include "./private/position_from_anchor_point.hpp"
 #include "./private/blit_surface_with_resize.hpp"
@@ -66,7 +66,7 @@ namespace SKC::GE {
 			m_is_bordered{ true },
 			m_is_visible{ true };
 		
-		tick_t last_frame_start{}, m_last_frame_time{};
+		tick_t m_last_frame_start{0}, m_last_frame_time{0}, m_frame{ 0 };
 
 		float m_frame_rate{ 30 };
 	
@@ -146,7 +146,7 @@ namespace SKC::GE {
 			m_is_screen_saver_enabled = false;
 
 		}
-		[[nodiscard]] size_t create_modifible_texture(int width, int height) {
+		[[nodiscard]] size_t create_texture(int width, int height) {
 			auto t = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA8888,
 				SDL_TEXTUREACCESS_TARGET,
 				width, height);
@@ -156,12 +156,12 @@ namespace SKC::GE {
 			return m_textures.back().tid();
 		}
 
-		[[nodiscard]] auto create_modifible_texture() {
+		[[nodiscard]] auto create_texture() {
 			update_window_size();
-			return create_modifible_texture(m_width, m_height);
+			return create_texture(m_width, m_height);
 		}
 
-		[[nodiscard]] auto create_texture_from_path(fs::path pth) {
+		[[nodiscard]] size_t create_texture(fs::path pth) {
 			if (!fs::exists(pth) || fs::is_directory(pth)) {
 				std::println(stderr, "[ERROR] trying to create texture with invalid path {}", pth.string());
 				return 0ull; 
@@ -196,8 +196,8 @@ namespace SKC::GE {
 		
 		rect get_window_rect() const{return { m_x, m_y, m_width,m_height };}
 		
-		void get_window_dimentions(int& width, int& height) const { SDL_GetWindowSize(m_window, &width, &height); }
-		SKC::Math::Vect2i get_window_dimentions() const {
+		void get_dimentions(int& width, int& height) const { SDL_GetWindowSize(m_window, &width, &height); }
+		SKC::Math::Vect2i get_dimentions() const {
 			int w, h;
 			SDL_GetWindowSize(m_window, &w, &h);
 			return { w,h }; 
@@ -219,9 +219,9 @@ namespace SKC::GE {
 		auto get_frame_rate()  const { return m_frame_rate; }
 		bool is_screen_saver_enabled() const { return m_is_screen_saver_enabled; }
 		bool is_visible() const { return m_is_visible; }
-		bool is_window_bordered() const { return m_is_bordered; }
-		bool is_window_fullscreen() const { return m_is_fullscreen; }
-		const std::string get_window_title() const { return SDL_GetWindowTitle(m_window); }
+		bool is_bordered() const { return m_is_bordered; }
+		bool is_fullscreen() const { return m_is_fullscreen; }
+		const std::string get_title() const { return SDL_GetWindowTitle(m_window); }
 		double from_normilzed_height(double V) const { return V * (double)m_height;}
 		double from_normilzed_width(double U) const {return U * (double)m_width;}
 		double to_normilzed_height(int py) const { return (double)py / (double)m_height; }
@@ -240,7 +240,6 @@ namespace SKC::GE {
 			SDL_GetRenderDrawColor(m_renderer, &color.r, &color.g, &color.b, &color.a); 
 			return color;  
 		}
-		void start_of_frame() { last_frame_start = SDL_GetTicks(); }
 		void end_frame() {
 			++m_frame; 
 			auto now = SDL_GetTicks();
@@ -250,7 +249,7 @@ namespace SKC::GE {
 
 		void wait_for_frame() {
 			if (!m_last_frame_start or !m_limit_frame_rate) {
-			end_frame(); 
+				end_frame(); 
 				return; 
 			}
 			auto frame_time = static_cast<Uint64>(1000.f / m_frame_rate);
