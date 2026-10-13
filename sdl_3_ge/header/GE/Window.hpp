@@ -53,7 +53,6 @@ namespace SKC::GE {
 		using c_t = Uint8;
 		using tick_t = Uint64; 
 		std::vector<texture_wrapper> m_textures{};
-		int m_x{}, m_y{}, m_width, m_height;
 		std::string m_title;
 		float m_scale_x{ 1 }, m_scale_y{ 1 };
 		SDL_Window* m_window;
@@ -86,7 +85,7 @@ namespace SKC::GE {
 			return (SDL_Texture*)nullptr; //return nullptr if not found
 		}
 	public: 
-		window(std::string title, int  width, int height, SDL_WindowFlags flags) noexcept  : m_width { width }, m_height{ height } {
+		window(std::string title, int  width, int height, SDL_WindowFlags flags) noexcept {
 			m_is_fullscreen = (flags & SDL_WINDOW_FULLSCREEN) != 0;
 			m_is_bordered = (flags & SDL_WINDOW_BORDERLESS) == 0;
 			m_is_visible = (flags & SDL_WINDOW_HIDDEN) == 0;
@@ -157,8 +156,9 @@ namespace SKC::GE {
 		}
 
 		[[nodiscard]] auto create_texture() {
-			update_window_size();
-			return create_texture(m_width, m_height);
+			int width, height; 
+			SDL_GetWindowSize(m_window, &width, &height); 
+			return create_texture(width, height);
 		}
 
 		[[nodiscard]] size_t create_texture(fs::path pth) {
@@ -185,17 +185,6 @@ namespace SKC::GE {
 			m_textures.emplace_back(tex, pth);
 			return m_textures.back().tid(); 
 		}
-		void update_window_size() {
-			rect ret{};
-			SDL_GetRenderSafeArea(m_renderer, &ret);
-			m_x = ret.x;
-			m_y = ret.y;
-			m_width = ret.w;
-			m_height = ret.h;
-		}
-		
-		rect get_window_rect() const{return { m_x, m_y, m_width,m_height };}
-		
 		void get_dimentions(int& width, int& height) const { SDL_GetWindowSize(m_window, &width, &height); }
 		SKC::Math::Vect2i get_dimentions() const {
 			int w, h;
@@ -222,10 +211,6 @@ namespace SKC::GE {
 		bool is_bordered() const { return m_is_bordered; }
 		bool is_fullscreen() const { return m_is_fullscreen; }
 		const std::string get_title() const { return SDL_GetWindowTitle(m_window); }
-		double from_normilzed_height(double V) const { return V * (double)m_height;}
-		double from_normilzed_width(double U) const {return U * (double)m_width;}
-		double to_normilzed_height(int py) const { return (double)py / (double)m_height; }
-		double to_normilzed_width(int px) const { return (double)px / (double)m_width;}
 		void disable_frame_rate_limiter() { m_limit_frame_rate = false; }
 		void enable_frame_rate_limiter() { m_limit_frame_rate = true; }
 		void set_background_color(c_t r, c_t g, c_t b, c_t a = 255) { m_background_color = { r,g,b,a }; }
