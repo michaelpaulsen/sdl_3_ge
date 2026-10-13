@@ -416,6 +416,10 @@ namespace SKC::GE {
 			PRIV_GET_TEX_(tid, txt,)
 			SDL_RenderTexture(m_renderer, txt, NULL, &pos);
 		}
+		void draw_texture(size_t tid, Fpoint pos) {
+			auto ts = get_texture_size(tid);
+			draw_texture(tid, { pos.x,pos.y, ts.x, ts.y });
+		}
 		void draw_texture(size_t tid, Frect pos, Frect atlas_pos) {
 			PRIV_GET_TEX_(tid, txt,)
 			SDL_RenderTexture(m_renderer, txt, &atlas_pos, &pos);
