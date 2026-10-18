@@ -11,8 +11,6 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keycode.h>
 #include <SDL3/SDL_stdinc.h>
-#include <imgui_impl_sdl3.h>
-
 //first party deps
 #include "../math/Vector.hpp"
 #include "./private/should_skip_event.hpp"
@@ -76,7 +74,6 @@ namespace SKC::GE {
 		F12,
 		LAST
 	};
-	template<bool _use_IMGUI = false>
 	class event_handler {
 	private:
 		struct keyevent_state_t {
@@ -250,9 +247,6 @@ namespace SKC::GE {
 			m_last_mouse_rel_pos = { 0,0 };
 			SDL_Event evnt{};
 			while (SDL_PollEvent(&evnt)) {
-				if constexpr (_use_IMGUI) {
-					ImGui_ImplSDL3_ProcessEvent(&evnt);
-				}
 				auto type = evnt.type;
 				//NOTE(skc): if the event is one that we don't whant to process then there's no reason to process it.
 				if (PRIVATE::should_sikp_event(type)) continue;
