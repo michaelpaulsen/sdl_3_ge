@@ -429,6 +429,18 @@ namespace SKC::GE {
 			}
 			SDL_RenderTexture(m_renderer, txt, src_rect, dest_rect);
 		}
+		void draw_texture_tiled(size_t tid, float scale = 1, PRIV_OPTIONAL(Frect, pos), PRIV_OPTIONAL(Frect, atlas_pos)) {
+			PRIV_GET_TEX_(tid, txt, );
+			SDL_FRect* src_rect = NULL, * dist_rect = NULL;
+			if (pos) {
+				dist_rect = &(*pos);
+			}
+			if (atlas_pos) {
+				src_rect = &(*atlas_pos);
+				adjust_src_rect(tid, src_rect);
+			}
+			SDL_RenderTextureTiled(m_renderer, txt, src_rect, scale, dist_rect);
+		}
 		void draw_texture_with_afine_transform(size_t tid, Fpoint tl, Fpoint tr, Fpoint bl) {
 			PRIV_GET_TEX_(tid, txt,)
 			SDL_RenderTextureAffine(m_renderer, txt, NULL, &tl, &tr, &bl);
