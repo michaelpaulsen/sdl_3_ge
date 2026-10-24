@@ -2,31 +2,27 @@
 
 #include <deque>
 #include <string>
-#include "../thread/smart_lock.hpp"
+#include "../thread/owning_mutex.hpp"
 namespace skc::PRIVATE {
 	class command_buffer {
 		using T = std::string;
-		SKC::threading::smart_lock<std::deque<T>> m_cmd;
+		SKC::threading::owning_mutex<std::deque<T>> m_cmd;
 	public:
 		void add_command(T command) {
-			m_cmd.lock();
+			auto lg = std::lock_guard(m_cmd); 
 			m_cmd.get().push_back(command);
-			m_cmd.unlock();
 
 		}
 		[[nodiscard]] bool is_empty() {
-			m_cmd.lock();
-			auto empty = m_cmd.get().empty();
-			m_cmd.unlock();
-			return empty;
+			auto lg = std::lock_guard(m_cmd);
+			return m_cmd.get().empty();
 
 		}
 		[[nodiscard]] T pop_front() {
-			m_cmd.lock();
+			auto lg = std::lock_guard(m_cmd);
 			auto& cmd_buff = m_cmd.get();
 			auto t = cmd_buff.front();
 			cmd_buff.pop_front();
-			m_cmd.unlock();
 			return t;
 		}
 	};

@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     TTF_Init();
     //call the user's entry point and save the return value so that we can return it later
     auto ret = MAIN_NAME({args});
-
+    TTF_Quit();
     SDL_Quit(); //by the time that we get here we are done so we tell sdl to quit.
 
 
