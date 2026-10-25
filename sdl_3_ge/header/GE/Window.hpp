@@ -86,7 +86,7 @@ namespace SKC::GE {
 			}
 			return (SDL_Texture*)nullptr; //return nullptr if not found
 		}
-		void adjust_src_rect(size_t tid, Frect* src_rect) {
+		void adjust_rect(size_t tid, Frect* src_rect) {
 			if (!src_rect or (src_rect->w != 0 and src_rect->h != 0)) return;
 			auto size = get_texture_size(tid);
 			if (src_rect->w == 0) { src_rect->w = size.x; }
@@ -420,12 +420,11 @@ namespace SKC::GE {
 			SDL_FRect* src_rect = NULL, *dest_rect = NULL; 
 			if (pos) {
 				dest_rect = &(*pos); 
-				adjust_src_rect(tid, src_rect);
-
+				adjust_rect(tid, dest_rect);
 			}
 			if (atlas_pos) {
 				src_rect = &(*atlas_pos);
-				adjust_src_rect(tid, src_rect); 
+				adjust_rect(tid, src_rect);
 			}
 			SDL_RenderTexture(m_renderer, txt, src_rect, dest_rect);
 		}
@@ -437,7 +436,7 @@ namespace SKC::GE {
 			}
 			if (atlas_pos) {
 				src_rect = &(*atlas_pos);
-				adjust_src_rect(tid, src_rect);
+				adjust_rect(tid, src_rect);
 			}
 			SDL_RenderTextureTiled(m_renderer, txt, src_rect, scale, dist_rect);
 		}
