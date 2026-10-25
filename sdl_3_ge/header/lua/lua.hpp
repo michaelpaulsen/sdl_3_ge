@@ -36,6 +36,9 @@ namespace skc {
 		void create_table() {
 			lua_newtable(m_state);
 		}
+		bool is_nil(int pos = -1) {
+			return lua_isnil(m_state, pos); 
+		}
 		void append_table(lua_generic  name, lua_generic value) {
 			if (!lua_istable(m_state, -1)) {
 				std::println("NOT A TABLE"); 
