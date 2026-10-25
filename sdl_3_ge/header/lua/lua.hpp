@@ -92,7 +92,10 @@ namespace skc {
 		}
 		void set_global(std::string name) {
 			lua_setglobal(m_state, name.c_str());
+		}
 
+		void set_global(const char* name) {
+			lua_setglobal(m_state, name);
 		}
 		void set_global(std::string name, lua_generic val) {
 			push(val); 
