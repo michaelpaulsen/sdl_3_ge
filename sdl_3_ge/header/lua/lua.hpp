@@ -7,6 +7,7 @@
 #include <string_view>
 #include <format>
 #include <optional>
+#include <thread>
 
 extern "C" {
 #include <lua.h>
@@ -21,6 +22,7 @@ extern "C" {
 namespace skc {
 	
 	class lua_engine {
+		std::mutex m_state_mutex; 
 		lua_State* m_state;
 		bool m_errored = false; 
 	public: 
@@ -32,6 +34,12 @@ namespace skc {
 			if (m_state) {
 				lua_close(m_state); 
 			}
+		}
+		void lock() {
+			m_state_mutex.lock(); 
+		}
+		void unlock() {
+			m_state_mutex.unlock();
 		}
 		void create_table() {
 			lua_newtable(m_state);
