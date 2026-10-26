@@ -6,7 +6,20 @@
 #include "../../util.hpp"
 
 namespace skc::commands {
-
+	namespace PRIVATE {
+		SKC::GE::Frect parse_frect(skc::command& command) {
+			SKC::GE::Frect rect = { 0.f,0.f,0.f,0.f }; 
+			if (command.args() >= 2) {
+				rect.x = skc::util::to_number<float>(command.consume());
+				rect.y = skc::util::to_number<float>(command.consume());
+			}
+			if (command.args() >= 2) {
+				rect.w = skc::util::to_number<float>(command.consume());
+				rect.h = skc::util::to_number<float>(command.consume());
+			}
+			return rect; 
+		}
+	}
 
 	bool draw_command(SKC::GE::window& window, skc::command& command) {
 		auto sub_command = command.consume();
@@ -24,39 +37,18 @@ namespace skc::commands {
 		}
 		if (sub_command == "texture") {
 			auto tid = skc::util::to_number<size_t>(command.consume());
-			size_t param_count = command.args();
-			if (param_count == 0) {
+			if (command.args() == 0) {
 				window.draw_texture(tid);
 				return true;
 			}
-
-			switch (param_count) {
-			case 2: { //x y 
-				SKC::GE::Frect p{
-					.x = skc::util::to_number<float>(command.consume()),
-					.y = skc::util::to_number<float>(command.consume()),
-					.w = 0.f, 
-					.h = 0.f
-				};
-				window.draw_texture(tid, p);
-				return true;
+			auto destination_rect = PRIVATE::parse_frect(command);
+			if (command.args() >= 2) {
+				auto source_rect = PRIVATE::parse_frect(command);
+				window.draw_texture(tid, destination_rect, source_rect); 
+				return true; 
 			}
-			case 4: {// x y w h 
-				SKC::GE::Frect p{
-					.x = skc::util::to_number<float>(command.consume()),
-					.y = skc::util::to_number<float>(command.consume()),
-					.w = skc::util::to_number<float>(command.consume()),
-					.h = skc::util::to_number<float>(command.consume())
-				};
-				window.draw_texture(tid, p);
-				return true;
-			}
-			default: {
-				return true;
-
-			}
-			}
-
+			window.draw_texture(tid, destination_rect);
+			return true; 
 		}
 		return true; 
 	}
