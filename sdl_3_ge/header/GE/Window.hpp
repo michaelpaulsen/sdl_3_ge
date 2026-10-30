@@ -105,6 +105,17 @@ namespace SKC::GE {
 				std::println(stderr, "[FATAL ERROR] could not create SDL_Window or SDL_Renderer: {}", SDL_GetError());
 				std::exit(EXIT_FAILURE);
 			}
+			auto _ = create_texture(16,16);
+			set_render_target(1);
+			set_background_color( 255,0, 234);
+			clear(); 
+			set_draw_color(0, 0, 0,255); 
+			fill_rectangle(0, 0, 8, 8);
+			fill_rectangle(8, 8, 8, 8);
+			set_render_target(0);
+			set_background_color(0, 0, 0,0);
+			set_texture_scale_mode(1, SDL_SCALEMODE_PIXELART);
+
 		}
 		~window() {
 			SDL_DestroyRenderer(m_renderer);
@@ -172,10 +183,10 @@ namespace SKC::GE {
 		[[nodiscard]] size_t create_texture(fs::path pth) {
 			if (!fs::exists(pth) || fs::is_directory(pth)) {
 				std::println(stderr, "[ERROR] trying to create texture with invalid path {}", pth.string());
-				return 0ull; 
+				return 1ull;  //the first texture is automatically created for this.  
 			}
 			SDL_Surface* surface = IMG_Load(pth.generic_string().c_str());
-			if (!surface) return 0ull;
+			if (!surface) return 1ull;
 			auto tex = SDL_CreateTextureFromSurface(m_renderer, surface);
 			
 			//NOTE(skc) doing this here so that the surface gets freed 
@@ -183,7 +194,7 @@ namespace SKC::GE {
 
 			SDL_DestroySurface(surface);
 			
-			if (!tex) return 0ull;
+			if (!tex) return 1ull;
 			
 			//NOTE(skc): 
 			//default to blending mode for images with transparency
