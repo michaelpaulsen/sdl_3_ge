@@ -21,6 +21,28 @@ namespace skc::commands {
 		}
 	}
 
+	bool tile_command(SKC::GE::window& window, skc::command& command) {
+		auto tid = skc::util::to_number<size_t>(command.consume());
+		if (command.args() == 0) {
+			window.draw_texture_tiled(tid);
+			return true; 
+		}
+		auto scale = skc::util::to_number<float>(command.consume());
+		if (command.args() == 0) {
+			window.draw_texture_tiled(tid, scale);
+			return true;
+		}
+		auto pos = PRIVATE::parse_frect(command); 
+		std::print("pos : ({},{}) {}x{}", pos.x, pos.y, pos.w, pos.h);
+		if (command.args() >= 2) {
+			auto atlas = PRIVATE::parse_frect(command);
+			window.draw_texture_tiled(tid, scale, pos, atlas); 
+			return true; 
+		}
+		window.draw_texture_tiled(tid, scale, pos); 
+		return true; 
+	}
+
 	bool draw_command(SKC::GE::window& window, skc::command& command) {
 		auto sub_command = command.consume();
 		if (sub_command == "rect") {

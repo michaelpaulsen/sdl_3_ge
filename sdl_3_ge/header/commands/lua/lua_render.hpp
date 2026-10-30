@@ -46,6 +46,26 @@ namespace skc::lua_statics{
 			command += std::format("{} {} {} {} {}", tid, x, y, w, h);
 			break;
 		}
+		case 9: {
+			int pos = 0; 
+			int tid = luaL_checknumber(L, ++pos);
+			float x = luaL_checknumber(L, ++pos);
+			float y = luaL_checknumber(L, ++pos);
+			float w = luaL_checknumber(L, ++pos);
+			float h = luaL_checknumber(L, ++pos);
+			float atlas_x = luaL_checknumber(L, ++pos);
+			float atlas_y = luaL_checknumber(L, ++pos);
+			float atlas_w = luaL_checknumber(L, ++pos);
+			float atlas_h = luaL_checknumber(L, ++pos);
+			
+			command += std::format("{} {} {} {} {}", tid, x, y, w, h);
+			command += std::format(" {} {} {} {}",  
+				atlas_x,
+				atlas_y,
+				atlas_w,
+				atlas_h);
+			break;
+		}
 		default: { return 0; }
 		}
 

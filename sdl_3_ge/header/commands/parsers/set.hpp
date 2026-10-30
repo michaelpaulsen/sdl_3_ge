@@ -16,14 +16,24 @@ namespace skc::commands {
 			auto r = std::stoi(command.consume());
 			auto g = std::stoi(command.consume());
 			auto b = std::stoi(command.consume());
-			window.set_draw_color(r, g, b);
+			unsigned char a = 255;
+			if (command.args() >= 1) {
+				a = std::stoi(command.consume());
+				
+			}
+			window.set_draw_color(r, g, b,a);
 			return true;
 		}
 		if (sub_command == "clear_color") {
 			auto r = std::stoi(command.consume());
 			auto g = std::stoi(command.consume());
 			auto b = std::stoi(command.consume());
-			window.set_background_color(r, g, b);
+			unsigned char a = 255;
+			if (command.args() >= 1) {
+				a = std::stoi(command.consume());
+
+			}
+			window.set_background_color(r, g, b,a);
 			return true;
 		}
 		if (sub_command == "font_color") {

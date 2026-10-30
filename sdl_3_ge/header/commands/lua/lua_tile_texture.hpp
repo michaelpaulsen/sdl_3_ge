@@ -7,61 +7,29 @@ extern "C" {
 }
 #include <format>
 namespace skc::lua_statics {
-	int tile_texture(lua_State* L ) {
-		auto top = lua_gettop(L); 
-		switch (top) {
-			case 1: {
-				command_buffer.add_command(std::format("tile {}", lua_tointeger(L, 1)));
-				return 0; 
-			}
-			case 2: {
-				auto tid = lua_tointeger(L, 1);
-				auto scale = lua_tointeger(L, 2);
-				command_buffer.add_command(std::format("tile {} {}", tid, scale));
-				return 0;
-
-			}
-			case 4: {
-				int t = 0; 
-				auto tid = lua_tointeger(L, ++t);
-				auto scale = lua_tointeger(L, ++t);
-				auto x = lua_tointeger(L, ++t);
-				auto y = lua_tointeger(L, ++t);
-				command_buffer.add_command(
-					std::format("tile {} {} {} {}", 
-						tid,
-						scale,
-						x,y 
-					)
-				);
-				return 0;
-
-			}
-			case 6: {
-				int t = 0;
-				auto tid = lua_tointeger(L, ++t);
-				auto scale = lua_tointeger(L, ++t);
-				auto x = lua_tointeger(L, ++t);
-				auto y = lua_tointeger(L, ++t);
-				auto w = lua_tointeger(L, ++t);
-				auto h = lua_tointeger(L, ++t);
-				command_buffer.add_command(
-					std::format("tile {} {} {} {} {} {}",
-						tid,
-						scale,
-						x, y, 
-						w, h
-					)
-				);
-				return 0;
-
-			}
-			default: {
-				return 0;
-			}
+	int tile_texture(lua_State* L) {
+		auto top = lua_gettop(L);
+		if (top == 0) return 0;
+		std::string cmd = std::format("tile {} ", luaL_checknumber(L, 1));
+		if (top == 1) {
+			command_buffer.add_command(cmd); 
+			return 0; 
 		}
+		if (top == 2) {
+			command_buffer.add_command(cmd + std::format("{} ", luaL_checknumber(L, 2)));
+			return 0;
+		}
+		cmd += std::format("{} ", luaL_checknumber(L, 2));
+		//tid scale x1 y1 w1 h1 x2 y2 w2 h2
+		if (top > 10) top = 10;
+		int lua_index = 2;
+		while ((top - lua_index) >= 2) {
+			if ((top - lua_index) < 2) break;
+			cmd += std::format("{} ", luaL_checknumber(L, ++lua_index));
+			cmd += std::format("{} ", luaL_checknumber(L, ++lua_index));
+		}
+		command_buffer.add_command(cmd);
+		return 0; 
 
 	}
-
-
 }
