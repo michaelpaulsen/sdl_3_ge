@@ -180,13 +180,20 @@ namespace SKC::GE {
 			return create_texture(width, height);
 		}
 
-		[[nodiscard]] size_t create_texture(fs::path pth) {
+		[[nodiscard]] size_t create_texture(fs::path pth, PRIV_OPTIONAL(SKC::GE::color, alpha_color)) {
 			if (!fs::exists(pth) || fs::is_directory(pth)) {
 				std::println(stderr, "[ERROR] trying to create texture with invalid path {}", pth.string());
 				return 1ull;  //the first texture is automatically created for this.  
 			}
 			SDL_Surface* surface = IMG_Load(pth.generic_string().c_str());
 			if (!surface) return 1ull;
+
+			if (alpha_color) {
+				auto ac = *alpha_color;
+				auto color = SDL_MapRGB(SDL_GetPixelFormatDetails(surface->format), NULL, ac.r, ac.g, ac.b);
+				SDL_SetSurfaceColorKey(surface, true, color);
+			}
+
 			auto tex = SDL_CreateTextureFromSurface(m_renderer, surface);
 			
 			//NOTE(skc) doing this here so that the surface gets freed 
