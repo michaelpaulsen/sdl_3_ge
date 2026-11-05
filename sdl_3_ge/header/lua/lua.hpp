@@ -56,6 +56,9 @@ namespace skc {
 			push(value); 
 			lua_settable(m_state, -3); 
 		}
+		void append_table() {
+			lua_settable(m_state, -3); 
+		}
 		void append_table(const char* name, lua_generic value) {
 			append_table(std::string(name), value); 
 		}
@@ -77,6 +80,9 @@ namespace skc {
 				lua_pushboolean(m_state, *n);
 				return;
 			}
+		}
+		void push(const char* value) {
+			lua_pushstring(m_state, value);
 		}
 		void load_lib(std::string name, const luaL_Reg functions[]) {
 			luaL_newlib(m_state, functions); 

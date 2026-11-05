@@ -1,5 +1,6 @@
 #pragma once
 #include "../command_buffer.hpp"
+#include "../command_state.hpp"
 #include "../command.hpp"
 
 #include "../../GE/Window.hpp"
@@ -21,29 +22,28 @@ namespace skc::commands {
 		}
 	}
 
-	bool tile_command(SKC::GE::window& window, skc::command& command) {
+	COMMAND_STATE tile_command(SKC::GE::window& window, skc::command& command) {
 		auto tid = skc::util::to_number<size_t>(command.consume());
 		if (command.args() == 0) {
 			window.draw_texture_tiled(tid);
-			return true; 
+			return COMMAND_STATE::PARSED; 
 		}
 		auto scale = skc::util::to_number<float>(command.consume());
 		if (command.args() == 0) {
 			window.draw_texture_tiled(tid, scale);
-			return true;
+			return COMMAND_STATE::PARSED;
 		}
 		auto pos = PRIVATE::parse_frect(command); 
-		std::print("pos : ({},{}) {}x{}", pos.x, pos.y, pos.w, pos.h);
 		if (command.args() >= 2) {
 			auto atlas = PRIVATE::parse_frect(command);
 			window.draw_texture_tiled(tid, scale, pos, atlas); 
-			return true; 
+			return COMMAND_STATE::PARSED;
 		}
 		window.draw_texture_tiled(tid, scale, pos); 
-		return true; 
+		return COMMAND_STATE::INVALID;
 	}
 
-	bool draw_command(SKC::GE::window& window, skc::command& command) {
+	COMMAND_STATE draw_command(SKC::GE::window& window, skc::command& command) {
 		auto sub_command = command.consume();
 		if (sub_command == "rect") {
 			size_t param_count = command.args();
@@ -53,26 +53,26 @@ namespace skc::commands {
 				auto w = skc::util::to_number<double>(command.consume());
 				auto h = skc::util::to_number<double>(command.consume());
 				window.fill_rectangle(x, y, w, h);
-				return true;
+				return COMMAND_STATE::PARSED;
 			}
-			return true;
+			return COMMAND_STATE::INVALID;
 		}
 		if (sub_command == "texture") {
 			auto tid = skc::util::to_number<size_t>(command.consume());
 			if (command.args() == 0) {
 				window.draw_texture(tid);
-				return true;
+				return COMMAND_STATE::PARSED;
 			}
 			auto destination_rect = PRIVATE::parse_frect(command);
 			if (command.args() >= 2) {
 				auto source_rect = PRIVATE::parse_frect(command);
 				window.draw_texture(tid, destination_rect, source_rect); 
-				return true; 
+				return COMMAND_STATE::PARSED;
 			}
 			window.draw_texture(tid, destination_rect);
-			return true; 
+			return COMMAND_STATE::PARSED;
 		}
-		return true; 
+		return COMMAND_STATE::INVALID;
 	}
 
 }
