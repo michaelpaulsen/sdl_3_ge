@@ -26,6 +26,16 @@
 #include "./private/position_from_anchor_point.hpp"
 #include "./private/blit_surface_with_resize.hpp"
 #include "make_uvs.hpp"
+#ifdef SKC_USE_NS
+#define SKC_TICKS_TO_SECONDS 1e9
+#define PRIV_GET_TICKS SDL_GetTicksNS
+#define PRIV_DELAY SDL_DelayNS
+#else 
+#define SKC_TICKS_TO_SECONDS 1e3
+#define PRIV_GET_TICKS SDL_GetTicks
+#define PRIV_DELAY     SDL_Delay
+#endif // SKC_USE_NS
+
 #define PRIV_GET_TEX_(tid, name, ret) auto name = get_tex_from_tid(tid);\
                       if (!name) return ret;
 
@@ -251,7 +261,7 @@ namespace SKC::GE {
 		}
 		void end_frame() {
 			++m_frame; 
-			auto now = SDL_GetTicks();
+			auto now = PRIV_GET_TICKS();
 			m_last_frame_time = (now - m_last_frame_start);
 			m_last_frame_start = now; 
 		}
@@ -261,11 +271,10 @@ namespace SKC::GE {
 				end_frame(); 
 				return; 
 			}
-			auto frame_time = static_cast<Uint64>(1000.f / m_frame_rate);
-			auto render_time = SDL_GetTicks() - m_last_frame_start;
+			auto frame_time = static_cast<Uint64>(SKC_TICKS_TO_SECONDS / m_frame_rate);
 			
-			if (render_time < frame_time) {
-				SDL_Delay(static_cast<Uint32>(frame_time - render_time));
+			if (m_last_frame_time < frame_time) {
+				PRIV_DELAY((frame_time - m_last_frame_time));
 			}
 			end_frame();
 		}
@@ -648,6 +657,8 @@ namespace SKC::GE {
 	};
 }
 //NOTE(skc): this is heere to scope this macro because it should not be used outside of this file.
+#undef PRIV_GET_TICKS
+#undef PRIV_DELAY
 #undef PRIV_OPTIONAL
 #undef PRIV_GET_TEX_
 #undef PRIV_PUSH_RENDER_BLEND_MODE_
