@@ -1,4 +1,7 @@
 #pragma once
+#include <unordered_map>
+
+
 #include "../math/Vector.hpp"
 #include "./parsers/create_command.hpp"
 #include "./command_state.hpp"
@@ -10,6 +13,7 @@ namespace skc::commands {
 		lua_engine& lua,
 		SKC::GE::window& window,
 		command& command,
+		std::unordered_map<std::string, size_t>& tnames,
 		const skc_Vect2i& window_size
 	) {
 
@@ -17,12 +21,22 @@ namespace skc::commands {
 		if (cmd == "create") {
 			auto subcommand = command.consume();
 			if (subcommand == "texture") {
-				return commands::create_texture(command, lua, window, window_size);
+				return commands::create_texture(command, lua, window, tnames, window_size);
 			}
 		}
 		if (cmd == "pixlize") {
-			//TODO(SKC) implement parsing texture names. 
-			return COMMAND_STATE::NOT_IMPLEMENTED;
+			if (command.args() != 1) return COMMAND_STATE::INVALID; 
+			try{
+				auto name = command.consume(); 
+				auto tid = tnames.at(name); 
+				std::println("pixelizing {} (tid: {})", name, tid); 
+				window.set_texture_scale_mode(tid, SDL_SCALEMODE_PIXELART);
+				return COMMAND_STATE::PARSED;
+			}
+			catch (...) {
+				//NOTE(SKC): no texture found
+				return COMMAND_STATE::INVALID; 
+			}
 		}
 		if (cmd == "load") {
 			auto mode = command.consume();
@@ -43,6 +57,7 @@ namespace skc::commands {
 				}
 				long long x = window.get_texture_width(tid);
 				long long y = window.get_texture_height(tid);
+				tnames[tx_name] = tid; 
 				{
 					auto lg = std::lock_guard(lua);
 					lua.get_global(texture_array_name);
@@ -64,8 +79,6 @@ namespace skc::commands {
 			}
 			return COMMAND_STATE::INVALID;
 		}
-
-
 		return COMMAND_STATE::CONTINUE;
 	}
 }

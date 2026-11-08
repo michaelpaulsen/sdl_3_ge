@@ -15,7 +15,6 @@ extern "C" {
 #include <lualib.h>
 
 }
-#include "../thread/smart_lock.hpp"
 
 #include "./statics.hpp"
 #include "./lua_type.hpp"
@@ -90,9 +89,6 @@ namespace skc {
 			lua_setglobal(m_state, name.c_str()); 
 		}
 
-		void pstack() {
-			lua_statics::pstack(m_state); 
-		}
 		void get_global(std::string name) {
 			lua_getglobal(m_state, name.c_str()); 
 		}
@@ -118,7 +114,6 @@ namespace skc {
 			int e = lua_pcall(m_state, nargs, nresults,NULL);
 			if (e != LUA_OK) {
 				std::println("{}", luaL_checkstring(m_state, -1)); 
-				lua_statics::pstack(m_state); 
 				m_errored = true; 
 			}
 		}

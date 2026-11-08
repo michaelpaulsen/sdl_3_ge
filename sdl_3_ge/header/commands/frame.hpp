@@ -20,7 +20,8 @@ namespace skc::commands {
 		skc::lua_engine& lua,
 		SKC::GE::window& window,
 		command& command,
-		std::unordered_map<unsigned, std::string>& kmap
+		std::unordered_map<unsigned, std::string>& kmap,
+		const std::unordered_map<std::string, size_t>& tmap
 	) {
 
 		auto cmd = command.cmd();
@@ -60,10 +61,28 @@ namespace skc::commands {
 		}
 
 		if (cmd == "tile") {
-			return skc::commands::tile_command(window, command);
+			return skc::commands::tile_command(window, command, tmap);
 		}
 		if (cmd == "draw") {
-			return skc::commands::draw_command(window, command);
+			auto sub_command = command.consume();
+			if (sub_command == "rect") {
+				size_t param_count = command.args();
+				if (param_count == 4) {
+					auto x = skc::util::to_number<double>(command.consume());
+					auto y = skc::util::to_number<double>(command.consume());
+					auto w = skc::util::to_number<double>(command.consume());
+					auto h = skc::util::to_number<double>(command.consume());
+					window.fill_rectangle(x, y, w, h);
+					return COMMAND_STATE::PARSED;
+				}
+				return COMMAND_STATE::INVALID;
+			}
+			if (sub_command == "texture") {
+				return render_texture(window, command, tmap);
+			}
+			return COMMAND_STATE::INVALID;
+			
+			//return skc::commands::draw_command(window, command,tmap);
 		}
 
 		if (cmd == "alpha") {

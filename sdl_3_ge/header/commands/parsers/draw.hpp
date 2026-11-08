@@ -1,4 +1,7 @@
 #pragma once
+#include <unordered_map>
+
+
 #include "../command_buffer.hpp"
 #include "../command_state.hpp"
 #include "../command.hpp"
@@ -20,10 +23,61 @@ namespace skc::commands {
 			}
 			return rect; 
 		}
+		size_t get_tid(
+			command& command,
+			const std::unordered_map<std::string, size_t>& tnames
+		) {
+			size_t tid = 1;
+			auto tid_param = command.consume();
+			if (util::is_num(tid_param)) {
+				tid = util::to_number<size_t>(tid_param);
+			}
+			else {
+				try {
+					tid = tnames.at(tid_param);
+				}
+				catch (...) {
+					return 1;
+				}
+			}
+			return tid;
+		}
 	}
 
-	COMMAND_STATE tile_command(SKC::GE::window& window, skc::command& command) {
-		auto tid = skc::util::to_number<size_t>(command.consume());
+
+	COMMAND_STATE render_texture(
+		SKC::GE::window& window,
+		skc::command& command,
+		const std::unordered_map<std::string, size_t>& tnames
+	) {
+
+		if (command.args() == 0) return COMMAND_STATE::INVALID;
+
+		auto tid = PRIVATE::get_tid(command, tnames); 
+		if (command.args() == 0) {
+			window.draw_texture(tid);
+			return COMMAND_STATE::PARSED;
+		}
+		auto destination_rect = PRIVATE::parse_frect(command);
+		if (command.args() >= 2) {
+			auto source_rect = PRIVATE::parse_frect(command);
+			window.draw_texture(tid, destination_rect, source_rect);
+			return COMMAND_STATE::PARSED;
+		}
+		window.draw_texture(tid, destination_rect);
+		return COMMAND_STATE::PARSED;
+	}
+
+
+
+	COMMAND_STATE tile_command(
+		SKC::GE::window& window,
+		skc::command& command,
+		const std::unordered_map<std::string, size_t> &tnames
+	) {
+		if (command.args() == 0) return COMMAND_STATE::INVALID; 
+		size_t tid = PRIVATE::get_tid(command, tnames); 
+
 		if (command.args() == 0) {
 			window.draw_texture_tiled(tid);
 			return COMMAND_STATE::PARSED; 
@@ -40,39 +94,6 @@ namespace skc::commands {
 			return COMMAND_STATE::PARSED;
 		}
 		window.draw_texture_tiled(tid, scale, pos); 
-		return COMMAND_STATE::INVALID;
+		return COMMAND_STATE::PARSED;
 	}
-
-	COMMAND_STATE draw_command(SKC::GE::window& window, skc::command& command) {
-		auto sub_command = command.consume();
-		if (sub_command == "rect") {
-			size_t param_count = command.args();
-			if (param_count == 4) {
-				auto x = skc::util::to_number<double>(command.consume());
-				auto y = skc::util::to_number<double>(command.consume());
-				auto w = skc::util::to_number<double>(command.consume());
-				auto h = skc::util::to_number<double>(command.consume());
-				window.fill_rectangle(x, y, w, h);
-				return COMMAND_STATE::PARSED;
-			}
-			return COMMAND_STATE::INVALID;
-		}
-		if (sub_command == "texture") {
-			auto tid = skc::util::to_number<size_t>(command.consume());
-			if (command.args() == 0) {
-				window.draw_texture(tid);
-				return COMMAND_STATE::PARSED;
-			}
-			auto destination_rect = PRIVATE::parse_frect(command);
-			if (command.args() >= 2) {
-				auto source_rect = PRIVATE::parse_frect(command);
-				window.draw_texture(tid, destination_rect, source_rect); 
-				return COMMAND_STATE::PARSED;
-			}
-			window.draw_texture(tid, destination_rect);
-			return COMMAND_STATE::PARSED;
-		}
-		return COMMAND_STATE::INVALID;
-	}
-
 }
