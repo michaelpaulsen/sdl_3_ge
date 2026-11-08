@@ -142,8 +142,6 @@ namespace SKC::GE {
 			SDL_DestroySurface(render_data);
 			return ret;
 		}
-		//TODO(skc): add getter and setters for window 
-		//fullscreen display mode. 
 		bool set_window_full_screen(bool is_fullscreen) {
 			if (is_fullscreen == m_is_fullscreen) return false;
 			m_is_fullscreen = is_fullscreen;
