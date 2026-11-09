@@ -30,8 +30,6 @@
 * -SDL_RenderPoints
 
 #### from the *window API*
-* ***test*** SDL_DisableScreenSaver
-* ***test*** SDL_EnableScreenSaver 
 * SDL_SetWindowFullscreenMode
 * SDL_SetWindowSize
 * SDL_FlashWindow
@@ -56,20 +54,15 @@
 ## Message/File Box API
 
 ## LUA API stuff
-* make C++ wrapper and general improvements to [LUA/C++] interface
 * the ablity to handle events from LUA
 * make an api for creating cut scenes in LUA
 * trigger LUA Events that I can listen to on the native side.
 * API for loading worlds via LUA 
 
 ## general to-dos 
-* reformat and add comments to main.hpp
+
 
 ## resource mangigment and other stuff
-* better API for CLI/Console settings
-    * make the console accept input while the app is running
-* file format for saving paramiters.
-    * possibly get INI to work cross platform? 
 * a file manager  
 	* properties 
 		* m_work_dir  (the base dir)

@@ -8,6 +8,7 @@
 #include <format>
 #include <optional>
 #include <thread>
+#include <mutex>
 
 extern "C" {
 #include <lua.h>
@@ -16,7 +17,6 @@ extern "C" {
 
 }
 
-#include "./statics.hpp"
 #include "./lua_type.hpp"
 namespace skc {
 	

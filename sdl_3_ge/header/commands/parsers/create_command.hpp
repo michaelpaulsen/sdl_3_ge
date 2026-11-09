@@ -44,7 +44,7 @@ namespace skc::commands {
 		if (command.args() == 0 || command.args() > 3) return COMMAND_STATE::INVALID;
 		auto name = command.consume();
 		//NOTE(SKC) it is never not a bug to create two textures with the same name! 
-		// since this is only ever done prior to loading speed is not an issue.  
+		// since this is only ever done prior to loading, speed is not an issue.  
 		if (tnames.contains(name)) return COMMAND_STATE::INVALID; 
 		int x = window_size.x, y = window_size.y;
 		//NOTE(SKC) by the time we get here we know that command.args()

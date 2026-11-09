@@ -1,17 +1,25 @@
+#ignored folders
+
+#build folders
 .vs
 [Dd]ebug/
 x64/
 x86/
 
-
-# Custom ignores for sdl_3_ge project
-/sdl_3_ge/fonts
+#resource files
+sdl_3_ge/fonts
 sdl_3_ge/img
-/sdl_3_ge/header/ini/old
-/tmp
-/sdl_3_ge/header/GE/controller/game_pad.hpp
-/sdl_3_ge/header/GE/timer.hpp
-/sdl_3_ge/Skc_time.hpp
+
+#old lib stuff that doesn't need to be a thing
+sdl_3_ge/header/geo/old
+
+#not  finished stuff that is not used by any thing.
+sdl_3_ge/header/formats
+sdl_3_ge/header/GE/state_machine
+sdl_3_ge/header/geo/collision.hpp
+
+
+#file extensions that I don't ever want included
 *.exe
 *.bat
 *.ps1
@@ -21,7 +29,12 @@ sdl_3_ge/img
 *.txt
 *.png
 *.bmp
+*.lua
+*.old
+*.old2
+*.kate-swp
+*.html
 
-/sdl_3_ge/imgui.ini
-/sdl_3_ge/header/GE/css_color_names.hpp
-/sdl_3_ge/sdl_3_ge.vcxproj.user
+#local files that are misc.
+notes.txt
+template commit.md
