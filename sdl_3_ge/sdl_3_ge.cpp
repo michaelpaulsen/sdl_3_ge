@@ -37,7 +37,7 @@ extern "C" {
 #include "header/commands/lua/lua_draw.hpp"
 #include "header/commands/lua/lua_render.hpp"
 #include "header/commands/lua/lua_tile_texture.hpp"
-
+#include "header/commands/types.hpp"
 
 #include "header/filesys/file_event_listener.hpp"
 
@@ -134,9 +134,9 @@ int main([[maybe_unused]] main_info_t info) {
 	};
 #pragma endregion 
 #pragma region pre load stuff
-	auto key_binds = std::unordered_map<unsigned, std::string>{};
+	auto key_binds = skc::commands::types::key_bind_t{};
 	window.set_frame_rate(120);
-	std::unordered_map<std::string, size_t> txt_names;
+	skc::commands::types::tmap_t txt_names;
 	auto lua = skc::lua_engine();
 	{
 		auto lg = std::lock_guard{ lua };

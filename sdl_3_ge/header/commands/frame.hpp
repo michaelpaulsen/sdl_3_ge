@@ -12,7 +12,7 @@
 
 
 #include "command_state.hpp" 
-
+#include "types.hpp"
 
 namespace skc::commands {
 	
@@ -20,8 +20,8 @@ namespace skc::commands {
 		skc::lua_engine& lua,
 		SKC::GE::window& window,
 		command& command,
-		std::unordered_map<unsigned, std::string>& kmap,
-		const std::unordered_map<std::string, size_t>& tmap
+		types::key_bind_t& kmap,
+		const types::tmap_t & tmap
 	) {
 
 		auto cmd = command.cmd();

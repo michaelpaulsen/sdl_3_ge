@@ -8,12 +8,13 @@
 #include "../lua/lua.hpp"
 #include "../GE/Window.hpp"
 #include "command.hpp"
+#include "types.hpp"
 namespace skc::commands {
 	COMMAND_STATE parse_init(
 		lua_engine& lua,
 		SKC::GE::window& window,
 		command& command,
-		std::unordered_map<std::string, size_t>& tnames,
+		types::tmap_t& tnames,
 		const skc_Vect2i& window_size
 	) {
 

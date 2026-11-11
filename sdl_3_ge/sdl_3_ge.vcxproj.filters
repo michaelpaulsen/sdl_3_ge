@@ -29,12 +29,6 @@
     <ClInclude Include="header\main.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Skc_time.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\timer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\math\Math.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -50,9 +44,6 @@
     <ClInclude Include="header\GE\Color.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\GE\controller\game_pad.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\GE\Events.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -62,25 +53,10 @@
     <ClInclude Include="header\GE\Imgui_window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\GE\key_util.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\GE\timer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\GE\Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\thread\smart_lock.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\windows\file_api\folder_listener.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\GE\font.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\fmt\printFmtutils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\GE\cvars\CVar.hpp">
@@ -90,9 +66,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\GE\texture.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\GE\level\level.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\fileio.hpp">
@@ -105,9 +78,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\GE\private\position_from_anchor_point.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\GE\Action.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\math\interpolate.hpp">
@@ -123,9 +93,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\math\numbers.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\filesys\get_files_in_folder.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\GE\private\should_skip_event.hpp">
@@ -189,6 +156,54 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\commands\lua\lua_tile_texture.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\commands\command_state.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\commands\frame.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\commands\init.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\commands\lua\lua_draw_tiled.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\commands\parsers\create_command.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\format\printFmtutils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\formats\world_header.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\GE\key_mod.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\GE\make_uvs.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\geo\collision.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\ini\settings.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\math\vec_format.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\strmanip.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\thread\owning_mutex.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\util.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\commands\types.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
