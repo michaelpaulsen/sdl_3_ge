@@ -66,23 +66,34 @@ extern "C" {
 
 #include "header/util.hpp"
 #include "header/main.hpp"
+#ifdef _DEBUG
 #ifdef SKC_NO_BREAK
-#define SKC_LE_BREAK 
+#define SKC_LE_BREAK(ec)
+#elif defined(SKC_EXIT_ON_ERROR)
+#define SKC_LE_BREAK(ec) exit(ec)
 #elif defined(_WIN32)
-#define SKC_LE_BREAK _CrtDbgBreak()
+#define SKC_LE_BREAK(ec) _CrtDbgBreak()
 #elif defined(__clang__)
-#define SKC_LE_BREAK __builtin_trap()
+#define SKC_LE_BREAK(ec) __builtin_trap()
 #else 
-#define SKC_LE_BREAK
+#define SKC_LE_BREAK(ec) do {\
+std::print("[ERROR] unable to detect os at build time please make a ticket with your compiler's"\
+"idenifcation macro and debug break intrinsic"\
+);
+exit(-ec);
+}while(0)
+#endif
+#else
+#define SKC_LE_BREAK(ec)
 #endif
 #define ASERT_COMMAND_VALID(command_state, command)\
 	if(skc::is_invalid(command_state)){\
 		std::println("INVALID COMMAND {}", command);\
-		SKC_LE_BREAK;\
+		SKC_LE_BREAK(-EINVAL);\
 	}\
 	if(command_state == skc::COMMAND_STATE::NOT_IMPLEMENTED){\
 		std::println("COMMAND NOT IMPLEMENTED {}", command);\
-		SKC_LE_BREAK;\
+		SKC_LE_BREAK(-EFAULT);\
 	}
 
 
@@ -252,14 +263,6 @@ int main([[maybe_unused]] main_info_t info) {
 			}
 		}
 
-		while (!skc::command_buffer.is_empty()) {
-			auto line = skc::command_buffer.pop_front();
-			auto command = skc::command(line);
-			auto cmd = command.cmd();
-			auto c_s = skc::commands::parse_frame(lua, window, command,key_binds,txt_names);
-			if (skc::should_exit(c_s)) std::exit(0);
-			ASERT_COMMAND_VALID(c_s, command.str());
-		}
 		for (const auto& [key, function] : key_binds) {
 			auto key_state = event_handler.get_key_state(key); 
 			if (function == "nil") continue; 
@@ -274,6 +277,16 @@ int main([[maybe_unused]] main_info_t info) {
 				lua.call(4, 0); 
 			}
 		}
+
+		while (!skc::command_buffer.is_empty()) {
+			auto line = skc::command_buffer.pop_front();
+			auto command = skc::command(line);
+			auto cmd = command.cmd();
+			auto c_s = skc::commands::parse_frame(lua, window, command, key_binds, txt_names);
+			if (skc::should_exit(c_s)) std::exit(0);
+			ASERT_COMMAND_VALID(c_s, command.str());
+		}
+		
 		window.present();
 		window.wait_for_frame();
 	}
