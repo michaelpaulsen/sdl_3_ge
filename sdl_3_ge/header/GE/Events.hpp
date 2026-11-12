@@ -5,13 +5,13 @@
 #include <array> 
 #include <vector>
 
-#include <cmath>
 //3rd party deps
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keycode.h>
 #include <SDL3/SDL_stdinc.h>
 //first party deps
+#include "types.hpp"
 #include "../math/Vector.hpp"
 #include "./private/should_skip_event.hpp"
 #include "key_mod.hpp"
@@ -33,47 +33,6 @@
 #define UZ static_cast<size_t>
 #endif // !U32
 namespace SKC::GE {
-
-	enum struct full_screen_state_change_t : unsigned char {
-		NO_CHANGE,
-		EXITED_FULLSCREEN,
-		ENTERED_FULL_SCREEN
-
-	};
-	enum struct drop_event_data_type_t: unsigned char {
-		NO_DROPPED_DATA,
-		FILE_DATA,
-		TEXT_DATA
-
-	};
-	enum class special_keys : unsigned char {
-		BACKSPACE,
-		RETURN,
-		INSERT,
-		HOME,
-		END,
-		PAGEDOWN,
-		PAGEUP,
-		UP,
-		DOWN,
-		LEFT,
-		RIGHT,
-		ESC = SDLK_ESCAPE, 
-		DEL = SDLK_DELETE,
-		F1,
-		F2,
-		F3,
-		F4,
-		F5,
-		F6,
-		F7,
-		F8,
-		F9,
-		F10,
-		F11,
-		F12,
-		LAST
-	};
 	class event_handler {
 	private:
 		struct keyevent_state_t {
@@ -100,10 +59,10 @@ namespace SKC::GE {
 		bool m_has_started_dragging{ false };
 
 		bool* m_last_key_state = NULL; 
-		drop_event_data_type_t m_dropped_data_type{ drop_event_data_type_t::NO_DROPPED_DATA };
+		types::drop_event_data_type_t m_dropped_data_type{ types::drop_event_data_type_t::NO_DROPPED_DATA };
 
 		key_mod m_keymod_state{};
-		full_screen_state_change_t m_fullscreen_status{ 0 };		
+		types::full_screen_state_change_t m_fullscreen_status{ 0 };
 		std::string m_last_dropped_data{};
 		std::array<mouse_button_state_t, 256> m_mouse_keys{0};
 		//NOTE(skc) m_cursor_position is set by both the mouse and any JOYSTICS 
@@ -169,7 +128,7 @@ namespace SKC::GE {
 			ks.repeat = true;
 			ks.delta = SDL_GetTicksNS() - ks.last;
 		}
-		void process_keboard_state(special_keys key, SDL_Scancode scan_code, const bool* key_states) {
+		void process_keboard_state(types::special_keys key, SDL_Scancode scan_code, const bool* key_states) {
 			process_keboard_state(m_key_states.at(UZ(key)), scan_code, key_states);
 
 		}
@@ -203,7 +162,7 @@ namespace SKC::GE {
 		bool theme_changed()        const noexcept { return m_system_theme_changed; }
 		bool is_minimized()         const noexcept { return m_window_is_minimized; }
 		bool quit()                 const noexcept { return m_quit; }
-		bool has_dropped_data()     const noexcept { return m_dropped_data_type != drop_event_data_type_t::NO_DROPPED_DATA; }
+		bool has_dropped_data()     const noexcept { return m_dropped_data_type != types::drop_event_data_type_t::NO_DROPPED_DATA; }
 		bool has_key_event()        const noexcept { return m_has_key_event; }
 		bool window_resized()       const noexcept { return m_window_resized; }
 		bool mouse_focus()          const noexcept { return m_mouse_focus; }
@@ -217,7 +176,7 @@ namespace SKC::GE {
 		// calls this function.	
 		auto dropped_data_type() {
 			auto ret = m_dropped_data_type;
-			m_dropped_data_type = drop_event_data_type_t::NO_DROPPED_DATA;
+			m_dropped_data_type = types::drop_event_data_type_t::NO_DROPPED_DATA;
 			return ret ; 
 		}
 		auto get_mouse_button_state(unsigned char button) const {
@@ -232,7 +191,7 @@ namespace SKC::GE {
 		auto drag_vector() const noexcept { return m_drag_vector; }
 		auto scroll_wheel_pos() const noexcept { return m_scroll_wheel_pos; }
 		auto get_key_state(unsigned char key) const noexcept { return m_key_states.at(UZ(tolower(int(key)))); }
-		auto get_key_state(special_keys key) const noexcept { return m_key_states.at(UZ(tolower(int(key)))); }
+		auto get_key_state(types::special_keys key) const noexcept { return m_key_states.at(UZ(tolower(int(key)))); }
 		
 		void pollevents() noexcept {
 			int count;
@@ -242,7 +201,7 @@ namespace SKC::GE {
 			m_has_key_event = false;
 			m_window_resized = false;
 			m_system_theme_changed = false;
-			m_fullscreen_status = full_screen_state_change_t::NO_CHANGE;
+			m_fullscreen_status = types::full_screen_state_change_t::NO_CHANGE;
 			m_scroll_wheel_pos = { 0,0 };
 			m_last_mouse_rel_pos = { 0,0 };
 			SDL_Event evnt{};
@@ -276,7 +235,7 @@ namespace SKC::GE {
 					break;
 				}
 				case SDL_EVENT_DROP_FILE: {
-					m_dropped_data_type = drop_event_data_type_t::FILE_DATA;
+					m_dropped_data_type = types::drop_event_data_type_t::FILE_DATA;
 					m_last_dropped_data = evnt.drop.data;
 					std::print("file dropped with data {}", evnt.drop.data);
 					break;
@@ -289,12 +248,12 @@ namespace SKC::GE {
 					break;
 				}
 				case SDL_EVENT_WINDOW_ENTER_FULLSCREEN: {
-					m_fullscreen_status = full_screen_state_change_t::ENTERED_FULL_SCREEN;
+					m_fullscreen_status = types::full_screen_state_change_t::ENTERED_FULL_SCREEN;
 					break;
 
 				}
 				case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN: {
-					m_fullscreen_status = full_screen_state_change_t::EXITED_FULLSCREEN;
+					m_fullscreen_status = types::full_screen_state_change_t::EXITED_FULLSCREEN;
 					break;
 
 				}
@@ -398,31 +357,31 @@ namespace SKC::GE {
 			// Since SDLK_SPACE is the first key code that we 
 			// actually iterate through we can use the first 0x1f (31) 
 			// positions in the array for what ever scan codes that we want.  
-			process_keboard_state(special_keys::BACKSPACE, SDL_SCANCODE_BACKSPACE, key_states);
-			process_keboard_state(special_keys::RETURN,    SDL_SCANCODE_RETURN,    key_states);
-			process_keboard_state(special_keys::INSERT,    SDL_SCANCODE_INSERT,    key_states);
-			process_keboard_state(special_keys::ESC,       SDL_SCANCODE_ESCAPE,    key_states);
-			process_keboard_state(special_keys::DEL,       SDL_SCANCODE_DELETE,    key_states);
-			process_keboard_state(special_keys::HOME,      SDL_SCANCODE_HOME,      key_states);
-			process_keboard_state(special_keys::END,       SDL_SCANCODE_END,       key_states);
-			process_keboard_state(special_keys::PAGEUP,    SDL_SCANCODE_PAGEUP,    key_states);
-			process_keboard_state(special_keys::PAGEDOWN,  SDL_SCANCODE_PAGEDOWN,  key_states);
-			process_keboard_state(special_keys::UP,        SDL_SCANCODE_UP,        key_states);
-			process_keboard_state(special_keys::DOWN,      SDL_SCANCODE_DOWN,      key_states);
-			process_keboard_state(special_keys::LEFT,      SDL_SCANCODE_LEFT,      key_states);
-			process_keboard_state(special_keys::RIGHT,     SDL_SCANCODE_RIGHT,     key_states);
-			process_keboard_state(special_keys::F1,        SDL_SCANCODE_F1,        key_states);
-			process_keboard_state(special_keys::F2,        SDL_SCANCODE_F2,        key_states);
-			process_keboard_state(special_keys::F3,        SDL_SCANCODE_F3,        key_states);
-			process_keboard_state(special_keys::F4,        SDL_SCANCODE_F4,        key_states);
-			process_keboard_state(special_keys::F5,        SDL_SCANCODE_F5,        key_states);
-			process_keboard_state(special_keys::F6,        SDL_SCANCODE_F6,        key_states);
-			process_keboard_state(special_keys::F7,        SDL_SCANCODE_F7,        key_states);
-			process_keboard_state(special_keys::F8,        SDL_SCANCODE_F8,        key_states);
-			process_keboard_state(special_keys::F9,        SDL_SCANCODE_F9,        key_states);
-			process_keboard_state(special_keys::F10,       SDL_SCANCODE_F10,       key_states);
-			process_keboard_state(special_keys::F11,       SDL_SCANCODE_F11,       key_states);
-			process_keboard_state(special_keys::F12,       SDL_SCANCODE_F12,       key_states);
+			process_keboard_state(types::special_keys::BACKSPACE, SDL_SCANCODE_BACKSPACE, key_states);
+			process_keboard_state(types::special_keys::RETURN,    SDL_SCANCODE_RETURN,    key_states);
+			process_keboard_state(types::special_keys::INSERT,    SDL_SCANCODE_INSERT,    key_states);
+			process_keboard_state(types::special_keys::ESC,       SDL_SCANCODE_ESCAPE,    key_states);
+			process_keboard_state(types::special_keys::DEL,       SDL_SCANCODE_DELETE,    key_states);
+			process_keboard_state(types::special_keys::HOME,      SDL_SCANCODE_HOME,      key_states);
+			process_keboard_state(types::special_keys::END,       SDL_SCANCODE_END,       key_states);
+			process_keboard_state(types::special_keys::PAGEUP,    SDL_SCANCODE_PAGEUP,    key_states);
+			process_keboard_state(types::special_keys::PAGEDOWN,  SDL_SCANCODE_PAGEDOWN,  key_states);
+			process_keboard_state(types::special_keys::UP,        SDL_SCANCODE_UP,        key_states);
+			process_keboard_state(types::special_keys::DOWN,      SDL_SCANCODE_DOWN,      key_states);
+			process_keboard_state(types::special_keys::LEFT,      SDL_SCANCODE_LEFT,      key_states);
+			process_keboard_state(types::special_keys::RIGHT,     SDL_SCANCODE_RIGHT,     key_states);
+			process_keboard_state(types::special_keys::F1,        SDL_SCANCODE_F1,        key_states);
+			process_keboard_state(types::special_keys::F2,        SDL_SCANCODE_F2,        key_states);
+			process_keboard_state(types::special_keys::F3,        SDL_SCANCODE_F3,        key_states);
+			process_keboard_state(types::special_keys::F4,        SDL_SCANCODE_F4,        key_states);
+			process_keboard_state(types::special_keys::F5,        SDL_SCANCODE_F5,        key_states);
+			process_keboard_state(types::special_keys::F6,        SDL_SCANCODE_F6,        key_states);
+			process_keboard_state(types::special_keys::F7,        SDL_SCANCODE_F7,        key_states);
+			process_keboard_state(types::special_keys::F8,        SDL_SCANCODE_F8,        key_states);
+			process_keboard_state(types::special_keys::F9,        SDL_SCANCODE_F9,        key_states);
+			process_keboard_state(types::special_keys::F10,       SDL_SCANCODE_F10,       key_states);
+			process_keboard_state(types::special_keys::F11,       SDL_SCANCODE_F11,       key_states);
+			process_keboard_state(types::special_keys::F12,       SDL_SCANCODE_F12,       key_states);
 			if (m_is_dragging) {
 				m_drag_vector = m_mouse_position - m_last_mouse_pos;
 				m_last_mouse_pos = m_mouse_position;
