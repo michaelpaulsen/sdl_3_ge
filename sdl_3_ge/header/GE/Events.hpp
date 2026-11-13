@@ -42,9 +42,9 @@ namespace SKC::GE {
 			Uint64 last, delta; 
 		};
 		struct mouse_button_state_t {
-			Uint8 clicks;
-			bool down;
 			float x, y;
+			Uint8 clicks;
+			bool down, up,  pressed; 
 		};
 		template<size_t size>
 		using key_state_array_t = std::array<keyevent_state_t, size>;
@@ -134,9 +134,9 @@ namespace SKC::GE {
 		}
 	public:
 		enum {
-			RIGHT_MOUSE_BUTTON = 1,
-			LEFT_MOUSE_BUTTON,
-			MIDDLE_MOUSE_BUTTON
+			LEFT_MOUSE_BUTTON = 1,
+			MIDDLE_MOUSE_BUTTON,
+			RIGHT_MOUSE_BUTTON,
 		};
 
 		event_handler() {
@@ -205,6 +205,14 @@ namespace SKC::GE {
 			m_scroll_wheel_pos = { 0,0 };
 			m_last_mouse_rel_pos = { 0,0 };
 			SDL_Event evnt{};
+			//NOTE(skc): reset the pressed state for all of the mouse keys. 
+			for (auto& key : m_mouse_keys) {
+				key.up = false; 
+				if (key.down && key.pressed) {
+					key.pressed = false;
+				}
+			}
+
 			while (SDL_PollEvent(&evnt)) {
 				auto type = evnt.type;
 				//NOTE(skc): if the event is one that we don't whant to process then there's no reason to process it.
@@ -279,8 +287,13 @@ namespace SKC::GE {
 				case SDL_EVENT_MOUSE_BUTTON_DOWN:
 				{
 					auto button = evnt.button;
-					mouse_button_state_t state = { button.clicks, button.down, button.x, button.y };
-					m_mouse_keys.at(UZ(button.button)) = state;
+					auto& mb_state = m_mouse_keys.at(UZ(button.button));
+					mb_state.x = button.x;
+					mb_state.y = button.y;
+					if (!mb_state.down) {
+							mb_state.down = true;
+							mb_state.pressed = true;
+					} 
 					if (button.button == 1) {
 						m_has_started_dragging = true;
 						m_last_mouse_pos = { static_cast<double>(button.x), static_cast<double>(button.y) };
@@ -289,8 +302,12 @@ namespace SKC::GE {
 				}
 				case SDL_EVENT_MOUSE_BUTTON_UP: {
 					auto button = evnt.button;
-					mouse_button_state_t state = { button.clicks, button.down, static_cast<float>(button.x), static_cast<float>(button.y) };
-					m_mouse_keys.at(UZ(button.button)) = state;
+					auto& ms = m_mouse_keys.at(UZ(button.button)); 
+					ms.clicks = 0;
+					ms.down = false;
+					ms.up = true;
+					ms.x = 0; 
+					ms.y = 0; 
 					m_is_dragging = false;
 					m_has_started_dragging = false;
 					break;

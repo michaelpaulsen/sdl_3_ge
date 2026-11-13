@@ -41,9 +41,13 @@ namespace SKC::GE::types {
 		LAST
 	};
 	enum class E_EVENT_IDS : unsigned {
-		MOUSE_M_UP = (unsigned)special_keys::LAST,
-		MOUSE_M_DOWN,
-		MOUSE_MOTION,
+		MOUSE_LEFT_DOWN = (unsigned)special_keys::LAST,
+		MOUSE_LEFT_UP,
+		MOUSE_MIDDLE_DOWN,
+		MOUSE_MIDDLE_UP,
+		MOUSE_RIGHT_DOWN,
+		MOUSE_RIGHT_UP,
 		MOUSE_CLICKED,
+		LAST,
 	};
 }

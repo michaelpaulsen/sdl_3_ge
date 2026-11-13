@@ -5,16 +5,9 @@ static constexpr const char     mouse_pos_name[] = "mouse_pos"  ;
 static constexpr const char texture_array_name[] = "textures"   ;
 static constexpr const char     draw_loop_name[] = "frame"      ;
 
-#include <filesystem>
 #include <print>
 #include <string>
 #include <thread>
-#include <vector>
-#include <cassert>
-#include <functional>
-#include <unordered_map>
-#include <chrono>
-
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_video.h>
 
@@ -38,9 +31,6 @@ extern "C" {
 #include "header/commands/lua/lua_render.hpp"
 #include "header/commands/lua/lua_tile_texture.hpp"
 #include "header/commands/types.hpp"
-
-#include "header/filesys/file_event_listener.hpp"
-
 #include "header/lua/lua.hpp"
 
 #include "header/ini/settings.hpp"
@@ -52,16 +42,8 @@ extern "C" {
 #include "header/GE/make_uvs.hpp"
 #include "header/GE/tile_map.hpp"
 #include "header/GE/Window.hpp"
-
-#include "header/geo/geo.hpp"
-#include "header/geo/sort.hpp"
-
-#include "header/math/Math.hpp"
-#include "header/math/numbers.hpp"
-#include "header/math/ray.hpp"
-#include "header/math/vec_format.hpp"
 #include "header/math/Vector.hpp"
-#define SKC_NO_BREAK 
+//#define SKC_NO_BREAK 
 
 
 #include "header/util.hpp"
@@ -160,35 +142,6 @@ int main([[maybe_unused]] main_info_t info) {
 
 		//skc_keys table.
 		lua.create_table();
-		lua.append_table("BACKSPACE", (lua_Integer)SKC::GE::types::special_keys::BACKSPACE);
-		lua.append_table("RETURN",    (lua_Integer)SKC::GE::types::special_keys::RETURN);
-		lua.append_table("INSERT",    (lua_Integer)SKC::GE::types::special_keys::INSERT);
-		lua.append_table("HOME",      (lua_Integer)SKC::GE::types::special_keys::HOME);
-		lua.append_table("END",       (lua_Integer)SKC::GE::types::special_keys::END);
-		lua.append_table("PAGEDOWN",  (lua_Integer)SKC::GE::types::special_keys::PAGEDOWN);
-		lua.append_table("PAGEUP",    (lua_Integer)SKC::GE::types::special_keys::PAGEUP);
-		lua.append_table("UP",        (lua_Integer)SKC::GE::types::special_keys::UP);
-		lua.append_table("DOWN",      (lua_Integer)SKC::GE::types::special_keys::DOWN);
-		lua.append_table("LEFT",      (lua_Integer)SKC::GE::types::special_keys::LEFT);
-		lua.append_table("RIGHT",     (lua_Integer)SKC::GE::types::special_keys::RIGHT);
-		lua.append_table("ESC",       (lua_Integer)SKC::GE::types::special_keys::ESC);
-		lua.append_table("DEL",       (lua_Integer)SKC::GE::types::special_keys::DEL);
-		lua.append_table("F1",        (lua_Integer)SKC::GE::types::special_keys::F1);
-		lua.append_table("F2",        (lua_Integer)SKC::GE::types::special_keys::F2);
-		lua.append_table("F3",        (lua_Integer)SKC::GE::types::special_keys::F3);
-		lua.append_table("F4",        (lua_Integer)SKC::GE::types::special_keys::F4);
-		lua.append_table("F5",        (lua_Integer)SKC::GE::types::special_keys::F5);
-		lua.append_table("F6",        (lua_Integer)SKC::GE::types::special_keys::F6);
-		lua.append_table("F7",        (lua_Integer)SKC::GE::types::special_keys::F7);
-		lua.append_table("F8",        (lua_Integer)SKC::GE::types::special_keys::F8);
-		lua.append_table("F9",        (lua_Integer)SKC::GE::types::special_keys::F9);
-		lua.append_table("F10",       (lua_Integer)SKC::GE::types::special_keys::F10);
-		lua.append_table("F11",       (lua_Integer)SKC::GE::types::special_keys::F11);
-		lua.append_table("F12",       (lua_Integer)SKC::GE::types::special_keys::F12);
-		lua.append_table("SPACE",     (lua_Integer)0x20);
-		lua.set_global("skc_keys");
-		
-		lua.create_table();
 			lua.push("_DEFUALT_TEXTURE");
 			lua.create_table();
 			lua.append_table("tid", 1LL);
@@ -262,14 +215,56 @@ int main([[maybe_unused]] main_info_t info) {
 				return 1;
 			}
 		}
-
+		//TODO(skc) : move this to its own file 
+		namespace skcGE = SKC::GE; 
+		auto lmb = event_handler.get_mouse_button_state(event_handler.LEFT_MOUSE_BUTTON);
+		if (lmb.down) {
+			const auto leftdownid = UZ(SKC::GE::types::E_EVENT_IDS::MOUSE_LEFT_DOWN); 
+			if (key_binds.contains(leftdownid)) {
+				auto function = key_binds.at(leftdownid);
+				if (function != "nil") {
+					auto lg = std::lock_guard(lua);
+					lua.get_global(function);
+					if (!lua.is_nil()) {
+						lua.push((int64_t)event_handler.LEFT_MOUSE_BUTTON);
+						lua.push((long long)lmb.clicks);
+						lua.push((long long)lmb.down);
+						lua.push((long long)lmb.x);
+						lua.push((long long)lmb.y);
+						lua.push((long long)event_handler.relative_mouse_position().x);
+						lua.push((long long)event_handler.relative_mouse_position().y);
+						lua.call(7, 0);
+					}
+				}
+			}
+		}
+		auto rmb = event_handler.get_mouse_button_state(event_handler.RIGHT_MOUSE_BUTTON);
+		if (rmb.down) {
+			const auto leftdownid = UZ(SKC::GE::types::E_EVENT_IDS::MOUSE_RIGHT_DOWN);
+			if (key_binds.contains(leftdownid)) {
+				auto function = key_binds.at(leftdownid);
+				if (function != "nil") {
+					auto lg = std::lock_guard(lua);
+					lua.get_global(function);
+					if (!lua.is_nil()) {
+						lua.push((int64_t)event_handler.RIGHT_MOUSE_BUTTON);
+						lua.push((long long)rmb.clicks);
+						lua.push((long long)rmb.down);
+						lua.push((long long)rmb.x);
+						lua.push((long long)rmb.y);
+						lua.push((long long)event_handler.relative_mouse_position().x);
+						lua.push((long long)event_handler.relative_mouse_position().y);
+						lua.call(7, 0);
+					}
+				}
+			}
+		}
 		for (const auto& [key, function] : key_binds) {
+			if (key >= std::to_underlying<skcGE::types::special_keys>(skcGE::types::special_keys::LAST) || function == "nil"){continue;}
 			auto key_state = event_handler.get_key_state(key); 
-			if (function == "nil") continue; 
 			if (key_state.down) {
 				auto lg = std::lock_guard(lua);
 				lua.get_global(function);
-				if (lua.is_nil()) continue; 
 				lua.push((lua_Integer)key);
 				lua.push(key_state.pressed);
 				lua.push((lua_Number)key_state.delta / 1e9);
